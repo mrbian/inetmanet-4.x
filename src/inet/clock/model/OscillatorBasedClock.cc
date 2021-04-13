@@ -90,7 +90,7 @@ clocktime_t OscillatorBasedClock::computeClockTimeFromSimTime(simtime_t t) const
 simtime_t OscillatorBasedClock::computeSimTimeFromClockTime(clocktime_t t) const
 {
     ASSERT(t >= getClockTime());
-    int64_t numTicks = floor(t.dbl() / oscillator->getNominalTickLength().dbl());
+    int64_t numTicks = t.raw() / oscillator->getNominalTickLength().raw();
     return oscillator->getComputationOrigin() + oscillator->computeIntervalForTicks(numTicks - originClockTick);
 }
 
@@ -114,10 +114,10 @@ ClockEvent *OscillatorBasedClock::cancelClockEvent(ClockEvent *event)
     return ClockBase::cancelClockEvent(event);
 }
 
-void OscillatorBasedClock::handleClockEventOccurred(ClockEvent *event)
+void OscillatorBasedClock::handleClockEvent(ClockEvent *event)
 {
-    ClockBase::handleClockEventOccurred(event);
     events.erase(std::remove(events.begin(), events.end(), event), events.end());
+    ClockBase::handleClockEvent(event);
 }
 
 const char *OscillatorBasedClock::resolveDirective(char directive) const
