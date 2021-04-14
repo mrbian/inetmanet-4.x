@@ -1570,8 +1570,8 @@
         requires = ""
         labels = ""
         nedPackages = "
-                      inet.lora
-                      inet.examples.lora
+                      inet.flora
+                      inet.examples.flora
                       "
         extraSourceFolders = ""
         compileFlags = "-DINET_WITH_FLORACODE"
