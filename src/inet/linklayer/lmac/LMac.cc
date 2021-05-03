@@ -58,10 +58,10 @@ void LMac::initialize(int stage)
         txQueue = check_and_cast<queueing::IPacketQueue *>(getSubmodule("queue"));
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
-        cModule *radioModule = getModuleFromPar<cModule>(par("radioModule"), this);
+        radio.reference(this, "radioModule", true);
+        cModule *radioModule = check_and_cast<cModule *>(radio.get());
         radioModule->subscribe(IRadio::radioModeChangedSignal, this);
         radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
-        radio = check_and_cast<IRadio *>(radioModule);
 
         WATCH(macState);
 
@@ -544,6 +544,8 @@ void LMac::handleLowerPacket(Packet *packet)
  */
 void LMac::receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details)
 {
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     if (signalID == IRadio::transmissionStateChangedSignal) {
         IRadio::TransmissionState newRadioTransmissionState = static_cast<IRadio::TransmissionState>(value);
         if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE) {

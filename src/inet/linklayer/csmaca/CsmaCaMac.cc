@@ -116,11 +116,10 @@ void CsmaCaMac::initialize(int stage)
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
         // subscribe for the information of the carrier sense
-        cModule *radioModule = getModuleFromPar<cModule>(par("radioModule"), this);
+        radio.reference(this, "radioModule", true);
+        cModule *radioModule = check_and_cast<cModule *>(radio.get());
         radioModule->subscribe(IRadio::receptionStateChangedSignal, this);
         radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
-
-        radio = check_and_cast<IRadio *>(radioModule);
         radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
     }
 }
@@ -373,7 +372,8 @@ void CsmaCaMac::handleWithFsm(cMessage *msg)
 
 void CsmaCaMac::receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details)
 {
-    Enter_Method("receiveSignal");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     if (signalID == IRadio::receptionStateChangedSignal)
         handleWithFsm(mediumStateChange);
     else if (signalID == IRadio::transmissionStateChangedSignal) {

@@ -73,8 +73,8 @@ Igmpv3::~Igmpv3()
 void Igmpv3::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
-        ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-        rt = getModuleFromPar<IIpv4RoutingTable>(par("routingTableModule"), this);
+        ift.reference(this, "interfaceTableModule", true);
+        rt.reference(this, "routingTableModule", true);
 
         enabled = par("enabled");
         robustness = par("robustnessVariable");
@@ -150,7 +150,7 @@ void Igmpv3::addWatches()
 
 void Igmpv3::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
-    Enter_Method("receiveSignal");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
 
     NetworkInterface *ie;
     int interfaceId;

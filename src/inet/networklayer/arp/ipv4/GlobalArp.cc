@@ -47,8 +47,6 @@ GlobalArp::GlobalArp()
         if (!globalArpCache.empty())
             throw cRuntimeError("Global ARP cache not empty, model error in previous run?");
     }
-
-    interfaceTable = nullptr;
 }
 
 GlobalArp::~GlobalArp()
@@ -87,7 +85,7 @@ void GlobalArp::initialize(int stage)
         WATCH_PTRMAP(globalArpCache);
     }
     else if (stage == INITSTAGE_NETWORK_LAYER) {
-        interfaceTable = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
+        interfaceTable.reference(this, "interfaceTableModule", true);
         // register our addresses in the global cache
         for (int i = 0; i < interfaceTable->getNumInterfaces(); i++) {
             NetworkInterface *networkInterface = interfaceTable->getInterface(i);
@@ -268,7 +266,8 @@ L3Address GlobalArp::getL3AddressFor(const MacAddress& macAddress) const
 
 void GlobalArp::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
-    Enter_Method("receiveSignal");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     // host associated. Link is up. Change the state to init.
     if (signalID == interfaceIpv4ConfigChangedSignal || signalID == interfaceIpv6ConfigChangedSignal) {
         const NetworkInterfaceChangeDetails *iecd = check_and_cast<const NetworkInterfaceChangeDetails *>(obj);

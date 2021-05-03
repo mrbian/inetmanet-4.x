@@ -72,10 +72,10 @@ void XMac::initialize(int stage)
         WATCH(macState);
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
-        cModule *radioModule = getModuleFromPar<cModule>(par("radioModule"), this);
+        radio.reference(this, "radioModule", true);
+        cModule *radioModule = check_and_cast<cModule *>(radio.get());
         radioModule->subscribe(IRadio::radioModeChangedSignal, this);
         radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
-        radio = check_and_cast<IRadio *>(radioModule);
 
         wakeup = new cMessage("wakeup", XMAC_WAKE_UP);
 
@@ -548,7 +548,8 @@ void XMac::sendDataPacket()
  */
 void XMac::receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details)
 {
-    Enter_Method("receiveSignal");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     if (signalID == IRadio::transmissionStateChangedSignal) {
         IRadio::TransmissionState newRadioTransmissionState = (IRadio::TransmissionState)value;
         if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE) {

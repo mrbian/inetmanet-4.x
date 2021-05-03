@@ -31,6 +31,7 @@ import inet.node.inet.WirelessHost;
 import inet.node.wireless.AccessPoint;
 import inet.node.inet.Router;
 import inet.node.inet.AdhocHost;
+import inet.visualizer.canvas.integrated.IntegratedCanvasVisualizer;
 
 
 
@@ -38,7 +39,7 @@ network AODV_UU
 {
     parameters:
         @display("bgb=40,25;bgg=1,1,grey95");
-
+        bool hasVisualizer = default(false);
 
     submodules:
         radioMedium: UnitDiskRadioMedium {
@@ -50,8 +51,9 @@ network AODV_UU
             @display("p=35,1");
         }
         
-        visualizer: <default("IntegratedCanvasVisualizer")> like IIntegratedVisualizer if hasVisualizer() {
-            @display("p=30,1");
+        visualizer: IntegratedCanvasVisualizer if hasVisualizer {
+            parameters:
+                @display("p=100,100");
         }
         
         configurator: Ipv4NetworkConfigurator {

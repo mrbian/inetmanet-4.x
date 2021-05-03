@@ -65,7 +65,7 @@ void DhcpClient::initialize(int stage)
         clientPort = 68; // client
         serverPort = 67; // server
         // get the routing table to update and subscribe it to the blackboard
-        irt = getModuleFromPar<IIpv4RoutingTable>(par("routingTableModule"), this);
+        irt.reference(this, "routingTableModule", true);
         // set client to idle state
         clientState = IDLE;
         // get the interface to configure
@@ -505,7 +505,7 @@ void DhcpClient::handleDhcpMessage(Packet *packet)
 
 void DhcpClient::receiveSignal(cComponent *source, int signalID, cObject *obj, cObject *details)
 {
-    Enter_Method("receiveSignal");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
     printSignalBanner(signalID, obj, details);
 
     // host associated. link is up. change the state to init.

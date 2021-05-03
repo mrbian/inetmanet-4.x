@@ -103,8 +103,8 @@ void Rip::initialize(int stage)
 
     if (stage == INITSTAGE_LOCAL) {
         host = getContainingNode(this);
-        ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-        rt = getModuleFromPar<IRoutingTable>(par("routingTableModule"), this);
+        ift.reference(this, "interfaceTableModule", true);
+        rt.reference(this, "routingTableModule", true);
         socket.setOutputGate(gate("socketOut"));
 
         const char *m = par("mode");
@@ -311,7 +311,7 @@ void Rip::sendRIPRequest(const RipNetworkInterface& ripInterface)
  */
 void Rip::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
-    Enter_Method("receiveSignal");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
 
     const NetworkInterface *ie;
     const NetworkInterfaceChangeDetails *change;

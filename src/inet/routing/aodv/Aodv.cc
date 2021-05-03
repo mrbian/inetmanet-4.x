@@ -52,9 +52,9 @@ void Aodv::initialize(int stage)
         rreqId = sequenceNum = 0;
         rreqCount = rerrCount = 0;
         host = getContainingNode(this);
-        routingTable = getModuleFromPar<IRoutingTable>(par("routingTableModule"), this);
-        interfaceTable = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-        networkProtocol = getModuleFromPar<INetfilter>(par("networkProtocolModule"), this);
+        routingTable.reference(this, "routingTableModule", true);
+        interfaceTable.reference(this, "interfaceTableModule", true);
+        networkProtocol.reference(this, "networkProtocolModule", true);
 
         aodvUDPPort = par("udpPort");
         askGratuitousRREP = par("askGratuitousRREP");
@@ -1022,7 +1022,8 @@ IRoute *Aodv::createRoute(const L3Address& destAddr, const L3Address& nextHop,
 
 void Aodv::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
-    Enter_Method("receiveChangeNotification");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     if (signalID == linkBrokenSignal) {
         EV_DETAIL << "Received link break signal" << endl;
         Packet *datagram = check_and_cast<Packet *>(obj);

@@ -130,7 +130,7 @@ void MediumOsgVisualizer::setAnimationSpeed() const
 
 osg::Node *MediumOsgVisualizer::getRadioOsgNode(const IRadio *radio) const
 {
-    auto it = radioOsgNodes.find(radio);
+    auto it = radioOsgNodes.find(radio->getId());
     if (it == radioOsgNodes.end())
         return nullptr;
     else
@@ -139,12 +139,12 @@ osg::Node *MediumOsgVisualizer::getRadioOsgNode(const IRadio *radio) const
 
 void MediumOsgVisualizer::setRadioOsgNode(const IRadio *radio, osg::Node *node)
 {
-    radioOsgNodes[radio] = node;
+    radioOsgNodes[radio->getId()] = node;
 }
 
 osg::Node *MediumOsgVisualizer::removeRadioOsgNode(const IRadio *radio)
 {
-    auto it = radioOsgNodes.find(radio);
+    auto it = radioOsgNodes.find(radio->getId());
     if (it == radioOsgNodes.end())
         return nullptr;
     else {
@@ -155,7 +155,7 @@ osg::Node *MediumOsgVisualizer::removeRadioOsgNode(const IRadio *radio)
 
 osg::Node *MediumOsgVisualizer::getSignalOsgNode(const ITransmission *transmission) const
 {
-    auto it = signalOsgNodes.find(transmission);
+    auto it = signalOsgNodes.find(transmission->getId());
     if (it == signalOsgNodes.end())
         return nullptr;
     else
@@ -164,12 +164,12 @@ osg::Node *MediumOsgVisualizer::getSignalOsgNode(const ITransmission *transmissi
 
 void MediumOsgVisualizer::setSignalOsgNode(const ITransmission *transmission, osg::Node *node)
 {
-    signalOsgNodes[transmission] = node;
+    signalOsgNodes[transmission->getId()] = node;
 }
 
 osg::Node *MediumOsgVisualizer::removeSignalOsgNode(const ITransmission *transmission)
 {
-    auto it = signalOsgNodes.find(transmission);
+    auto it = signalOsgNodes.find(transmission->getId());
     if (it == signalOsgNodes.end())
         return nullptr;
     else {
@@ -357,8 +357,6 @@ void MediumOsgVisualizer::handleRadioAdded(const IRadio *radio)
         auto module = const_cast<cModule *>(check_and_cast<const cModule *>(radio));
         auto networkNode = getContainingNode(module);
         auto networkNodeVisualization = networkNodeVisualizer->getNetworkNodeVisualization(networkNode);
-        if (networkNodeVisualization == nullptr)
-            throw cRuntimeError("Cannot create medium visualization for '%s', because network node visualization is not found for '%s'", module->getFullPath().c_str(), networkNode->getFullPath().c_str());
         networkNodeVisualization->addAnnotation(group, osg::Vec3d(0.0, 0.0, 0.0), 100.0);
         if (displaySignalDepartures) {
             auto texture = new osg::Texture2D();

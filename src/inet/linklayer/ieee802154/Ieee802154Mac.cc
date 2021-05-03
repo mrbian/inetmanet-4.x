@@ -112,10 +112,10 @@ void Ieee802154Mac::initialize(int stage)
         macState = IDLE_1;
         txAttempts = 0;
         txQueue = check_and_cast<queueing::IPacketQueue *>(getSubmodule("queue"));
-        radio = getModuleFromPar<IRadio>(par("radioModule"), this);
+        radio.reference(this, "radioModule", true);
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
-        cModule *radioModule = check_and_cast<cModule *>(radio);
+        cModule *radioModule = check_and_cast<cModule *>(radio.get());
         // check parameters for consistency
         // aTurnaroundTime should match (be equal or bigger) the RX to TX
         // switching time of the radio
@@ -903,7 +903,8 @@ void Ieee802154Mac::handleLowerPacket(Packet *packet)
 
 void Ieee802154Mac::receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details)
 {
-    Enter_Method("receiveSignal");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     if (signalID == IRadio::transmissionStateChangedSignal) {
         IRadio::TransmissionState newRadioTransmissionState = static_cast<IRadio::TransmissionState>(value);
         if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE) {
@@ -930,7 +931,7 @@ void Ieee802154Mac::handleStartOperation(LifecycleOperation *operation)
     // manageQueue() to see waiting packets or set to idle if none
     MacProtocolBase::handleStartOperation(operation);
 
-    cModule *radioModule = check_and_cast<cModule *>(radio);
+    cModule *radioModule = check_and_cast<cModule *>(radio.get());
     radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
 }
 
@@ -943,7 +944,7 @@ void Ieee802154Mac::handleStopOperation(LifecycleOperation *operation)
     cancelEvent(sifsTimer);
     cancelEvent(rxAckTimer);
 
-    cModule *radioModule = check_and_cast<cModule *>(radio);
+    cModule *radioModule = check_and_cast<cModule *>(radio.get());
     radioModule->unsubscribe(IRadio::transmissionStateChangedSignal, this);
 
     MacProtocolBase::handleStopOperation(operation);
@@ -956,7 +957,7 @@ void Ieee802154Mac::handleCrashOperation(LifecycleOperation *operation)
     cancelEvent(sifsTimer);
     cancelEvent(rxAckTimer);
 
-    cModule *radioModule = check_and_cast<cModule *>(radio);
+    cModule *radioModule = check_and_cast<cModule *>(radio.get());
     radioModule->unsubscribe(IRadio::transmissionStateChangedSignal, this);
 
     MacProtocolBase::handleCrashOperation(operation);

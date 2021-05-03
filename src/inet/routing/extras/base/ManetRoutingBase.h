@@ -26,6 +26,7 @@
 #include <sys/time.h>
 #endif
 
+#include "inet/common/ModuleRefByPar.h"
 #include "inet/common/Simsignals.h"
 #include "inet/networklayer/contract/IL3AddressType.h"
 #include "inet/applications/base/ApplicationBase.h"
@@ -146,9 +147,13 @@ class INET_API ManetRoutingBase : public ApplicationBase, public UdpSocket::ICal
     static bool createInternalStore;
     static GlobalRouteMap *globalRouteMap;
 
-    IRoutingTable *inet_rt = nullptr;
-    IInterfaceTable *inet_ift = nullptr;
-    INetfilter *networkProtocol = nullptr;
+    //IRoutingTable *inet_rt = nullptr;
+    //IInterfaceTable *inet_ift = nullptr;
+    //INetfilter *networkProtocol = nullptr;
+    ModuleRefByPar<IRoutingTable> inet_rt;
+    ModuleRefByPar<IInterfaceTable> inet_ift;
+    ModuleRefByPar<INetfilter> networkProtocol;
+
     cModule *hostModule = nullptr;
     Icmp *icmpModule = nullptr;
     bool mac_layer_ = false;
@@ -231,8 +236,8 @@ class INET_API ManetRoutingBase : public ApplicationBase, public UdpSocket::ICal
 
     /* Netfilter hooks */
     virtual void registerHook() {
-        if (networkProtocol == nullptr)
-            networkProtocol = getModuleFromPar<INetfilter>(par("networkProtocolModule"), this);
+        if (networkProtocol.get() == nullptr)
+            throw cRuntimeError("Network protocol not found, it is necessary to call registerRoutingModule before this method");
         networkProtocol->registerHook(0, this);
      }
 

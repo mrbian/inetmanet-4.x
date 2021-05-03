@@ -33,7 +33,7 @@ void PacketBasedTokenGenerator::initialize(int stage)
         numTokensPerBitParameter = &par("numTokensPerBit");
         inputGate = gate("in");
         producer = getConnectedModule<IActivePacketSource>(inputGate);
-        server = getModuleFromPar<TokenBasedServer>(par("serverModule"), this);
+        server.reference(this, "serverModule", true);
         server->subscribe(TokenBasedServer::tokensDepletedSignal, this);
         numTokensGenerated = 0;
         WATCH(numTokensGenerated);
@@ -80,6 +80,8 @@ const char *PacketBasedTokenGenerator::resolveDirective(char directive) const
 
 void PacketBasedTokenGenerator::receiveSignal(cComponent *source, simsignal_t signal, double value, cObject *details)
 {
+    Enter_Method("%s", cComponent::getSignalName(signal));
+
     if (signal == TokenBasedServer::tokensDepletedSignal) {
         Enter_Method("tokensDepleted");
         producer->handleCanPushPacketChanged(inputGate->getPathStartGate());

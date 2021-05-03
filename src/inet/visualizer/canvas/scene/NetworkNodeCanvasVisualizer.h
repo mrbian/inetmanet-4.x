@@ -31,7 +31,7 @@ class INET_API NetworkNodeCanvasVisualizer : public NetworkNodeVisualizerBase
   protected:
     const CanvasProjection *canvasProjection = nullptr;
     double zIndex = NaN;
-    std::map<const cModule *, NetworkNodeCanvasVisualization *> networkNodeVisualizations;
+    std::map<int, NetworkNodeCanvasVisualization *> networkNodeVisualizations;
 
   protected:
     virtual void initialize(int stage) override;
@@ -44,6 +44,7 @@ class INET_API NetworkNodeCanvasVisualizer : public NetworkNodeVisualizerBase
 
   public:
     virtual ~NetworkNodeCanvasVisualizer();
+    virtual NetworkNodeCanvasVisualization *findNetworkNodeVisualization(const cModule *networkNode) const override;
     virtual NetworkNodeCanvasVisualization *getNetworkNodeVisualization(const cModule *networkNode) const override;
 };
 

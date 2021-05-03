@@ -93,11 +93,11 @@ void Gpsr::initialize(int stage)
         displayBubbles = par("displayBubbles");
         // context
         host = getContainingNode(this);
-        interfaceTable = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
+        interfaceTable.reference(this, "interfaceTableModule", true);
         outputInterface = par("outputInterface");
         mobility = check_and_cast<IMobility *>(host->getSubmodule("mobility"));
-        routingTable = getModuleFromPar<IRoutingTable>(par("routingTableModule"), this);
-        networkProtocol = getModuleFromPar<INetfilter>(par("networkProtocolModule"), this);
+        routingTable.reference(this, "routingTableModule", true);
+        networkProtocol.reference(this, "networkProtocolModule", true);
         // internal
         beaconTimer = new cMessage("BeaconTimer");
         purgeNeighborsTimer = new cMessage("PurgeNeighborsTimer");
@@ -813,7 +813,8 @@ void Gpsr::handleCrashOperation(LifecycleOperation *operation)
 
 void Gpsr::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
-    Enter_Method("receiveChangeNotification");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     if (signalID == linkBrokenSignal) {
         EV_WARN << "Received link break" << endl;
         // TODO remove the neighbor

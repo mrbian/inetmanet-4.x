@@ -61,9 +61,6 @@ Dymo::Dymo() :
     maxHopLimit(-1),
     host(nullptr),
     addressType(nullptr),
-    interfaceTable(nullptr),
-    routingTable(nullptr),
-    networkProtocol(nullptr),
     expungeTimer(nullptr),
     sequenceNumber(0)
 {
@@ -113,9 +110,9 @@ void Dymo::initialize(int stage)
         maxHopLimit = par("maxHopLimit");
         // context
         host = getContainingNode(this);
-        interfaceTable = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-        routingTable = getModuleFromPar<IRoutingTable>(par("routingTableModule"), this);
-        networkProtocol = getModuleFromPar<INetfilter>(par("networkProtocolModule"), this);
+        interfaceTable.reference(this, "interfaceTableModule", true);
+        routingTable.reference(this, "routingTableModule", true);
+        networkProtocol.reference(this, "networkProtocolModule", true);
         // internal
         expungeTimer = new cMessage("ExpungeTimer");
         L3AddressResolver addressResolver;
@@ -1463,7 +1460,8 @@ void Dymo::handleCrashOperation(LifecycleOperation *operation)
 
 void Dymo::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
-    Enter_Method("receiveChangeNotification");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     if (signalID == linkBrokenSignal) {
         EV_WARN << "Received link break" << endl;
         Packet *datagram = check_and_cast<Packet *>(obj);

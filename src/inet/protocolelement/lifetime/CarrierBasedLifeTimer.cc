@@ -31,8 +31,8 @@ void CarrierBasedLifeTimer::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         networkInterface = getContainingNicModule(this);
         networkInterface->subscribe(interfaceStateChangedSignal, this);
-        packetCollection = getModuleFromPar<IPacketCollection>(par("collectionModule"), this);
-        auto packetCollectionModule = check_and_cast<cModule *>(packetCollection);
+        packetCollection.reference(this, "collectionModule", true);
+        auto packetCollectionModule = check_and_cast<cModule *>(packetCollection.get());
         packetCollectionModule->subscribe(packetPushedSignal, this);
     }
 }
@@ -52,6 +52,8 @@ void CarrierBasedLifeTimer::clearCollection()
 
 void CarrierBasedLifeTimer::receiveSignal(cComponent *source, simsignal_t signal, cObject *obj, cObject *details)
 {
+    Enter_Method("%s", cComponent::getSignalName(signal));
+
     if (signal == interfaceStateChangedSignal) {
         auto interfaceChangeDetails = check_and_cast<NetworkInterfaceChangeDetails *>(details);
         if (interfaceChangeDetails->getFieldId() == NetworkInterface::F_CARRIER && !networkInterface->hasCarrier())

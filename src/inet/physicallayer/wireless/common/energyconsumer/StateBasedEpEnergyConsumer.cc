@@ -53,7 +53,7 @@ void StateBasedEpEnergyConsumer::initialize(int stage)
         radioModule->subscribe(IRadio::transmittedSignalPartChangedSignal, this);
         radio = check_and_cast<IRadio *>(radioModule);
         powerConsumption = W(0);
-        energySource = getModuleFromPar<IEpEnergySource>(par("energySourceModule"), this);
+        energySource.reference(this, "energySourceModule", true);
         WATCH(powerConsumption);
     }
     else if (stage == INITSTAGE_POWER)
@@ -62,6 +62,8 @@ void StateBasedEpEnergyConsumer::initialize(int stage)
 
 void StateBasedEpEnergyConsumer::receiveSignal(cComponent *source, simsignal_t signal, intval_t value, cObject *details)
 {
+    Enter_Method("%s", cComponent::getSignalName(signal));
+
     if (signal == IRadio::radioModeChangedSignal ||
         signal == IRadio::receptionStateChangedSignal ||
         signal == IRadio::transmissionStateChangedSignal ||

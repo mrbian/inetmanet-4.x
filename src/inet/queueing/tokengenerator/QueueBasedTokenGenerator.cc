@@ -30,8 +30,8 @@ void QueueBasedTokenGenerator::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         minNumPackets = par("minNumPackets");
         minTotalLength = b(par("minTotalLength"));
-        queue = getModuleFromPar<IPacketQueue>(par("queueModule"), this);
-        check_and_cast<cSimpleModule *>(queue)->subscribe(packetPulledSignal, this);
+        queue.reference(this, "queueModule", true);
+        check_and_cast<cSimpleModule *>(queue.get())->subscribe(packetPulledSignal, this);
         numTokensParameter = &par("numTokens");
     }
     else if (stage == INITSTAGE_QUEUEING)
@@ -41,6 +41,8 @@ void QueueBasedTokenGenerator::initialize(int stage)
 
 void QueueBasedTokenGenerator::receiveSignal(cComponent *source, simsignal_t signal, cObject *object, cObject *details)
 {
+    Enter_Method("%s", cComponent::getSignalName(signal));
+
     if (signal == packetPulledSignal) {
         Enter_Method("packetPulled");
         if (queue->getNumPackets() < minNumPackets || queue->getTotalLength() < minTotalLength)

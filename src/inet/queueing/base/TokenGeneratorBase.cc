@@ -28,17 +28,9 @@ void TokenGeneratorBase::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
         displayStringTextFormat = par("displayStringTextFormat");
-        server = getModuleFromPar<TokenBasedServer>(par("serverModule"), this);
+        server.reference(this, "serverModule", true);
         numTokensGenerated = 0;
         WATCH(numTokensGenerated);
-    }
-}
-
-void TokenGeneratorBase::updateDisplayString()
-{
-    if (getEnvir()->isGUI()) {
-        auto text = StringFormat::formatString(displayStringTextFormat, this);
-        getDisplayString().setTagArg("t", 0, text);
     }
 }
 
@@ -57,7 +49,7 @@ const char *TokenGeneratorBase::resolveDirective(char directive) const
             break;
         }
         default:
-            throw cRuntimeError("Unknown directive: %c", directive);
+            result = PacketProcessorBase::resolveDirective(directive);
     }
     return result.c_str();
 }

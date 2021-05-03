@@ -60,7 +60,7 @@ void NextHopRoutingTable::initialize(int stage)
 
     if (stage == INITSTAGE_LOCAL) {
         // get a pointer to the IInterfaceTable
-        ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
+        ift.reference(this, "interfaceTableModule", true);
 
         const char *addressTypeString = par("addressType");
         if (!strcmp(addressTypeString, "mac"))
@@ -126,6 +126,8 @@ void NextHopRoutingTable::handleMessage(cMessage *msg)
 
 void NextHopRoutingTable::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     // TODO
 }
 

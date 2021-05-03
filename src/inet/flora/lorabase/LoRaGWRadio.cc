@@ -125,7 +125,7 @@ void LoRaGWRadio::startTransmission(Packet *macFrame, IRadioSignal::SignalPart p
         scheduleAt(transmission->getEndTime(part), txTimer);
         emit(transmissionStartedSignal, check_and_cast<const cObject *>(transmission));
         EV_INFO << "Transmission started: " << (IWirelessSignal *)radioFrame << " " << IRadioSignal::getSignalPartName(part) << " as " << transmission << endl;
-        check_and_cast<LoRaMedium *>(medium)->emit(IRadioMedium::signalDepartureStartedSignal, check_and_cast<const cObject *>(transmission));
+        check_and_cast<LoRaMedium *>(medium.get())->emit(IRadioMedium::signalDepartureStartedSignal, check_and_cast<const cObject *>(transmission));
     }
     else delete macFrame;
 }
@@ -152,7 +152,7 @@ void LoRaGWRadio::endTransmission(cMessage *timer)
 //    concurrentTransmissions.remove(timer);
     EV_INFO << "Transmission ended: " << (IWirelessSignal *)signal << " " << IRadioSignal::getSignalPartName(part) << " as " << transmission << endl;
     emit(transmissionEndedSignal, check_and_cast<const cObject *>(transmission));
-    check_and_cast<LoRaMedium *>(medium)->emit(IRadioMedium::signalDepartureEndedSignal, check_and_cast<const cObject *>(transmission));
+    check_and_cast<LoRaMedium *>(medium.get())->emit(IRadioMedium::signalDepartureEndedSignal, check_and_cast<const cObject *>(transmission));
     delete(timer);
 }
 
@@ -196,7 +196,7 @@ void LoRaGWRadio::startReception(cMessage *timer, IRadioSignal::SignalPart part)
     //updateTransceiverState();
     //updateTransceiverPart();
     radioMode = RADIO_MODE_TRANSCEIVER;
-    check_and_cast<LoRaMedium *>(medium)->emit(IRadioMedium::signalArrivalStartedSignal, check_and_cast<const cObject *>(reception));
+    check_and_cast<LoRaMedium *>(medium.get())->emit(IRadioMedium::signalArrivalStartedSignal, check_and_cast<const cObject *>(reception));
     if(iAmGateway) EV << "[MSDebug] start reception, size : " << concurrentReceptions.size() << endl;
 }
 
@@ -274,7 +274,7 @@ void LoRaGWRadio::endReception(cMessage *timer)
     //updateTransceiverState();
     //updateTransceiverPart();
     radioMode = RADIO_MODE_TRANSCEIVER;
-    check_and_cast<LoRaMedium *>(medium)->emit(IRadioMedium::signalArrivalEndedSignal, check_and_cast<const cObject *>(reception));
+    check_and_cast<LoRaMedium *>(medium.get())->emit(IRadioMedium::signalArrivalEndedSignal, check_and_cast<const cObject *>(reception));
     delete timer;
 }
 

@@ -112,10 +112,10 @@ void Ldp::initialize(int stage)
         holdTime = par("holdTime");
         helloInterval = par("helloInterval");
 
-        ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-        rt = getModuleFromPar<IIpv4RoutingTable>(par("routingTableModule"), this);
-        lt = getModuleFromPar<LibTable>(par("libTableModule"), this);
-        tedmod = getModuleFromPar<Ted>(par("tedModule"), this);
+        ift.reference(this, "interfaceTableModule", true);
+        rt.reference(this, "routingTableModule", true);
+        lt.reference(this, "libTableModule", true);
+        tedmod.reference(this, "tedModule", true);
 
         WATCH_VECTOR(myPeers);
         WATCH_VECTOR(fecUp);
@@ -1280,7 +1280,8 @@ bool Ldp::lookupLabel(Packet *packet, LabelOpVector& outLabel, std::string& outI
 
 void Ldp::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
-    Enter_Method("receiveSignal");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     printSignalBanner(signalID, obj, details);
 
     ASSERT(signalID == routeAddedSignal || signalID == routeDeletedSignal);

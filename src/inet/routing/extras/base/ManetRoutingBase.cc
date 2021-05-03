@@ -234,10 +234,14 @@ void ManetRoutingBase::registerRoutingModule()
 
     createTimerQueue();
 
-    inet_rt = findModuleFromPar<IRoutingTable>(par("routingTableModule"), this);
-    inet_ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
+    //inet_rt = findModuleFromPar<IRoutingTable>(par("routingTableModule"), this);
+    //inet_ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
+    //networkProtocol = getModuleFromPar<INetfilter>(par("networkProtocolModule"), this);
+
     hostModule = getContainingNode(this);
-    networkProtocol = getModuleFromPar<INetfilter>(par("networkProtocolModule"), this);
+    inet_ift.reference(this, "interfaceTableModule", true);
+    inet_rt.reference(this, "routingTableModule", true);
+    networkProtocol.reference(this, "networkProtocolModule", true);
 
     if (routesVector)
         routesVector->clear();

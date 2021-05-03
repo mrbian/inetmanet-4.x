@@ -430,7 +430,7 @@ void LoRaRadio::endReception(cMessage *timer)
     updateTransceiverPart();
     delete timer;
     // TODO: move to radio medium
-    check_and_cast<RadioMedium *>(medium)->emit(IRadioMedium::signalArrivalEndedSignal, check_and_cast<const cObject *>(reception));
+    check_and_cast<RadioMedium *>(medium.get())->emit(IRadioMedium::signalArrivalEndedSignal, check_and_cast<const cObject *>(reception));
 /*
     auto part = (IRadioSignal::SignalPart)timer->getKind();
     auto signal = static_cast<Signal *>(timer->getControlInfo());

@@ -62,10 +62,10 @@ void BMac::initialize(int stage)
         txQueue = check_and_cast<queueing::IPacketQueue *>(getSubmodule("queue"));
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
-        cModule *radioModule = getModuleFromPar<cModule>(par("radioModule"), this);
+        radio.reference(this, "radioModule", true);
+        cModule *radioModule = check_and_cast<cModule *>(radio.get());
         radioModule->subscribe(IRadio::radioModeChangedSignal, this);
         radioModule->subscribe(IRadio::transmissionStateChangedSignal, this);
-        radio = check_and_cast<IRadio *>(radioModule);
 
         // init the dropped packet info
         WATCH(macState);
@@ -572,7 +572,8 @@ void BMac::sendDataPacket()
 
 void BMac::receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details)
 {
-    Enter_Method("receiveSignal");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     if (signalID == IRadio::radioModeChangedSignal) {
         IRadio::RadioMode radioMode = static_cast<IRadio::RadioMode>(value);
         if (radioMode == IRadio::RADIO_MODE_TRANSMITTER) {

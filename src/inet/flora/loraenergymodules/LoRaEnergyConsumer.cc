@@ -59,9 +59,10 @@ void LoRaEnergyConsumer::initialize(int stage)
         //radioModule->subscribe(IdealEpEnergyStorage::residualEnergyCapacityChangedSignal, this);
         radio = check_and_cast<IRadio *>(radioModule);
         const char *energySourceModule = par("energySourceModule");
-        energySource = dynamic_cast<IdealEpEnergyStorage *>(getParentModule()->getSubmodule(energySourceModule));
-        if (!energySource)
-            throw cRuntimeError("Cannot find power source");
+        energySource.reference(getParentModule(), energySourceModule, true);
+//        energySource = dynamic_cast<IdealEpEnergyStorage *>(getParentModule()->getSubmodule(energySourceModule));
+//        if (!energySource)
+//            throw cRuntimeError("Cannot find power source");
         //energyConsumerId = energySource->addEnergyConsumer(this);
         totalEnergyConsumed = 0;
         energyBalance = J(0);

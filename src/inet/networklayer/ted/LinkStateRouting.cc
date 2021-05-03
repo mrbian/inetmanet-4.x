@@ -48,7 +48,7 @@ void LinkStateRouting::initialize(int stage)
     cSimpleModule::initialize(stage);
     // TODO INITSTAGE
     if (stage == INITSTAGE_ROUTING_PROTOCOLS) {
-        tedmod = getModuleFromPar<Ted>(par("tedModule"), this);
+        tedmod.reference(this, "tedModule", true);
 
         IIpv4RoutingTable *rt = getModuleFromPar<IIpv4RoutingTable>(par("routingTableModule"), this);
         routerId = rt->getRouterId();
@@ -91,7 +91,8 @@ void LinkStateRouting::handleMessage(cMessage *msg)
 
 void LinkStateRouting::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
 {
-    Enter_Method("receiveSignal");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     printSignalBanner(signalID, obj, details);
 
     ASSERT(signalID == tedChangedSignal);

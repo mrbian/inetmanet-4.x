@@ -74,7 +74,7 @@ void Ipv4RoutingTable::initialize(int stage)
         host->subscribe(interfaceConfigChangedSignal, this);
         host->subscribe(interfaceIpv4ConfigChangedSignal, this);
 
-        ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
+        ift.reference(this, "interfaceTableModule", true);
 
         netmaskRoutes = par("netmaskRoutes");
         forwarding = par("forwarding");
@@ -162,7 +162,8 @@ void Ipv4RoutingTable::receiveSignal(cComponent *source, simsignal_t signalID, c
     if (getSimulation()->getContextType() == CTX_INITIALIZE)
         return; // ignore notifications during initialize
 
-    Enter_Method("receiveSignal");
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+
     printSignalBanner(signalID, obj, details);
 
     if (signalID == interfaceCreatedSignal) {
