@@ -141,7 +141,7 @@ void icancloud_App_IO_Message::updateLength (){
 			else{
 				osStream << "Error updating icancloud_App_IO_Message length (request). Wrong operation:"
 						 << operationToString (operation);
-				throw cRuntimeError(osStream.str().c_str());
+				throw cRuntimeError("%s",osStream.str().c_str());
 			}
 		}
 
@@ -176,7 +176,7 @@ void icancloud_App_IO_Message::updateLength (){
 			else{
 				osStream << "Error updating SIMCAM_App_IO_Message length (request). Wrong operation:"
 						 << operationToString (operation);
-				throw cRuntimeError(osStream.str().c_str());
+				throw cRuntimeError("%s",osStream.str().c_str());
 			}
 		}
 

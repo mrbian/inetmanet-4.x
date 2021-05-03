@@ -41,8 +41,7 @@ void CfgPreloadFS::parseFile(const char* preLoad_data){
 	if (config.size() == 0){
 	    info << "Error opening preload defined in basic file system: " << preLoad_data;
 	    perror (info.str().c_str());
-	    throw cRuntimeError (info.str().c_str());
-	    throw cRuntimeError(info.str().c_str());
+	    throw cRuntimeError("%s",info.str().c_str());
 	}
 	// start to load files...
 	else{
@@ -59,7 +58,7 @@ void CfgPreloadFS::parseFile(const char* preLoad_data){
 	        config.erase (config.begin());
 	        if (strlen(line) == 0){
 	            info << "Error parsing preload defined in basic file system: " << line;
-	            throw cRuntimeError(info.str().c_str());
+	            throw cRuntimeError("%s",info.str().c_str());
 	        }
 	        else{
 	            // Parse current line
@@ -73,7 +72,7 @@ void CfgPreloadFS::parseFile(const char* preLoad_data){
 	            }
 	            else{
 	                info << "Error parsing preload defined in basic file system: " << line;
-	                throw cRuntimeError(info.str().c_str());
+	                throw cRuntimeError("%s",info.str().c_str());
 	            }
 	        }
 	    }

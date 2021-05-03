@@ -65,7 +65,7 @@ Packet* NFS_Storage_Cell::popSubRequest (){
 
 	msgLine = "NFS_Storage_Cell::popSubRequest can not be invoked, and it happens!..\n. Aborting simulation ..";
 
-	throw cRuntimeError(msgLine.c_str());
+	throw cRuntimeError("%s",msgLine.c_str());
 }
 
 Packet* NFS_Storage_Cell::popNextSubRequest (cMessage* parentRequest){

@@ -236,7 +236,7 @@ void icancloud_BlockList_Message::updateLength (){
 			else{
 				osStream << "Error updating icancloud_BlockList_Message length (request). Wrong operation:"
 						 << operationToString (getOperation());
-				throw cRuntimeError(osStream.str().c_str());
+				throw cRuntimeError("%s",osStream.str().c_str());
 			}
 		}
 
@@ -257,7 +257,7 @@ void icancloud_BlockList_Message::updateLength (){
 			else{
 				osStream << "Error updating SIMCAM_BlockList_Message length (response). Wrong operation:"
 						 << operationToString (getOperation());
-				throw cRuntimeError(osStream.str().c_str());
+				throw cRuntimeError("%s",osStream.str().c_str());
 			}
 		}
 	}
@@ -280,7 +280,7 @@ void icancloud_BlockList_Message::updateLength (){
 			else{
 				osStream << "Error updating SIMCAM_BlockList_Message length (request). Wrong operation:"
 						 << operationToString (getOperation());
-				throw cRuntimeError(osStream.str().c_str());
+				throw cRuntimeError("%s",osStream.str().c_str());
 			}
 		}
 
@@ -299,7 +299,7 @@ void icancloud_BlockList_Message::updateLength (){
 			else{
 				osStream << "Error updating SIMCAM_BlockList_Message length (response). Wrong operation:"
 						 << operationToString (getOperation());
-				throw cRuntimeError(osStream.str().c_str());
+				throw cRuntimeError("%s",osStream.str().c_str());
 			}
 		}
 	}

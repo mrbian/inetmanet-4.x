@@ -82,7 +82,7 @@ void H_MemoryManager_Base::processSelfMessage (cMessage *msg){
 
     std::ostringstream msgLine;
     msgLine << "Unknown self message [" << msg->getName() << "]";
-    throw cRuntimeError(msgLine.str().c_str());
+    throw cRuntimeError("%s", msgLine.str().c_str());
 
     delete (msg);
 

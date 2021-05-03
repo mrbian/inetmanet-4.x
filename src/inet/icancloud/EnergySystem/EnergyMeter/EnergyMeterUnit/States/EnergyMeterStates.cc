@@ -63,7 +63,7 @@ void EnergyMeterStates::setNewState (string newState,  double consumption){
 		states.insert(states.end(), newEnergyState);
 	} else {
 		msgLine << "The state ["<< newState <<"] is repeated. Aborting simulation..";
-		throw cRuntimeError(msgLine.str().c_str());
+		throw cRuntimeError("%s",msgLine.str().c_str());
 	}
 
 }
@@ -147,7 +147,7 @@ void EnergyMeterStates::changeState (string state, simtime_t actualSimtime){
 		if (!found){
 			msgLine << "The state ["<< state <<"] has not been found at the operation of changing state." << std::endl;
 			msgLine << "Maybe the component does not support the energy states. Aborting simulation.." << std::endl;
-			throw cRuntimeError(msgLine.str().c_str());
+			throw cRuntimeError("%s",msgLine.str().c_str());
 		}
 	}
 }

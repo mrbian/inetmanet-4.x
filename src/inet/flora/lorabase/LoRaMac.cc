@@ -169,8 +169,7 @@ void LoRaMac::handleSelfMessage(cMessage *msg)
 void LoRaMac::handleUpperMessage(cMessage *msg)
 {
     if(fsm.getState() != IDLE) {
-            error(fsm.getStateName());
-            error("Wrong, it should not happen");
+            error("Wrong, it should not happen erroneous state: %s", fsm.getStateName());
     }
     auto pkt = check_and_cast<Packet *>(msg);
 

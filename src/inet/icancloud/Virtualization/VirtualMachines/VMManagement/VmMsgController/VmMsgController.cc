@@ -79,7 +79,7 @@ void VmMsgController::processSelfMessage (cMessage *msg){
 	delete (msg);
 	std::ostringstream msgLine;
 	msgLine << "Unknown self message [" << msg->getName() << "]";
-	throw cRuntimeError(msgLine.str().c_str());
+	throw cRuntimeError("%s",msgLine.str().c_str());
 }
 
 void VmMsgController::processRequestMessage (Packet *pkt){

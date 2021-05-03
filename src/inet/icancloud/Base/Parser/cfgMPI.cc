@@ -43,8 +43,7 @@ void CfgMPI::parseFile(const char* fileName){
 		if (machineFile_fd == nullptr){
 			info << "Error opening MPI Trace Player config file:" << fileName;
 			perror (info.str().c_str());
-			throw cRuntimeError (info.str().c_str());
-			throw cRuntimeError(info.str().c_str());
+			throw cRuntimeError("%s",info.str().c_str());
 		}
 
 		// Read the number of entries
@@ -57,7 +56,7 @@ void CfgMPI::parseFile(const char* fileName){
 			// Load the current path entry
 			if (fgets (line, LINE_SIZE, machineFile_fd)==nullptr){
 				info << "Error reading file " << fileName << ". Line: " << line;
-				throw cRuntimeError(info.str().c_str());
+				throw cRuntimeError("%s",info.str().c_str());
 			}
 
 			// Parse the data
@@ -83,7 +82,7 @@ void CfgMPI::parseFile(const char* fileName){
 				// Error!
 				else{
 					info << "Error parsing file " << fileName << ". Line: " << line;
-					throw cRuntimeError(info.str().c_str());
+					throw cRuntimeError("%s",info.str().c_str());
 				}
 	    	}
 		}

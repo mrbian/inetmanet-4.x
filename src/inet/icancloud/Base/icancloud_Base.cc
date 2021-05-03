@@ -740,7 +740,7 @@ void icancloud_Base::showErrorMessage (const char *args, ...){
 		}
 
 	// Throws an exception to stop the execution!
-	throw cRuntimeError(msgLine.str().c_str());
+	throw cRuntimeError("%s",msgLine.str().c_str());
 }
 
 
