@@ -355,11 +355,8 @@ void DSRUU::initialize(int stage)
     {
         registerRoutingModule();
 
-        registerService(Protocol::dsr, nullptr, gate("socketIn"));
-        registerProtocol(Protocol::dsr, gate("socketOut"), nullptr);
-
-        registerService(Protocol::manet, nullptr, gate("socketIn"));
-        registerProtocol(Protocol::manet, gate("socketOut"), nullptr);
+        registerProtocol(Protocol::dsr, gate("socketOut"), gate("socketOut"));
+        registerProtocol(Protocol::manet, gate("socketOut"), gate("socketOut"));
 
         registerHook();
 
