@@ -15,7 +15,6 @@ namespace inet {
 namespace physicallayer {
 
 using std::cout;
-using namespace inet::power;
 //extern double risInt;
 
 //class INET_API MassiveMIMOURPA : public MassiveArray
@@ -33,7 +32,8 @@ class INET_API MassiveMIMOURPA : public MassiveArray
         double distance;
         double risInt;
 
-        IEnergySource *energySource = nullptr;
+        ModuleRefByPar<power::IEnergySource> energySource;
+        // IEnergySource *energySource = nullptr;
         int numAntennas;
         // internal state
         int energyConsumerId;

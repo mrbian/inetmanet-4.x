@@ -52,9 +52,10 @@ void MassiveMIMOURPA::initialize(int stage) {
         IRadio * radio = check_and_cast<IRadio *>(radioModule);
         gain = makeShared<AntennaGain>(length, M, N, phiz, freq, distance, risInt, this, radio);
 /*
-        const char *energySourceModule = par("energySourceModule");
+        energySource.reference(this, "energySourceModule", false);
+        //const char *energySourceModule = par("energySourceModule");
 
-        energySource = dynamic_cast<IEnergySource *>(getModuleByPath(energySourceModule));
+        //energySource = dynamic_cast<IEnergySource *>(getModuleByPath(energySourceModule));
         if (energySource)
             energyConsumerId = energySource->addEnergyConsumer(this);
 */

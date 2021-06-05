@@ -51,9 +51,11 @@ void MassiveMIMOUCPA::initialize(int stage) {
         gain = makeShared<AntennaGain>(length, M, phiz, freq, distance, risInt, this, radio);
 
 /*
-        const char *energySourceModule = par("energySourceModule");
+        energySource.reference(this, "energySourceModule", false);
 
-        energySource = dynamic_cast<IEnergySource *>(getModuleByPath(energySourceModule));
+        //const char *energySourceModule = par("energySourceModule");
+
+        //energySource = dynamic_cast<IEnergySource *>(getModuleByPath(energySourceModule));
         if (energySource)
             energyConsumerId = energySource->addEnergyConsumer(this);
 */
