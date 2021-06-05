@@ -1,6 +1,4 @@
 //
-// Copyright (C) 2020 OpenSim Ltd.
-//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -12,21 +10,25 @@
 // GNU Lesser General Public License for more details.
 //
 // You should have received a copy of the GNU Lesser General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// along with this program.  If not, see http://www.gnu.org/licenses/.
 //
 
-#include "inet/queueing/queue/InProgressQueue.h"
+#ifndef __INET_SELFDOCUMENTERFINGERPRINTCALCULATOR_H_
+#define __INET_SELFDOCUMENTERFINGERPRINTCALCULATOR_H_
+
+#include "inet/common/INETDefs.h"
 
 namespace inet {
-namespace queueing {
 
-Define_Module(InProgressQueue);
-
-bool InProgressQueue::canPushPacket(Packet *packet, cGate *gate) const
+class INET_API SelfDocumenterFingerprintCalculator : public cSingleFingerprintCalculator
 {
-    return queue.isEmpty() || packetComparatorFunction->comparePackets(packet, getPacket(0)) > 0;
-}
+  public:
+    virtual SelfDocumenterFingerprintCalculator *dup() const override { return new SelfDocumenterFingerprintCalculator(); }
 
-} // namespace queueing
-} // namespace inet
+    virtual void addEvent(cEvent *event) override;
+};
+
+} // namespace
+
+#endif // #ifndef __INET_SELFDOCUMENTERFINGERPRINTCALCULATOR_H_
 

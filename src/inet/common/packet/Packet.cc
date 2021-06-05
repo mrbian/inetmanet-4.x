@@ -26,6 +26,35 @@ namespace inet {
 
 Register_Class(Packet);
 
+#ifdef INET_WITH_SELFDOC
+
+#define SELFDOC_FUNCTION  \
+        selfDoc(__FUNCTION__, ""); \
+        SelfDocTempOff
+
+#define SELFDOC_FUNCTION_CHUNK(chunk)  \
+        { auto p = chunk.get(); selfDoc(__FUNCTION__, opp_typename(typeid(*p))); } \
+        SelfDocTempOff
+
+void Packet::selfDoc(const char * packetAction, const char *typeName)
+{
+    if (SelfDoc::generateSelfdoc) {
+        std::ostringstream os;
+        os << "=SelfDoc={ " << SelfDoc::keyVal("module", getSimulation()->getContextModule()->getComponentType()->getFullName())
+           << ", " << SelfDoc::keyVal("action", "PACKET")
+           << ", \"details\" : { "
+           << SelfDoc::keyVal("packetAction", packetAction)
+           << ", " << SelfDoc::keyVal("chunkType", typeName)
+           << " } }";
+        globalSelfDoc.insert(os.str());
+    }
+}
+#else
+#define SELFDOC_FUNCTION
+#define SELFDOC_FUNCTION_CHUNK(chunk)
+#define SELFDOC_FUNCTION_T
+#endif // INET_WITH_SELFDOC
+
 Packet::Packet(const char *name, short kind) :
     cPacket(name, kind),
     content(EmptyChunk::singleton),
@@ -134,6 +163,7 @@ void Packet::parsimUnpack(cCommBuffer *buffer)
 
 void Packet::setFrontOffset(b offset)
 {
+    SELFDOC_FUNCTION;
     CHUNK_CHECK_USAGE(b(0) <= offset && offset <= getTotalLength() - backIterator.getPosition(), "offset is out of range");
     content->seekIterator(frontIterator, offset);
     CHUNK_CHECK_IMPLEMENTATION(isConsistent());
@@ -141,6 +171,7 @@ void Packet::setFrontOffset(b offset)
 
 void Packet::setBackOffset(b offset)
 {
+    SELFDOC_FUNCTION;
     CHUNK_CHECK_USAGE(frontIterator.getPosition() <= offset && offset <= getTotalLength(), "offset is out of range");
     content->seekIterator(backIterator, getTotalLength() - offset);
     CHUNK_CHECK_IMPLEMENTATION(isConsistent());
@@ -150,6 +181,7 @@ void Packet::setBackOffset(b offset)
 
 void Packet::insertAt(const Ptr<const Chunk>& chunk, b offset)
 {
+    SELFDOC_FUNCTION_CHUNK(chunk);
     auto totalLength = getTotalLength();
     CHUNK_CHECK_USAGE(chunk != nullptr, "chunk is nullptr");
     CHUNK_CHECK_USAGE(chunk->getChunkLength() > b(0), "chunk is empty");
@@ -198,6 +230,7 @@ void Packet::insertAt(const Ptr<const Chunk>& chunk, b offset)
 
 void Packet::eraseAt(b offset, b length)
 {
+    SELFDOC_FUNCTION;
     auto totalLength = getTotalLength();
     CHUNK_CHECK_USAGE(b(0) <= offset && offset <= totalLength, "offset is out of range");
     CHUNK_CHECK_USAGE(b(-1) <= length && offset + length <= totalLength, "length is invalid");
@@ -242,6 +275,7 @@ void Packet::eraseAt(b offset, b length)
 
 void Packet::trimFront()
 {
+    SELFDOC_FUNCTION;
     b length = frontIterator.getPosition();
     setFrontOffset(b(0));
     eraseAtFront(length);
@@ -249,6 +283,7 @@ void Packet::trimFront()
 
 void Packet::trimBack()
 {
+    SELFDOC_FUNCTION;
     b length = backIterator.getPosition();
     setBackOffset(getTotalLength());
     eraseAtBack(length);
@@ -256,6 +291,7 @@ void Packet::trimBack()
 
 void Packet::trim()
 {
+    SELFDOC_FUNCTION;
     trimFront();
     trimBack();
 }
