@@ -31,8 +31,8 @@ module WirelessInterface extends NetworkInterface like IWirelessInterface
         string interfaceTableModule;
         string energySourceModule;
         string protocol = default("");
-        *.interfaceTableModule = default(absPath(interfaceTableModule));
-        *.energySourceModule = default(absPath(energySourceModule));
+        *.interfaceTableModule = default(absPath(this.interfaceTableModule));
+        *.energySourceModule = default(absPath(this.energySourceModule));
     gates:
         input upperLayerIn;
         output upperLayerOut;
@@ -40,15 +40,15 @@ module WirelessInterface extends NetworkInterface like IWirelessInterface
     submodules:
         classifier: <default("")> like IIeee8021dQosClassifier if typename != "" {
             parameters:
-	            @display("p=500,100");
+                @display("p=500,100");
         }
         mac: <> like IMacProtocol {
             parameters:
-	            @display("p=300,200");
+                @display("p=300,200");
         }
         radio: <default("")> like IRadio if typename != "" {
             parameters:
-	            @display("p=300,300");
+                @display("p=300,300");
         }
     connections allowunconnected:
         upperLayerIn --> { @display("m=n"); } --> mac.upperLayerIn if !exists(classifier);

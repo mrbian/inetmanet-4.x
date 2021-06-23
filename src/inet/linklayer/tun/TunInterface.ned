@@ -30,7 +30,7 @@ module TunInterface extends NetworkInterface like ITunnelInterface
     parameters:
         string interfaceTableModule;
         int mtu @unit(B) = default(1500B);
-        *.interfaceTableModule = default(absPath(interfaceTableModule));
+        *.interfaceTableModule = default(absPath(this.interfaceTableModule));
         @display("i=block/tunnel");
     gates:
         input upperLayerIn;
@@ -38,7 +38,7 @@ module TunInterface extends NetworkInterface like ITunnelInterface
     submodules:
         tun: Tun {
             parameters:
-	            @display("p=300,100");
+                @display("p=300,100");
         }
     connections:
         upperLayerIn --> { @display("m=n"); } --> tun.upperLayerIn;
