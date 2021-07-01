@@ -41,8 +41,11 @@ namespace inet {
 using namespace omnetpp;
 } // namespace inet
 
-#if OMNETPP_VERSION < 0x0600 || OMNETPP_BUILDNUM < 1517
-#  error At least OMNeT++/OMNEST version 6.0pre12 required
+//#if OMNETPP_VERSION < 0x0600 || OMNETPP_BUILDNUM < 1517
+//#  error At least OMNeT++/OMNEST version 6.0pre12 required
+//#endif
+#if OMNETPP_VERSION < 0x0600 || OMNETPP_BUILDNUM < 1506
+#  error At least OMNeT++/OMNEST version 6.0pre11 required
 #endif
 
 #define INET_VERSION        0x0403
@@ -60,6 +63,32 @@ using namespace omnetpp;
 
 // main namespace of INET framework
 namespace inet {
+
+
+#ifndef opp_isempty
+inline bool opp_isempty(const char *s)  {return !s || !s[0];}
+inline bool opp_stringbeginswith(const char *s, const char *prefix)
+{
+    return strlen(s) >= strlen(prefix) && strncmp(s, prefix, strlen(prefix)) == 0;
+}
+
+inline bool opp_stringendswith(const char *s, const char *ending)
+{
+    int slen = strlen(s);
+    int endinglen = strlen(ending);
+    return slen >= endinglen && strcmp(s+slen-endinglen, ending) == 0;
+}
+
+inline std::string opp_substringbefore(const std::string& str, const std::string& substr)
+{
+    size_t pos = str.find(substr);
+    return pos == std::string::npos ? "" : str.substr(0, pos);
+}
+
+inline const char *opp_nulltoempty(const char *s)  {return s ? s : "";}
+
+#endif
+
 
 typedef unsigned short ushort;
 typedef unsigned int uint;
