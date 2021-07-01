@@ -85,7 +85,7 @@ void PathVisualizerBase::initialize(int stage)
         labelFormat.parseFormat(par("labelFormat"));
         labelFont = cFigure::parseFont(par("labelFont"));
         labelColorAsString = par("labelColor");
-        if (!isEmpty(labelColorAsString))
+        if (!opp_isempty(labelColorAsString))
             labelColor = cFigure::Color(labelColorAsString);
         fadeOutMode = par("fadeOutMode");
         fadeOutTime = par("fadeOutTime");
@@ -211,10 +211,7 @@ void PathVisualizerBase::removeAllPathVisualizations()
 const std::vector<int> *PathVisualizerBase::getIncompletePath(const std::string& label, int chunkId)
 {
     auto it = incompletePaths.find({ label, chunkId });
-    if (it == incompletePaths.end())
-        return nullptr;
-    else
-        return &it->second;
+    return (it == incompletePaths.end()) ? nullptr : &it->second;
 }
 
 void PathVisualizerBase::addToIncompletePath(const std::string& label, int chunkId, cModule *module)

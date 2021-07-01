@@ -528,7 +528,7 @@ void SctpAssociation::initAssociation(SctpOpenReq *openCmd)
     outboundStreams = openCmd->getOutboundStreams();
     // create algorithm
     const char *sctpAlgorithmClass = openCmd->getSctpAlgorithmClass();
-    if (!sctpAlgorithmClass || !sctpAlgorithmClass[0])
+    if (opp_isempty(sctpAlgorithmClass))
         sctpAlgorithmClass = sctpMain->par("sctpAlgorithmClass");
     sctpAlgorithm = check_and_cast<SctpAlgorithm *>(inet::utils::createOne(sctpAlgorithmClass));
     sctpAlgorithm->setAssociation(this);
@@ -2125,8 +2125,7 @@ void SctpAssociation::addPath(const L3Address& addr)
 {
     EV_INFO << "Add Path remote address: " << addr << "\n";
 
-    auto i = sctpPathMap.find(addr);
-    if (i == sctpPathMap.end()) {
+    if (!containsKey(sctpPathMap, addr)) {
         EV_DEBUG << " get new path for " << addr << " at line " << __LINE__ << "\n";
         SctpPathVariables *path = new SctpPathVariables(addr, this, rt);
         sctpPathMap[addr] = path;
@@ -2965,8 +2964,7 @@ void SctpAssociation::putInTransmissionQ(const uint32_t tsn, SctpDataVariables *
     if (chunk->countsAsOutstanding) {
         decreaseOutstandingBytes(chunk);
     }
-    auto it = transmissionQ->payloadQueue.find(tsn);
-    if (it == transmissionQ->payloadQueue.end()) {
+    if (!containsKey(transmissionQ->payloadQueue, tsn)) {
         EV_DETAIL << "putInTransmissionQ: insert tsn=" << tsn << endl;
         chunk->wasDropped = true;
         chunk->wasPktDropped = true;

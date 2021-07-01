@@ -29,6 +29,7 @@
 #include "inet/common/lifecycle/NodeStatus.h"
 #include "inet/common/packet/Packet.h"
 #include "inet/common/socket/SocketTag_m.h"
+#include "inet/common/stlutils.h"
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/networklayer/common/DscpTag_m.h"
 #include "inet/networklayer/common/HopLimitTag_m.h"
@@ -379,7 +380,7 @@ ushort Udp::getEphemeralPort()
     if (lastEphemeralPort == EPHEMERAL_PORTRANGE_END) // wrap
         lastEphemeralPort = EPHEMERAL_PORTRANGE_START;
 
-    while (socketsByPortMap.find(lastEphemeralPort) != socketsByPortMap.end()) {
+    while (containsKey(socketsByPortMap, lastEphemeralPort)) {
         if (lastEphemeralPort == searchUntil) // got back to starting point?
             throw cRuntimeError("Ephemeral port range %d..%d exhausted, all ports occupied", EPHEMERAL_PORTRANGE_START, EPHEMERAL_PORTRANGE_END);
         lastEphemeralPort++;
@@ -567,8 +568,7 @@ void Udp::blockMulticastSources(SockDesc *sd, NetworkInterface *ie, L3Address mu
     bool changed = false;
     for (auto& elem : sourceList) {
         const L3Address& sourceAddress = elem;
-        auto it = std::find(excludedSources.begin(), excludedSources.end(), sourceAddress);
-        if (it != excludedSources.end()) {
+        if (!contains(excludedSources, sourceAddress)) {
             excludedSources.push_back(sourceAddress);
             changed = true;
         }
@@ -598,7 +598,7 @@ void Udp::unblockMulticastSources(SockDesc *sd, NetworkInterface *ie, L3Address 
     bool changed = false;
     for (auto& elem : sourceList) {
         const L3Address& sourceAddress = elem;
-        auto it = std::find(excludedSources.begin(), excludedSources.end(), sourceAddress);
+        auto it = find(excludedSources, sourceAddress);
         if (it != excludedSources.end()) {
             excludedSources.erase(it);
             changed = true;
@@ -629,7 +629,7 @@ void Udp::leaveMulticastSources(SockDesc *sd, NetworkInterface *ie, L3Address mu
     bool changed = false;
     for (auto& elem : sourceList) {
         const L3Address& sourceAddress = elem;
-        auto it = std::find(includedSources.begin(), includedSources.end(), sourceAddress);
+        auto it = find(includedSources, sourceAddress);
         if (it != includedSources.end()) {
             includedSources.erase(it);
             changed = true;
@@ -667,8 +667,7 @@ void Udp::joinMulticastSources(SockDesc *sd, NetworkInterface *ie, L3Address mul
     bool changed = false;
     for (auto& elem : sourceList) {
         const L3Address& sourceAddress = elem;
-        auto it = std::find(includedSources.begin(), includedSources.end(), sourceAddress);
-        if (it != includedSources.end()) {
+        if (!contains(includedSources, sourceAddress)) {
             includedSources.push_back(sourceAddress);
             changed = true;
         }
@@ -1492,7 +1491,7 @@ INetfilter::IHook::Result UdpCrcInsertionHook::datagramPostRoutingHook(Packet *p
 
 bool Udp::MulticastMembership::isSourceAllowed(L3Address sourceAddr)
 {
-    auto it = std::find(sourceList.begin(), sourceList.end(), sourceAddr);
+    auto it = find(sourceList, sourceAddr);
     return (filterMode == UDP_INCLUDE_MCAST_SOURCES && it != sourceList.end()) ||
            (filterMode == UDP_EXCLUDE_MCAST_SOURCES && it == sourceList.end());
 }

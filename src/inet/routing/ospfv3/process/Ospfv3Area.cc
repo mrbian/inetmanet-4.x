@@ -5,6 +5,8 @@
 
 #include <iostream>
 
+#include "inet/common/stlutils.h"
+
 namespace inet {
 namespace ospfv3 {
 
@@ -76,21 +78,14 @@ void Ospfv3Area::init()
 
 bool Ospfv3Area::hasInterface(std::string interfaceName)
 {
-    std::map<std::string, Ospfv3Interface *>::iterator interfaceIt = this->interfaceByName.find(interfaceName);
-    if (interfaceIt == this->interfaceByName.end())
-        return false;
-
-    return true;
+    return containsKey(this->interfaceByName, interfaceName);
 } // hasArea
 
 Ospfv3Interface *Ospfv3Area::getInterfaceById(int id)
 {
-    std::map<int, Ospfv3Interface *>::iterator interfaceIt = this->interfaceById.find(id);
-    if (interfaceIt == this->interfaceById.end())
-        return nullptr;
-
-    return interfaceIt->second;
-} // getInterfaceById
+    auto interfaceIt = this->interfaceById.find(id);
+    return (interfaceIt == this->interfaceById.end()) ? nullptr : interfaceIt->second;
+}
 
 Ospfv3Interface *Ospfv3Area::getNetworkLSAInterface(Ipv4Address id)
 {
@@ -101,17 +96,13 @@ Ospfv3Interface *Ospfv3Area::getNetworkLSAInterface(Ipv4Address id)
     }
 
     return nullptr;
-
 } // getInterfaceById
 
 Ospfv3Interface *Ospfv3Area::getInterfaceByIndex(int id)
 {
-    std::map<int, Ospfv3Interface *>::iterator interfaceIt = this->interfaceByIndex.find(id);
-    if (interfaceIt == this->interfaceByIndex.end())
-        return nullptr;
-
-    return interfaceIt->second;
-} // getInterfaceByIndex
+    auto interfaceIt = this->interfaceByIndex.find(id);
+    return  (interfaceIt == this->interfaceByIndex.end()) ? nullptr : interfaceIt->second;
+}
 
 void Ospfv3Area::addInterface(Ospfv3Interface *newInterface)
 {
