@@ -512,7 +512,7 @@ class Olsr : public ManetRoutingBase
 
     L3Address getIfaceAddressFromIndex(int index);
 
-    const char * getNodeId(const nsaddr_t &addr);
+    std::string getNodeId(const nsaddr_t &addr);
 
     void computeDistributionPath(const nsaddr_t &initNode);
 

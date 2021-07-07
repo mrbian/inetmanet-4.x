@@ -134,7 +134,7 @@ void AbstractCloudUser::decreaseVMSet (string vmType, int vmsQuantity){
 
 int AbstractCloudUser::machinesLeft (int index){
 
-    if (index > (int)(vmsToBeSelected.size() -1)) throw cRuntimeError("AbstractCloudUser::machinesLeft->index %i major than vmsSelectedSize %i\n",index, vmsToBeSelected.size() );
+    if (index > (int)(vmsToBeSelected.size() -1)) throw cRuntimeError("AbstractCloudUser::machinesLeft->index %i major than vmsSelectedSize %zu\n",index, vmsToBeSelected.size() );
 
     return (*(vmsToBeSelected.begin() +index))->quantity;;
 

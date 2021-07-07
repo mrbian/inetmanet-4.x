@@ -893,11 +893,11 @@ void AbstractDCManager::userStorageRequest (StorageRequest* st_req, AbstractNode
         requestOperation = st_req->getOperation();
         files = st_req->getPreloadFilesSet();
         fsStructure = st_req->getFSSet();
-        if (nodeHost == nullptr) throw cRuntimeError ("AbstractDCManager::userStorageRequest->req->getOperation() == %i, error. The storage request has an unknown operation\n", st_req->getConnection(0)->ip.c_str());
+        if (nodeHost == nullptr) throw cRuntimeError ("AbstractDCManager::userStorageRequest->req->getOperation() == %s, error. The storage request has an unknown operation condition nodeHost == nullptr \n", st_req->getConnection(0)->ip.c_str());
 
       if (requestOperation == REQUEST_LOCAL_STORAGE){
           // Get the io manager of the OS from the host node to communicate the new operation
-              if (nodeHost == nullptr) throw cRuntimeError ("AbstractDCManager::userStorageRequest->req->getOperation() == %s, error. The storage request has an unknown operation\n", st_req->getConnection(0)->ip.c_str());
+              if (nodeHost == nullptr) throw cRuntimeError ("AbstractDCManager::userStorageRequest->req->getOperation() == %s, error. The storage request has an unknown operation condition nodeHost == nullptr\n", st_req->getConnection(0)->ip.c_str());
           // Erase the first position that is the node host
 
       }

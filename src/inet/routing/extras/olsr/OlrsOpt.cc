@@ -127,7 +127,7 @@ OlsrOpt::recv_olsr(Packet* msg)
                 debug("%f: Node %s can not process OLSR packet because does not "
                       "implement OLSR type (%x)\n",
                       CURRENT_TIME,
-                      getNodeId(ra_addr()),
+                      getNodeId(ra_addr()).c_str(),
                       msg.msg_type());
             }
         }
@@ -528,8 +528,8 @@ OlsrOpt::nb_loss(Olsr_link_tuple* tuple)
     bool topologychanged = false;
     debug("%f: Node %s detects neighbor %s loss\n",
           CURRENT_TIME,
-          getNodeId(ra_addr()),
-          getNodeId(tuple->nb_iface_addr()));
+          getNodeId(ra_addr()).c_str(),
+          getNodeId(tuple->nb_iface_addr()).c_str());
 
     updated_link_tuple(tuple, OLSR_WILL_DEFAULT);
     topologychanged += state_.erase_nb2hop_tuples(get_main_addr(tuple->nb_iface_addr()));

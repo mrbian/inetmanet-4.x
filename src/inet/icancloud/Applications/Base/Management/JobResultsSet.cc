@@ -67,7 +67,7 @@ void JobResultsSet::newJobResultSet(string jobResult){
     for (unsigned int i = 0; (i < jobResultsSet.size()); i++){
         jobRes = (*(jobResultsSet.begin() + i));
         if (strcmp (jobRes->getName().c_str(), jobResult.c_str()) == 0){
-            throw cRuntimeError("Error: JobResultsSet::newJobResultSet->%s. The value %s exists previously.", jobResult.c_str());
+            throw cRuntimeError("Error: JobResultsSet::newJobResultSet->%s. The value %s exists previously.", jobRes->getName().c_str(), jobResult.c_str());
         }
     }
 

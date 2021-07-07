@@ -263,7 +263,7 @@ Olsr_Etx::recv_olsr(Packet* msg)
                 debug("%f: Node %s can not process OLSR packet because does not "
                       "implement OLSR type (%x)\n",
                       CURRENT_TIME,
-                      getNodeId(ra_addr()),
+                      getNodeId(ra_addr()).c_str(),
                       msg.msg_type());
             }
         }
@@ -1911,7 +1911,7 @@ Olsr_Etx::rtable_dijkstra_computation()
     rtable_.clear();
 
 
-    debug("Current node %s:\n", getNodeId(ra_addr()));
+    debug("Current node %s:\n", getNodeId(ra_addr()).c_str());
     // Iterate through all out 1 hop neighbors
     for (auto it = nbset().begin(); it != nbset().end(); it++)
     {
@@ -1923,8 +1923,8 @@ Olsr_Etx::rtable_dijkstra_computation()
         // Add this edge to the graph we are building
         if (best_link)
         {
-            debug("nb_tuple: %s (local) ==> %s , delay %lf, quality %lf\n", getNodeId(best_link->local_iface_addr()),
-                    getNodeId(nb_tuple->nb_main_addr()), best_link->nb_link_delay(), best_link->etx());
+            debug("nb_tuple: %s (local) ==> %s , delay %lf, quality %lf\n", getNodeId(best_link->local_iface_addr()).c_str(),
+                    getNodeId(nb_tuple->nb_main_addr()).c_str(), best_link->nb_link_delay(), best_link->etx());
             dijkstra->add_edge(nb_tuple->nb_main_addr(), best_link->local_iface_addr(),
                                 best_link->nb_link_delay(), best_link->etx(), true);
         }
@@ -1994,8 +1994,8 @@ Olsr_Etx::rtable_dijkstra_computation()
             // Add this edge to the graph we are building. The last hop is our 1 hop
             // neighbor that has the best link to the current two hop neighbor. And
             // nb2hop_addr is not directly connected to this node
-            debug("nb2hop_tuple: %s (local) ==> %s , delay %lf, quality %lf\n", getNodeId(nb_main_addr),
-                    getNodeId(nb2hop_tuple->nb2hop_addr()), nb2hop_tuple->nb_link_delay(), nb2hop_tuple->etx());
+            debug("nb2hop_tuple: %s (local) ==> %s , delay %lf, quality %lf\n", getNodeId(nb_main_addr).c_str(),
+                    getNodeId(nb2hop_tuple->nb2hop_addr()).c_str(), nb2hop_tuple->nb_link_delay(), nb2hop_tuple->etx());
             dijkstra->add_edge(nb2hop_tuple->nb2hop_addr(), nb_main_addr,
                                 nb2hop_tuple->nb_link_delay(), nb2hop_tuple->etx(), false);
         }
@@ -2016,8 +2016,8 @@ Olsr_Etx::rtable_dijkstra_computation()
         // Add this edge to the graph we are building. The last hop is our 1 hop
         // neighbor that has the best link to the current two hop. And dest_addr
         // is not directly connected to this node
-        debug("topology_tuple: %s (local) ==> %sd , delay %lf, quality %lf\n", getNodeId(topology_tuple->last_addr()),
-                getNodeId(topology_tuple->dest_addr()), topology_tuple->nb_link_delay(), topology_tuple->etx());
+        debug("topology_tuple: %s (local) ==> %sd , delay %lf, quality %lf\n", getNodeId(topology_tuple->last_addr()).c_str(),
+                getNodeId(topology_tuple->dest_addr()).c_str(), topology_tuple->nb_link_delay(), topology_tuple->etx());
         dijkstra->add_edge(topology_tuple->dest_addr(), topology_tuple->last_addr(),
                             topology_tuple->nb_link_delay(), topology_tuple->etx(), false);
     }
@@ -3148,7 +3148,7 @@ void
 Olsr_Etx::nb_loss(Olsr_link_tuple* tuple)
 {
     debug("%f: Node %s detects neighbor %s loss\n", CURRENT_TIME,
-            getNodeId(ra_addr()), getNodeId(tuple->nb_iface_addr()));
+            getNodeId(ra_addr()).c_str(), getNodeId(tuple->nb_iface_addr()).c_str());
 
     updated_link_tuple(tuple, OLSR_WILL_DEFAULT);
     state_.erase_nb2hop_tuples(get_main_addr(tuple->nb_iface_addr()));

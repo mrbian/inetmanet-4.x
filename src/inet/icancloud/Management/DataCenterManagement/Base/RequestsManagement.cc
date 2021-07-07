@@ -174,7 +174,7 @@ void RequestsManagement::eraseRequest (unsigned int index){
             requestsQueue.erase(reqIt);
         }
     } else {
-        throw cRuntimeError("Error in [RequestsManagement]: -------> erase_request: requestsQueue size:%i index:%i\n ", requestsQueue.size(), index);
+        throw cRuntimeError("Error in [RequestsManagement]: -------> erase_request: requestsQueue size:%zu index:%i\n ", requestsQueue.size(), index);
     }
 
 }

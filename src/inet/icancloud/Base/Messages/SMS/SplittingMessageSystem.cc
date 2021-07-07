@@ -171,7 +171,7 @@ void SplittingMessageSystem::arrivesSubRequest (inet::Packet* subRequest, inet::
     else {
         info << "Parent request not found! subRequest info:"
                 << subReqMsg->contentsToString(verboseMode);
-        throw cRuntimeError(info.str().c_str());
+        throw cRuntimeError("%s",info.str().c_str());
     }
 }
 

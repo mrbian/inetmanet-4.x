@@ -151,7 +151,7 @@ string MachinesMap::getSetId (int index){
 			result = (*setIt)->getSetIdentifier();
 		}
 		else {
-			throw cRuntimeError("machinesMap::getmachineSetId->Error. Index (%i) - machineMapIndex(%i)", index, machineMap.size());
+			throw cRuntimeError("machinesMap::getmachineSetId->Error. Index (%i) - machineMapIndex(%zu)", index, machineMap.size());
 		}
 
 	return result;
@@ -207,7 +207,7 @@ int MachinesMap::getSetQuantity (int machineIndex){
 			result = (*setIt)->size();
 		}
 		else {
-			throw cRuntimeError("machinesMap::getmachineSetId->Error. Index (%i) - machineMapIndex(%i)", machineIndex, machineMap.size());
+			throw cRuntimeError("machinesMap::getmachineSetId->Error. Index (%i) - machineMapIndex(%zu)", machineIndex, machineMap.size());
 		}
 
 		return result;
@@ -262,7 +262,7 @@ int MachinesMap::getSetNumberOfCPUs(int machineIndex){
 			result = (*setIt)->getNumberOfCPUs();
 		}
 		else {
-			throw cRuntimeError("machinesMap::getmachineSetNumberOfCPUs->Error. Index (%i) - machineMapIndex(%i)", machineIndex, machineMap.size());
+			throw cRuntimeError("machinesMap::getmachineSetNumberOfCPUs->Error. Index (%i) - machineMapIndex(%zu)", machineIndex, machineMap.size());
 		}
 
 		return result;
@@ -345,7 +345,7 @@ int MachinesMap::getSetTotalMemory(int machineIndex){
             result = (*setIt)->getTotalMemory();
         }
         else {
-            throw cRuntimeError("machinesMap::getmachineSetTotalMemory->Error. Index (%i) - machineMapIndex(%i)", machineIndex, machineMap.size());
+            throw cRuntimeError("machinesMap::getmachineSetTotalMemory->Error. Index (%i) - machineMapIndex(%zu)", machineIndex, machineMap.size());
         }
 
         return result;
@@ -367,7 +367,7 @@ string MachinesMap::getSetIdentifier(int machineIndex){
 			result = (*setIt)->getSetIdentifier();
 		}
 		else {
-			throw cRuntimeError("machinesMap::getmachineSetIdentifier->Error. Index (%i) - machineMapIndex(%i)", machineIndex, machineMap.size());
+			throw cRuntimeError("machinesMap::getmachineSetIdentifier->Error. Index (%i) - machineMapIndex(%zu)", machineIndex, machineMap.size());
 		}
 
 		return result;
@@ -420,7 +420,7 @@ bool MachinesMap::isMachineON  (int machineSetIndex, int machineIndex){
 			result = (*setIt)->isON(machineIndex);
 		}
 		else {
-			throw cRuntimeError("machinesMap::getmachineStateByIndex->Error. Index (%i) - machineMapIndex(%i)", machineSetIndex, machineMap.size());
+			throw cRuntimeError("machinesMap::getmachineStateByIndex->Error. Index (%i) - machineMapIndex(%zu)", machineSetIndex, machineMap.size());
 		}
 
 		return result;
@@ -474,7 +474,7 @@ int MachinesMap::countONMachines (int machineSetIndex){
 			result = (*setIt)->countON();
 		}
 		else {
-			throw cRuntimeError("machinesMap::countmachinesInStateByState->Error. Index (%i) - machineMapIndex(%i)", machineSetIndex, machineMap.size());
+			throw cRuntimeError("machinesMap::countmachinesInStateByState->Error. Index (%i) - machineMapIndex(%zu)", machineSetIndex, machineMap.size());
 		}
 
 		return result;
@@ -528,7 +528,7 @@ int MachinesMap::countOFFMachines (int machineSetIndex){
             result = (*setIt)->countOFF();
         }
         else {
-            throw cRuntimeError("machinesMap::countmachinesInStateByState->Error. Index (%i) - machineMapIndex(%i)", machineSetIndex, machineMap.size());
+            throw cRuntimeError("machinesMap::countmachinesInStateByState->Error. Index (%i) - machineMapIndex(%zu)", machineSetIndex, machineMap.size());
         }
 
         return result;
@@ -580,7 +580,7 @@ Machine* MachinesMap::getMachineByIndex (int machineSetIndex, int machineIndex){
 			result = (*(machineMap.begin()+machineSetIndex))->getMachineByIndex(machineIndex);
 		}
 		else {
-			throw cRuntimeError("machinesMap::getmachineByIndex->Error. Index (%i) - machineMapIndex(%i)", machineSetIndex, machineMap.size());
+			throw cRuntimeError("machinesMap::getmachineByIndex->Error. Index (%i) - machineMapIndex(%zu)", machineSetIndex, machineMap.size());
 		}
 		return result;
 
@@ -660,7 +660,7 @@ vector<Machine*> MachinesMap::getOFFMachines (int machineSetIndex){
 			result = (*setIt)-> getOFFMachines();
 		}
 		else {
-			throw cRuntimeError("machinesMap::getmachinesByState->Error. Index (%i) - machineMapIndex(%i)", machineSetIndex, machineMap.size());
+			throw cRuntimeError("machinesMap::getmachinesByState->Error. Index (%i) - machineMapIndex(%zu)", machineSetIndex, machineMap.size());
 		}
 
 		return result;
@@ -712,7 +712,7 @@ vector<Machine*> MachinesMap::getONMachines (int machineSetIndex){
             result = (*setIt)-> getONMachines();
         }
         else {
-            throw cRuntimeError("machinesMap::getmachinesByState->Error. Index (%i) - machineMapIndex(%i)", machineSetIndex, machineMap.size());
+            throw cRuntimeError("machinesMap::getmachinesByState->Error. Index (%i) - machineMapIndex(%zu)", machineSetIndex, machineMap.size());
         }
 
         return result;

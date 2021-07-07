@@ -310,7 +310,7 @@ void PortAddressTranslation::pat_arrivesIncomingConnection(Ptr<icancloud_Message
 		vm = user->searchVM(pId);
 
 		// If the vm does not exists, create it ..
-			if (vm == nullptr)throw cRuntimeError("portManager::pat_connectionStablished error. There is no vm connection for the incoming message %s!\n", pId);
+		if (vm == nullptr)throw cRuntimeError("portManager::pat_connectionStablished error. There is no vm connection for the incoming message %i!\n", pId);
 
 	//Allocate the connectionID
 		vm->setConnectionID(sm_net->getLocalPort(), sm_net->getConnectionId());
@@ -425,7 +425,7 @@ void PortAddressTranslation::pat_sendMessage(Ptr<icancloud_Message> &sm) {
     // If the user does not exists, create it ..
     if (user == nullptr)
         throw cRuntimeError(
-                "portManager::pat_connectionStablished error. There is no listen connection for the user %s!\n",
+                "portManager::pat_connectionStablished error. There is no listen connection for the user %i!\n",
                 uId);
 
     // Search the vm
@@ -434,7 +434,7 @@ void PortAddressTranslation::pat_sendMessage(Ptr<icancloud_Message> &sm) {
     // If the vm does not exists, create it ..
     if (vm == nullptr)
         throw cRuntimeError(
-                "portManager::pat_connectionStablished error. There is no vm connection for the incoming message %s!\n",
+                "portManager::pat_connectionStablished error. There is no vm connection for the incoming message %i!\n",
                 pId);
 
     // PAT
@@ -470,7 +470,7 @@ int PortAddressTranslation::pat_closeConnection(Ptr<icancloud_Message> &sm) {
     // If the user does not exists, create it ..
     if (user == nullptr)
         throw cRuntimeError(
-                "portManager::pat_connectionStablished error. There is no listen connection for the user %s!\n",
+                "portManager::pat_connectionStablished error. There is no listen connection for the user %i!\n",
                 uId);
 
     // Search the vm
@@ -479,7 +479,7 @@ int PortAddressTranslation::pat_closeConnection(Ptr<icancloud_Message> &sm) {
     // If the vm does not exists, create it ..
     if (vm == nullptr)
         throw cRuntimeError(
-                "portManager::pat_connectionStablished error. There is no vm connection for the incoming message %s!\n",
+                "portManager::pat_connectionStablished error. There is no vm connection for the incoming message %i!\n",
                 pId);
 
     // PAT
