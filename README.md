@@ -1,7 +1,7 @@
 [![badge 1][badge-1]][1] [![badge 2][badge-2]][2]
 
 
-Warning this version needs at least omnet++ 6-pre9.
+Warning this version needs at least omnet++ 6-pre12.
 For older omnet++ versions you  can use V4.2.x branch or inetmanet 3
 
 Inetmanet/INET Framework for OMNEST/OMNeT++
@@ -65,6 +65,9 @@ Inetmanet is compatible with inet framework but it has several differences.
               Aodv (Uppsala university).
               Dsr (Uppsala university).
               (Except Dsr, the rest of protocols are implemented like Udp applications).
+       Lora model:
+               Flora.
+          
        Cloud Computing modules:
               iCanClod.
               CloudNetSim++.
