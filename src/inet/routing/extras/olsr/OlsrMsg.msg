@@ -17,6 +17,8 @@ cplusplus {{
 #include "inet/routing/extras/olsr/OlsrMsg.h"
 }}
 
+namespace inet::inetmanet;
+
 class OlsrMsg
 {
     @existingClass;

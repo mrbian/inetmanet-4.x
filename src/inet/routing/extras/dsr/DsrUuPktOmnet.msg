@@ -69,7 +69,7 @@ struct dsr_opt_hdr
 
 cplusplus {{
      typedef  std::vector <dsr_opt_hdr>  VectorOptionHeader;
-      }} // C++ typedef
+}} // C++ typedef
 
 class VectorOptionHeader { @existingClass; }
 

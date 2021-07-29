@@ -49,3 +49,4 @@ class OlsrPkt extends FieldsChunk
     double send_time;           /// Packet sending timestamp
     OlsrMsg msg[];             ///< Packet body.
 }
+
