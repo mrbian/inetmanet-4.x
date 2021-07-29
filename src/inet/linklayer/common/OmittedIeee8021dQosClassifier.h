@@ -16,8 +16,8 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 
-#ifndef __INET_EXAMPLEQOSCLASSIFIER_H
-#define __INET_EXAMPLEQOSCLASSIFIER_H
+#ifndef __INET_OMITTEDIEEE80211QOSCLASSIFIER_H
+#define __INET_OMITTEDIEEE80211QOSCLASSIFIER_H
 
 #include "inet/common/IProtocolRegistrationListener.h"
 
