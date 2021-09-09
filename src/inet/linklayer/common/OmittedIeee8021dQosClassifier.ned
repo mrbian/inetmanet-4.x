@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2015 OpenSim Ltd.
+// Copyright (C) 2021 OpenSim Ltd.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
@@ -18,15 +18,17 @@
 package inet.linklayer.common;
 
 //
-// An example QoS classifier that assigns a User Priority based on
-// the transport protocol and port numbers.
+// Dummy 802.1d QoS classifier.
 //
-simple OmittedIeee8021dQosClassifier like IIeee8021dQosClassifier
+module OmittedIeee8021dQosClassifier like IIeee8021dQosClassifier
 {
     parameters:
-        @display("i=block/classifier");
+        @class(::inet::OmittedModule);
+        @display("i=block/classifier,black,50");
     gates:
         input in;
         output out;
+    connections:
+        in --> out;
 }
 
