@@ -21,7 +21,7 @@ module LoRaGWNic extends WirelessInterface
 {
     parameters:
         @display("i=block/ifcard");
-        *.interfaceTableModule = default(absPath(interfaceTableModule));
+        *.interfaceTableModule = default(absPath(this.interfaceTableModule));
         radio.typename = default("LoRaGWRadio");
         mac.typename = "LoRaGWMac";
 }
