@@ -161,6 +161,7 @@ const Protocol Protocol::probabilistic("probabilistic", "Probabilistic", Protoco
 const Protocol Protocol::shortcutMac("shortcutmac", "Shortcut MAC");
 const Protocol Protocol::shortcutPhy("shortcutphy", "Shortcut PHY", Protocol::PhysicalLayer);
 const Protocol Protocol::unitDisk("unitdisk", "UnitDisk");
+const Protocol Protocol::unknown("unknown", "Unknown");
 const Protocol Protocol::wiseRoute("wiseroute", "WiseRoute"); // WiseRoute Network Protocol
 const Protocol Protocol::gptp("gptp", "gPTP");
 const Protocol Protocol::ieee8021rTag("ieee8021rtag", "IEEE 802.1R TAG"); // TODO: move to its place in the alphanumeric ordering, causes fingerprints to change because some hypothetical protocols serialize the protocol ID into the packet
