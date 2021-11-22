@@ -37,7 +37,7 @@ class INET_API MacProtocolBase : public LayeredProtocolBase, public cListener
     int lowerLayerOutGateId = -1;
     //@}
 
-    NetworkInterface *networkInterface = nullptr;
+    opp_component_ptr<NetworkInterface> networkInterface;
 
     /** Currently transmitted frame if any */
     Packet *currentTxFrame = nullptr;
@@ -45,7 +45,7 @@ class INET_API MacProtocolBase : public LayeredProtocolBase, public cListener
     /** Messages received from upper layer and to be transmitted later */
     opp_component_ptr<queueing::IPacketQueue> txQueue;
 
-    cModule *hostModule = nullptr;
+    opp_component_ptr<cModule> hostModule;
 
   protected:
     MacProtocolBase();
