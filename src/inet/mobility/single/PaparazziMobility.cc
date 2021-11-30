@@ -25,7 +25,7 @@ Define_Module(PaparazziMobility);
 EXECUTE_ON_STARTUP(
         cEnum * e = cEnum::find("inet::PaparazziMobilityModels");
         if (!e)
-            enums.getInstance()->add(e = new cEnum("inet::PaparazziMobilityModels"));
+            omnetpp::internal::enums.getInstance()->add(e = new cEnum("inet::PaparazziMobilityModels"));
         e->insert(PaparazziMobility::WAYPOINT, "waypoint");
         e->insert(PaparazziMobility::STAYAT, "stayat");
         e->insert(PaparazziMobility::SCAN, "scan");
