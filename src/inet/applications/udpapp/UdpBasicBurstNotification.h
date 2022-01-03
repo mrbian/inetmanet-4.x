@@ -41,7 +41,6 @@ class INET_API UdpBasicBurstNotification : public UdpBasicBurst, protected cList
   protected:
     // chooses random destination address
     virtual L3Address chooseDestAddr() override;
-    virtual void generateBurst() override;
     virtual void processStart() override;
     virtual void receiveSignal(cComponent *source, simsignal_t signalID, intval_t i, cObject *details) override;
   public:

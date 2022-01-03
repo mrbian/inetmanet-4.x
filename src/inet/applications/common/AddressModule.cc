@@ -48,7 +48,9 @@ AddressModule::~AddressModule()
 
 void AddressModule::initModule(bool mode)
 {
-    cSimpleModule * owner = check_and_cast<cSimpleModule*>(getOwner());
+    owner = check_and_cast<cSimpleModule*>(getOwner());
+    if (owner == nullptr)
+        throw cRuntimeError("Not owner found");
     emitSignal = mode;
     destAddresses.clear();
     destModuleId.clear();
@@ -114,7 +116,11 @@ L3Address AddressModule::choseNewAddress(int &index)
         index = 0;
     }
     else {
-        int k = getEnvir()->getRNG(0)->intRand((long)destAddresses.size());
+        int k = -1;
+        if (destAddrRNG != -1)
+            k = owner->getRNG(destAddrRNG)->intRand((long)destAddresses.size());
+        else
+            k = owner->getRNG(0)->intRand((long)destAddresses.size());
         choseAddr = destAddresses[k];
         index = k;
     }
@@ -136,7 +142,6 @@ void AddressModule::receiveSignal(cComponent *src, simsignal_t id, cObject *obj,
     if (obj == this)
         return;
     // rebuild address destination table
-    cSimpleModule * owner = check_and_cast<cSimpleModule*> (getOwner());
     std::string aux = owner->par("destAddresses").stdstringValue();
     cStringTokenizer tokenizer(aux.c_str());
     const char *token;
@@ -175,7 +180,6 @@ void AddressModule::receiveSignal(cComponent *src, simsignal_t id, cObject *obj,
 
 void AddressModule::rebuildAddressList()
 {
-    cSimpleModule * owner = check_and_cast<cSimpleModule*> (getOwner());
     L3Address myAddr;
     L3AddressResolver().tryResolve(owner->getParentModule()->getFullPath().c_str(), myAddr);
     if (myAddr == myAddress)

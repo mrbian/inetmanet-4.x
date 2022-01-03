@@ -46,9 +46,11 @@ UdpBasicBurstNotification::~UdpBasicBurstNotification()
 
 void UdpBasicBurstNotification::processStart()
 {
-    socket.setOutputGate(gate("socketOut"));
-    socket.bind(localPort);
-    socket.setCallback(this);
+    if (!hasPar("registerInInit") || (hasPar("registerInInit") && !par("registerInInit").boolValue())) {
+        socket.setOutputGate(gate("socketOut"));
+        socket.setCallback(this);
+        socket.bind(localPort);
+    }
 
     const char *destAddrs = par("destAddresses");
     cStringTokenizer tokenizer(destAddrs);
@@ -92,6 +94,7 @@ void UdpBasicBurstNotification::processStart()
     addressModule = new AddressModule();
     //addressModule->initModule(par("chooseNewIfDeleted").boolValue());
     addressModule->initModule(true);
+    addressModule->setDestAddrRNG(destAddrRNG);
 
     nextSleep = simTime();
     nextBurst = simTime();
@@ -132,61 +135,6 @@ L3Address UdpBasicBurstNotification::chooseDestAddr()
             return addressModule->choseNewAddress();
         return L3Address();
     }
-}
-
-
-void UdpBasicBurstNotification::generateBurst()
-{
-    simtime_t now = simTime();
-
-    if (nextPkt < now)
-        nextPkt = now;
-
-    double sendInterval = sendIntervalPar->doubleValue();
-    if (sendInterval <= 0.0)
-        throw cRuntimeError(this, "The sendInterval parameter must be bigger than 0");
-    nextPkt += sendInterval;
-
-    if (activeBurst && nextBurst <= now) // new burst
-    {
-        double burstDuration = burstDurationPar->doubleValue();
-        if (burstDuration < 0.0)
-            throw cRuntimeError(this, "The burstDuration parameter mustn't be smaller than 0");
-        double sleepDuration = sleepDurationPar->doubleValue();
-
-        if (burstDuration == 0.0)
-            activeBurst = false;
-        else {
-            if (sleepDuration < 0.0)
-                throw cRuntimeError(this, "The sleepDuration parameter mustn't be smaller than 0");
-            nextSleep = now + burstDuration;
-            nextBurst = nextSleep + sleepDuration;
-        }
-
-        if (chooseDestAddrMode == PER_BURST)
-            destAddr = chooseDestAddr();
-    }
-
-    if (chooseDestAddrMode == PER_SEND)
-        destAddr = chooseDestAddr();
-
-    if (!destAddr.isUnspecified()) {
-
-        Packet *payload = createPacket();
-        payload->setTimestamp();
-        emit(packetSentSignal, payload);
-        numSent++;
-    }
-    // Next timer
-    if (activeBurst && nextPkt >= nextSleep)
-        nextPkt = nextBurst;
-
-    if (stopTime >= SIMTIME_ZERO && nextPkt >= stopTime) {
-        timerNext->setKind(STOP);
-        nextPkt = stopTime;
-    }
-
-    scheduleAt(nextPkt, timerNext);
 }
 
 void UdpBasicBurstNotification::receiveSignal(cComponent *source, simsignal_t signalID, intval_t l, cObject *details)

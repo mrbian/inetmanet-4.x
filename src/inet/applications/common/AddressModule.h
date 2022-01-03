@@ -33,6 +33,8 @@ class AddressModule : public cNoncopyableOwnedObject,cListener
         bool emitSignal;
         std::vector<L3Address> destAddresses;
         std::vector<int> destModuleId;
+        int destAddrRNG = -1;
+        cSimpleModule *owner = nullptr;
 
         L3Address chosedAddresses;
         int index;
@@ -41,6 +43,8 @@ class AddressModule : public cNoncopyableOwnedObject,cListener
         L3Address myAddress;
         virtual void receiveSignal(cComponent *src, simsignal_t id, cObject *obj, cObject *details);
     public:
+        virtual void setDestAddrRNG(const int &v) {destAddrRNG = v;}
+        virtual int getDestAddrRNG() {return destAddrRNG;}
         virtual void initModule(bool mode); // mode = true, use signals, useIpV6 = true use Ipv6 address
         virtual L3Address getAddress(int val = -1);
         bool isEmpty() {return destAddresses.empty();}

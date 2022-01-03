@@ -119,11 +119,15 @@ simple UdpBasicBurstNotification like IApp
         volatile double sleepDuration @unit(s); // time between bursts (zero allowed)
         volatile double sendInterval @unit(s); // time between messages during bursts; usually a random value, e.g. 0.1s+uniform(-0.001s,0.001s); zero not allowed
         double delayLimit @unit(s) = default(0s); // maximum accepted delay for a packet; packets with a bigger delay are discarded (dropped), zero value means no limit
+        bool dontFragment = default(false); // if true, asks IP to not fragment the message during routing
+        int dscp = default(-1); // if not -1, set the DSCP field (on IPv4/IPv6) of sent packets to this value
+        int tos = default(-1); // if not -1, set the Type Of Service (IPv4) / Traffic Class (IPv6) field of sent packets to this value        
         string outputInterface = default(""); // select the interface in which the packets will be sent
         string outputInterfaceMulticastBroadcast = default(""); // select the interface in which the broadcast packets will be sent
         bool setBroadcast = default(false); // Configure the socket for receive broadcast packets
         bool chooseNewIfDeleted = default(false); //receive if a node has been deleted and rebuilt destiation table      
         bool configureInInit = default(true);
+        double excessiveDelay @unit(s) = default(0s); // it is a delay limit to consider excesive delay, but the packet is not discarded.
         @signal[changeAddressSignalInit](type=AddressModule);
         @signal[changeAddressSignalDelete](type=AddressModule);      
         @signal[packetSent](type=inet::Packet);
