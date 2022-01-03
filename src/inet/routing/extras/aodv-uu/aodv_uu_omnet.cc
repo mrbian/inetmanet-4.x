@@ -83,6 +83,13 @@ int AODVUU::totalLocalRep =0;
 #endif
 std::map<L3Address,u_int32_t *> AODVUU::mapSeqNum;
 
+static std::ostream& operator<<(std::ostream& out, const q_pkt& e)
+{
+    out << "Dest :" << e.dest_addr.S_addr.str() << " -- Pkt: " << e.p->str();
+    return out;
+}
+
+
 void NS_CLASS initialize(int stage)
 {
      /*
@@ -296,6 +303,7 @@ void NS_CLASS initialize(int stage)
         rt_table_init();
         packet_queue_init();
         startAODVUUAgent();
+        WATCH_PTRVECTOR(PQ.pkQueue);
 
         is_init=true;
         // Initialize the timer
@@ -1161,6 +1169,7 @@ INetfilter::IHook::Result  NS_CLASS processPacket(Packet * p, unsigned int ifind
                     rreq_flags |= RREQ_DEST_ONLY;
                 rreq_route_discovery(dest_addr, rreq_flags, ipd);
             }
+            packet_queue_add(p, dest_addr);
             return INetfilter::IHook::QUEUE;
         }
 

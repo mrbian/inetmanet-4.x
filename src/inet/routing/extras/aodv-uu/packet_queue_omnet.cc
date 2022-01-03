@@ -56,7 +56,7 @@ void NS_CLASS packet_queue_destroy(void)
             delete qp->p;
         PQ.pkQueue.pop_back();
         // TODO: Discard
-        free(qp);
+        delete qp;
         count++;
     }
     DEBUG(LOG_INFO, 0, "Destroyed %d buffered packets!", count);
@@ -72,13 +72,13 @@ int NS_CLASS packet_queue_garbage_collect(void)
 
     for (unsigned int i=0; i < PQ.pkQueue.size();)
     {
-        struct q_pkt *qp = PQ.pkQueue[i];
+        auto qp = PQ.pkQueue[i];
         if (timeval_diff(&now, &qp->q_time) > MAX_QUEUE_TIME)
         {
             PQ.pkQueue.erase(PQ.pkQueue.begin()+i);
             sendICMP(qp->p);
             getNetworkProtocol()->dropQueuedDatagram(qp->p);
-            free(qp);
+            delete qp;
             count++;
         }
         else
@@ -97,12 +97,13 @@ int NS_CLASS packet_queue_garbage_collect(void)
 
 void NS_CLASS packet_queue_add(Packet * p, struct in_addr dest_addr)
 {
-    struct q_pkt *qp;
+    q_pkt *qp;
 
     if (PQ.pkQueue.size() >= MAX_QUEUE_LENGTH)
     {
         DEBUG(LOG_DEBUG, 0, "MAX Queue length! Removing first packet.");
         qp = PQ.pkQueue.front();
+        //PQ.pkQueue.pop_front();
         PQ.pkQueue.erase(PQ.pkQueue.begin());
         auto dgram = qp->p;
         sendICMP(dgram);
@@ -110,7 +111,7 @@ void NS_CLASS packet_queue_add(Packet * p, struct in_addr dest_addr)
         free(qp);
     }
 
-    qp = (struct q_pkt *) malloc(sizeof(struct q_pkt));
+    qp = new q_pkt;
 
     if (qp == nullptr)
     {
@@ -136,14 +137,15 @@ void NS_CLASS packet_queue_add_inject(Packet * p, struct in_addr dest_addr)
     {
         DEBUG(LOG_DEBUG, 0, "MAX Queue length! Removing first packet.");
         qp = PQ.pkQueue.front();
+        //PQ.pkQueue.pop_front();
         PQ.pkQueue.erase(PQ.pkQueue.begin());
         auto dgram = qp->p;
         sendICMP(dgram);
         getNetworkProtocol()->dropQueuedDatagram(dgram);
-        free(qp);
+        delete qp;
     }
 
-    qp = (struct q_pkt *) malloc(sizeof(struct q_pkt));
+    qp = new q_pkt;
 
     if (qp == nullptr)
     {
@@ -211,7 +213,7 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
         list.pop_back();
         for (unsigned int i=0; i < PQ.pkQueue.size();)
         {
-            struct q_pkt *qp = PQ.pkQueue[i];
+            auto qp = PQ.pkQueue[i];
             if (qp->dest_addr.s_addr == dest_addr.s_addr)
             {
                 PQ.pkQueue.erase(PQ.pkQueue.begin()+i);
@@ -272,7 +274,7 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                         getNetworkProtocol()->dropQueuedDatagram(qp->p);
                     break;
                 }
-                free(qp);
+                delete qp;
                 count++;
             }
             else

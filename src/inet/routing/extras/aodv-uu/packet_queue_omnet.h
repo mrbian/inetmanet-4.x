@@ -59,7 +59,8 @@ struct packet_queue
     unsigned int length() { return len; }
 };
 #else
-struct q_pkt
+
+struct q_pkt : public omnetpp::cObject
 {
     struct in_addr  dest_addr;
     struct timeval q_time;
