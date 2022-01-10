@@ -9,6 +9,9 @@
 #include "inet/common/FSMA.h"
 #include "inet/queueing/contract/IPacketQueue.h"
 #include "inet/common/Protocol.h"
+#include "inet/queueing/contract/IActivePacketSink.h"
+#include "inet/queueing/contract/IPacketQueue.h"
+#include "inet/linklayer/contract/IMacProtocol.h"
 
 namespace inet {
 namespace flora {
@@ -20,7 +23,7 @@ using namespace physicallayer;
  * Based on CSMA class
  */
 
-class LoRaMac : public MacProtocolBase
+class LoRaMac : public MacProtocolBase, public IMacProtocol, public queueing::IActivePacketSink
 {
   protected:
     /**
@@ -142,6 +145,9 @@ class LoRaMac : public MacProtocolBase
     virtual ~LoRaMac();
     //@}
     virtual MacAddress getAddress();
+    virtual queueing::IPassivePacketSource *getProvider(cGate *gate) override;
+    virtual void handleCanPullPacketChanged(cGate *gate) override;
+    virtual void handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful) override;
 
   protected:
     /**
@@ -160,8 +166,8 @@ class LoRaMac : public MacProtocolBase
      */
     //@{
     virtual void handleSelfMessage(cMessage *msg) override;
-    virtual void handleUpperMessage(cMessage *msg) override;
-    virtual void handleLowerMessage(cMessage *msg) override;
+    virtual void handleUpperPacket(Packet *packet) override;
+    virtual void handleLowerPacket(Packet *packet) override;
     virtual void handleWithFsm(cMessage *msg);
 
     virtual void receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details) override;
@@ -198,6 +204,7 @@ class LoRaMac : public MacProtocolBase
 
     void turnOnReceiver(void);
     void turnOffReceiver(void);
+    virtual void processUpperPacket();
     //@}
 };
 

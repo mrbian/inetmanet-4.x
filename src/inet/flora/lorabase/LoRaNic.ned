@@ -27,4 +27,6 @@ module LoRaNic extends WirelessInterface
         radio.transmitter.headerLength = 0B;
         radio.receiver.typename = "LoRaReceiver";
         mac.typename = "LoRaMac";
+        queue.typename = default("DropTailQueue");
+        queue.packetCapacity = default(-1);
 }
