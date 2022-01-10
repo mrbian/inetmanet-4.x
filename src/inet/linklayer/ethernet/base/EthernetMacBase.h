@@ -28,6 +28,7 @@
 #include "inet/linklayer/ethernet/common/EthernetMacHeader_m.h"
 #include "inet/networklayer/common/NetworkInterface.h"
 #include "inet/physicallayer/wired/ethernet/EthernetSignal_m.h"
+#include "inet/queueing/contract/IActivePacketSink.h"
 #include "inet/queueing/contract/IPacketQueue.h"
 
 namespace inet {
@@ -37,7 +38,7 @@ using namespace inet::physicallayer;
 /**
  * Base class for Ethernet MAC implementations.
  */
-class INET_API EthernetMacBase : public MacProtocolBase
+class INET_API EthernetMacBase : public MacProtocolBase, public queueing::IActivePacketSink
 {
   public:
     enum MacTransmitState {
@@ -165,6 +166,10 @@ class INET_API EthernetMacBase : public MacProtocolBase
      * Inserts padding in front of FCS and calculate FCS
      */
     void addPaddingAndSetFcs(Packet *packet, B requiredMinByteLength = MIN_ETHERNET_FRAME_BYTES) const;
+
+    // IActivePacketSink:
+    virtual queueing::IPassivePacketSource *getProvider(cGate *gate) override;
+    virtual void handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful) override;
 
   protected:
     // initialization

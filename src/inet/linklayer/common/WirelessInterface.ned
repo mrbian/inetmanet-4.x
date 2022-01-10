@@ -21,6 +21,8 @@ import inet.linklayer.contract.IMacProtocol;
 import inet.linklayer.contract.IWirelessInterface;
 import inet.networklayer.common.NetworkInterface;
 import inet.physicallayer.wireless.common.contract.packetlevel.IRadio;
+import inet.queueing.contract.IPacketQueue;
+
 
 //
 // This module implements a generic wireless network interface.
@@ -40,7 +42,11 @@ module WirelessInterface extends NetworkInterface like IWirelessInterface
     submodules:
         classifier: <default("OmittedIeee8021dQosClassifier")> like IIeee8021dQosClassifier {
             parameters:
-                @display("p=500,100");
+                @display("p=200,100");
+        }
+        queue: <default("OmittedPacketQueue")> like IPacketQueue {
+            parameters:
+                @display("p=200,200;q=l2queue");
         }
         mac: <> like IMacProtocol {
             parameters:
@@ -52,7 +58,8 @@ module WirelessInterface extends NetworkInterface like IWirelessInterface
         }
     connections allowunconnected:
         upperLayerIn --> { @display("m=n"); } --> classifier.in;
-        classifier.out --> mac.upperLayerIn;
+        classifier.out --> queue.in;
+        queue.out --> mac.upperLayerIn;
         mac.lowerLayerOut --> radio.upperLayerIn if exists(radio);
 
         radioIn --> { @display("m=s"); } --> radio.radioIn if exists(radio);

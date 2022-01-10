@@ -185,7 +185,7 @@ void EthernetMacBase::initialize(int stage)
         lowerLayerInGateId = physInGate->getId();
         lowerLayerOutGateId = physOutGate->getId();
         transmissionChannel = nullptr;
-        txQueue = check_and_cast<queueing::IPacketQueue *>(getSubmodule("queue"));
+        txQueue = getQueue(gate(upperLayerInGateId));
 
         initializeFlags();
 
@@ -352,7 +352,7 @@ void EthernetMacBase::processConnectDisconnect()
 
         // Clear queue
         while (!txQueue->isEmpty()) {
-            Packet *msg = txQueue->dequeuePacket();
+            Packet *msg = dequeuePacket();
             EV_DETAIL << "Interface is not connected, dropping packet " << msg << endl;
             numDroppedPkFromHLIfaceDown++;
             PacketDropDetails details;
@@ -714,6 +714,16 @@ void EthernetMacBase::txFinished()
     curTxSignal = nullptr;
 }
 
+queueing::IPassivePacketSource *EthernetMacBase::getProvider(cGate *gate)
+{
+    return (gate->getId() == upperLayerInGateId) ? txQueue.get() : nullptr;
+}
+
+void EthernetMacBase::handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful)
+{
+    Enter_Method("handlePullPacketProcessed");
+    throw cRuntimeError("Not supported callback");
+}
 
 } // namespace inet
 

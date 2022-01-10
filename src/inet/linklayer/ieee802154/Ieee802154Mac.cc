@@ -112,8 +112,9 @@ void Ieee802154Mac::initialize(int stage)
         rxAckTimer = new cMessage("timer-rxAck");
         macState = IDLE_1;
         txAttempts = 0;
-        txQueue = check_and_cast<queueing::IPacketQueue *>(getSubmodule("queue"));
+        txQueue = getQueue(gate(upperLayerInGateId));
         radio.reference(this, "radioModule", true);
+        WATCH(macState);
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
         cModule *radioModule = check_and_cast<cModule *>(radio.get());
@@ -183,12 +184,10 @@ void Ieee802154Mac::configureNetworkInterface()
 }
 
 /**
- * Encapsulates the message to be transmitted and pass it on
- * to the FSM main method for further processing.
+ * Encapsulates the message.
  */
-void Ieee802154Mac::handleUpperPacket(Packet *packet)
+void Ieee802154Mac::encapsulate(Packet *packet)
 {
-//    MacPkt*macPkt = encapsMsg(msg);
     auto macPkt = makeShared<Ieee802154MacHeader>();
     assert(headerLength % 8 == 0);
     macPkt->setChunkLength(b(headerLength));
@@ -213,19 +212,24 @@ void Ieee802154Mac::handleUpperPacket(Packet *packet)
         }
     }
 
-//    RadioAccNoise3PhyControlInfo *pco = new RadioAccNoise3PhyControlInfo(bitrate);
-//    macPkt->setControlInfo(pco);
     packet->insertAtFront(macPkt);
     packet->getTagForUpdate<PacketProtocolTag>()->setProtocol(&Protocol::ieee802154);
     EV_DETAIL << "pkt encapsulated, length: " << macPkt->getChunkLength() << "\n";
-    executeMac(EV_SEND_REQUEST, packet);
+}
+
+/**
+ * Encapsulates the message to be transmitted and pass it on
+ * to the FSM main method for further processing.
+ */
+void Ieee802154Mac::handleUpperPacket(Packet *packet)
+{
+    throw cRuntimeError("not supported");
 }
 
 void Ieee802154Mac::updateStatusIdle(t_mac_event event, cMessage *msg)
 {
     switch (event) {
         case EV_SEND_REQUEST:
-            txQueue->enqueuePacket(static_cast<Packet *>(msg));
             if (!txQueue->isEmpty()) {
                 EV_DETAIL << "(1) FSM State IDLE_1, EV_SEND_REQUEST and [TxBuff avail]: startTimerBackOff -> BACKOFF." << endl;
                 updateMacState(BACKOFF_2);
@@ -355,8 +359,10 @@ void Ieee802154Mac::updateStatusCCA(t_mac_event event, cMessage *msg)
                 EV_DETAIL << "(3) FSM State CCA_3, EV_TIMER_CCA, [Channel Idle]: -> TRANSMITFRAME_4." << endl;
                 updateMacState(TRANSMITFRAME_4);
                 radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
-                if (currentTxFrame == nullptr)
-                    popTxQueue();
+                if (currentTxFrame == nullptr) {
+                    currentTxFrame = dequeuePacket();
+                    encapsulate(currentTxFrame);
+                }
                 Packet *mac = currentTxFrame->dup();
                 attachSignal(mac, simTime() + aTurnaroundTime);
 //                sendDown(msg);
@@ -606,7 +612,6 @@ void Ieee802154Mac::updateStatusTransmitAck(t_mac_event event, cMessage *msg)
 void Ieee802154Mac::updateStatusNotIdle(cMessage *msg)
 {
     EV_DETAIL << "(20) FSM State NOT IDLE, EV_SEND_REQUEST. Is a TxBuffer available ?" << endl;
-    txQueue->enqueuePacket(static_cast<Packet *>(msg));
 }
 
 /**
@@ -1001,6 +1006,24 @@ void Ieee802154Mac::refreshDisplay() const
             break;
     }
     getDisplayString().setTagArg("t", 0, os.str().c_str());
+}
+
+queueing::IPassivePacketSource *Ieee802154Mac::getProvider(cGate *gate)
+{
+    return (gate->getId() == upperLayerInGateId) ? txQueue.get() : nullptr;
+}
+
+void Ieee802154Mac::handleCanPullPacketChanged(cGate *gate)
+{
+    Enter_Method("handleCanPullPacketChanged");
+    if (gate->getId() == upperLayerInGateId)
+        executeMac(EV_SEND_REQUEST, nullptr);
+}
+
+void Ieee802154Mac::handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful)
+{
+    Enter_Method("handlePullPacketProcessed");
+    throw cRuntimeError("Not supported callback");
 }
 
 } // namespace inet

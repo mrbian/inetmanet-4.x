@@ -61,16 +61,18 @@ void AckingMac::initialize(int stage)
         radio = check_and_cast<IRadio *>(radioModule);
         transmissionState = IRadio::TRANSMISSION_STATE_UNDEFINED;
 
-        txQueue = check_and_cast<queueing::IPacketQueue *>(getSubmodule("queue"));
+        txQueue = getQueue(gate(upperLayerInGateId));
     }
     else if (stage == INITSTAGE_LINK_LAYER) {
         radio->setRadioMode(fullDuplex ? IRadio::RADIO_MODE_TRANSCEIVER : IRadio::RADIO_MODE_RECEIVER);
+        transmissionState = radio->getTransmissionState();
         if (useAck)
             ackTimeoutMsg = new cMessage("link-break");
-        if (!txQueue->isEmpty()) {
-            popTxQueue();
-            startTransmitting();
-        }
+        if (currentTxFrame == nullptr    // not an active transmission
+                && transmissionState != IRadio::TRANSMISSION_STATE_TRANSMITTING
+                && canDequeuePacket()
+                )
+            processUpperPacket();
     }
 }
 
@@ -102,12 +104,12 @@ void AckingMac::receiveSignal(cComponent *source, simsignal_t signalID, intval_t
         IRadio::TransmissionState newRadioTransmissionState = static_cast<IRadio::TransmissionState>(value);
         if (transmissionState == IRadio::TRANSMISSION_STATE_TRANSMITTING && newRadioTransmissionState == IRadio::TRANSMISSION_STATE_IDLE) {
             radio->setRadioMode(fullDuplex ? IRadio::RADIO_MODE_TRANSCEIVER : IRadio::RADIO_MODE_RECEIVER);
-            if (!currentTxFrame && !txQueue->isEmpty()) {
-                popTxQueue();
-                startTransmitting();
-            }
+            transmissionState = newRadioTransmissionState;
+            if (currentTxFrame == nullptr && canDequeuePacket())
+                processUpperPacket();
         }
-        transmissionState = newRadioTransmissionState;
+        else
+            transmissionState = newRadioTransmissionState;
     }
 }
 
@@ -134,13 +136,10 @@ void AckingMac::startTransmitting()
 void AckingMac::handleUpperPacket(Packet *packet)
 {
     EV << "Received " << packet << " for transmission\n";
-    txQueue->enqueuePacket(packet);
-    if (currentTxFrame || radio->getTransmissionState() == IRadio::TRANSMISSION_STATE_TRANSMITTING)
-        EV << "Delaying transmission\n";
-    else if (!txQueue->isEmpty()) {
-        popTxQueue();
-        startTransmitting();
-    }
+    if (currentTxFrame != nullptr || radio->getTransmissionState() == IRadio::TRANSMISSION_STATE_TRANSMITTING)
+        throw cRuntimeError("AckingMac already in transmit state when packet arrived from upper layer");
+    currentTxFrame = packet;
+    startTransmitting();
 }
 
 void AckingMac::handleLowerPacket(Packet *packet)
@@ -193,10 +192,8 @@ void AckingMac::handleSelfMessage(cMessage *message)
         PacketDropDetails details;
         details.setReason(OTHER_PACKET_DROP);
         dropCurrentTxFrame(details);
-        if (!txQueue->isEmpty()) {
-            popTxQueue();
-            startTransmitting();
-        }
+        if (transmissionState != IRadio::TRANSMISSION_STATE_TRANSMITTING && canDequeuePacket())
+            processUpperPacket();
     }
     else {
         MacProtocolBase::handleSelfMessage(message);
@@ -214,10 +211,8 @@ void AckingMac::acked(Packet *frame)
     EV_DEBUG << "AckingMac::acked(" << frame->getFullName() << ") is accepted\n";
     cancelEvent(ackTimeoutMsg);
     deleteCurrentTxFrame();
-    if (!txQueue->isEmpty()) {
-        popTxQueue();
-        startTransmitting();
-    }
+    if (transmissionState != IRadio::TRANSMISSION_STATE_TRANSMITTING && canDequeuePacket())
+        processUpperPacket();
 }
 
 void AckingMac::encapsulate(Packet *packet)
@@ -277,6 +272,33 @@ void AckingMac::decapsulate(Packet *packet)
     auto payloadProtocol = ProtocolGroup::ethertype.getProtocol(macHeader->getNetworkProtocol());
     packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(payloadProtocol);
     packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(payloadProtocol);
+}
+
+queueing::IPassivePacketSource *AckingMac::getProvider(cGate *gate)
+{
+    return (gate->getId() == upperLayerInGateId) ? txQueue.get() : nullptr;
+}
+
+void AckingMac::handleCanPullPacketChanged(cGate *gate)
+{
+    Enter_Method("handleCanPullPacketChanged");
+    if (currentTxFrame == nullptr    // not an active transmission
+            && transmissionState != IRadio::TRANSMISSION_STATE_TRANSMITTING
+            && canDequeuePacket()
+            )
+        processUpperPacket();
+}
+
+void AckingMac::handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful)
+{
+    Enter_Method("handlePullPacketProcessed");
+    throw cRuntimeError("Not supported callback");
+}
+
+void AckingMac::processUpperPacket()
+{
+    auto packet = dequeuePacket();
+    handleUpperPacket(packet);
 }
 
 } // namespace inet

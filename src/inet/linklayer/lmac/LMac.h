@@ -17,6 +17,7 @@
 #include "inet/linklayer/contract/IMacProtocol.h"
 #include "inet/linklayer/lmac/LMacHeader_m.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadio.h"
+#include "inet/queueing/contract/IActivePacketSink.h"
 #include "inet/queueing/contract/IPacketQueue.h"
 
 namespace inet {
@@ -59,7 +60,7 @@ namespace inet {
  *
  * @ingroup macLayer
  **/
-class INET_API LMac : public MacProtocolBase, public IMacProtocol
+class INET_API LMac : public MacProtocolBase, public IMacProtocol, public queueing::IActivePacketSink
 {
   private:
     /** @brief Copy constructor is not allowed.
@@ -115,6 +116,11 @@ class INET_API LMac : public MacProtocolBase, public IMacProtocol
     /** @brief Encapsulate the NetwPkt into an MacPkt */
     virtual void encapsulate(Packet *);
     virtual void decapsulate(Packet *);
+
+    // IActivePacketSink:
+    virtual queueing::IPassivePacketSource *getProvider(cGate *gate) override;
+    virtual void handleCanPullPacketChanged(cGate *gate) override;
+    virtual void handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful) override;
 
   protected:
     /** @brief Generate new interface address*/
