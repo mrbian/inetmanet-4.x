@@ -155,8 +155,10 @@ void NS_CLASS packet_queue_add_inject(Packet * p, struct in_addr dest_addr)
     qp->p = p;
     qp->dest_addr = dest_addr;
 
-    if (getNetworkProtocol())
+    if (getNetworkProtocol()) {
+        drop((cOwnedObject *)p);
         getNetworkProtocol()->enqueueRoutingHook(p, IHook::Type::PREROUTING);
+    }
 
     gettimeofday(&qp->q_time, nullptr);
     PQ.pkQueue.push_back(qp);

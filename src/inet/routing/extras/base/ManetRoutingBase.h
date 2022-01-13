@@ -403,7 +403,7 @@ class INET_API ManetRoutingBase : public ApplicationBase, public UdpSocket::ICal
     /// Return true if the routing protocols is execute in the mac layer
     virtual bool isInMacLayer() const {return mac_layer_;}
 
-    virtual INetfilter * getNetworkProtocol() const {return networkProtocol;}
+    virtual INetfilter * getNetworkProtocol() {return networkProtocol.get();}
 
     std::string convertAddressToString(const L3Address&);
     virtual void setCollaborativeProtocol(cObject *p) {collaborativeProtocol = dynamic_cast<ManetRoutingBase*>(p);}
@@ -536,6 +536,8 @@ class INET_API ManetRoutingBase : public ApplicationBase, public UdpSocket::ICal
 
     //virtual bool handleOperationStage(LifecycleOperation *operation, int stage, IDoneCallback *doneCallback) override;
 };
+
+
 
 #define interface80211ptr getInterfaceWlanByAddress()
 

@@ -1,6 +1,8 @@
 /***************************************************************************
  *   Copyright (C) 2008 by Alfonso Ariza                                   *
  *   Copyright (C) 2012 by Alfonso Ariza                                   *
+ *   Copyright (C) 2016 by Alfonso Ariza                                   *
+ *   Copyright (C) 2022 by Alfonso Ariza                                   *
  *   aarizaq@uma.es                                                        *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -33,6 +35,7 @@
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/networklayer/ipv4/Ipv4InterfaceData.h"
 #include "inet/common/ProtocolTag_m.h"
+#include "inet/common/packet/dissector/PacketDissector.h"
 
 namespace inet {
 
@@ -261,6 +264,9 @@ void ManetRoutingBase::registerRoutingModule()
     cStringTokenizer tokenizerInterfaces(interfaces);
     const char *token;
     const char * prefixName;
+
+    if (!mac_layer_ && getNetworkProtocol() == nullptr)
+        throw cRuntimeError("networkProtocolModule %s not found", par("networkProtocolModule").stringValue());
 
     if (!mac_layer_)
          setStaticNode(par("isStaticNode").boolValue());
@@ -1654,6 +1660,7 @@ std::string ManetRoutingBase::convertAddressToString(const L3Address& add)
 {
     return add.str();
 }
+
 
 
 } // namespace inetmanet

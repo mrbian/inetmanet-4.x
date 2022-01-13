@@ -259,7 +259,7 @@ class AODVUU : public ManetRoutingBase
 
 
     bool is_init;
-    void drop (Packet *p,int cause = 0)
+    void dropPacket (Packet *p,int cause = 0)
     {
         delete p;
         // icmpAccess.get()->sendErrorMessage(p, ICMP_DESTINATION_UNREACHABLE, cause);

@@ -375,11 +375,83 @@ NS_CLASS ~AODVUU()
     }
 #endif
     packet_queue_destroy();
+
     cancelAndDelete(sendMessageEvent);
     log_cleanup();
     if (gateWayAddress)
         delete gateWayAddress;
 }
+
+
+template<class T>
+static bool iteratePacketDissector(const Ptr<const PacketDissector::ProtocolDataUnit> &unit) {
+    for (const auto& chunkAux : unit->getChunks()) {
+        const auto c = dynamicPtrCast<const PacketDissector::ProtocolDataUnit>(chunkAux);
+        if (c != nullptr) {
+            if(iteratePacketDissector<T>(c))
+                return true;
+        }
+        else if (chunkAux->getChunkType() == Chunk::CT_SEQUENCE) {
+            for (const auto& elementChunk : staticPtrCast<const SequenceChunk>(chunkAux)->getChunks()) {
+                if (dynamic_cast<T>(elementChunk.get())) {
+                    return true;
+                }
+            }
+        }
+        else if (chunkAux->getChunkType() == Chunk::CT_FIELDS) {
+            if (dynamic_cast<T>(chunkAux.get())) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+template<class T>
+static bool checkHeaderType(const Packet *pkt) {
+    PacketDissector::PduTreeBuilder pduTreeBuilder;
+    auto packetProtocolTag = pkt->findTag<PacketProtocolTag>();
+    auto protocol = packetProtocolTag != nullptr ? packetProtocolTag->getProtocol() : nullptr;
+    PacketDissector packetDissector(ProtocolDissectorRegistry::globalRegistry, pduTreeBuilder);
+    packetDissector.dissectPacket(const_cast<Packet *>(pkt), protocol);
+
+    auto& protocolDataUnit = pduTreeBuilder.getTopLevelPdu();
+
+    for (const auto& chunk : protocolDataUnit->getChunks()) {
+        if (auto childLevel = dynamicPtrCast<const PacketDissector::ProtocolDataUnit>(chunk)) {
+            for (const auto& chunkAux : childLevel->getChunks()) {
+                const auto c = dynamicPtrCast<const PacketDissector::ProtocolDataUnit>(chunkAux);
+                if (c != nullptr) {
+                    if (iteratePacketDissector<T>(c))
+                        return true;
+                }
+                else if (chunkAux->getChunkType() == Chunk::CT_SEQUENCE) {
+                    auto seqCh =  dynamicPtrCast<const SequenceChunk>(chunkAux);
+                    for (const auto& elementChunk : seqCh->getChunks()) {
+                        if (dynamic_cast<T>(elementChunk.get()))
+                            return true;
+                    }
+                }
+                else if (chunkAux->getChunkType() == Chunk::CT_FIELDS) {
+                    if (dynamic_cast<T>(chunkAux.get()))
+                        return true;
+                }
+            }
+        }
+        else if (chunk->getChunkType() == Chunk::CT_SEQUENCE) {
+            for (const auto& elementChunk : staticPtrCast<const SequenceChunk>(chunk)->getChunks()) {
+                if (dynamic_cast<T>(elementChunk.get()))
+                    return true;
+            }
+        }
+        else if (chunk->getChunkType() == Chunk::CT_FIELDS) {
+            if (dynamic_cast<T>(chunk.get()))
+                return true;
+        }
+    }
+    return false;
+}
+
 
 /*
   Moves pending packets with a certain next hop from the interface
@@ -419,6 +491,9 @@ void NS_CLASS packetFailed(const Packet *dgram)
         return;
     }
 
+    bool isIpv4 = checkHeaderType<const Ipv4Header *>(dgram);
+    bool isAodv = checkHeaderType<const AODV_msg *>(dgram);
+    /*
     PacketDissector::PduTreeBuilder pduTreeBuilder;
     auto packetProtocolTag = dgram->findTag<PacketProtocolTag>();
     auto protocol = packetProtocolTag != nullptr ? packetProtocolTag->getProtocol() : nullptr;
@@ -452,7 +527,7 @@ void NS_CLASS packetFailed(const Packet *dgram)
             }
         }
     }
-
+*/
     if (!isIpv4)
         return; // nothing more to do
 
@@ -461,13 +536,20 @@ void NS_CLASS packetFailed(const Packet *dgram)
     // create a copy of this packet
     auto pkt = new Packet(dgram->getName());
     pkt->copyTags(*dgram);
+    PacketDissector::PduTreeBuilder pduTreeBuilder;
+    auto packetProtocolTag = dgram->findTag<PacketProtocolTag>();
+    auto protocol = packetProtocolTag != nullptr ? packetProtocolTag->getProtocol() : nullptr;
+    PacketDissector packetDissector(ProtocolDissectorRegistry::globalRegistry, pduTreeBuilder);
+    packetDissector.dissectPacket(const_cast<Packet *> (dgram), protocol);
 
+    auto& protocolDataUnit = pduTreeBuilder.getTopLevelPdu();
     for (const auto& chunk : protocolDataUnit->getChunks()) {
+        bool removed = false;
         if (auto childLevel = dynamicPtrCast<const PacketDissector::ProtocolDataUnit>(chunk)) {
             for (const auto& chunkAux : childLevel->getChunks()) {
                 if (chunkAux->getChunkType() == Chunk::CT_SEQUENCE) {
                     // remove previous headers to ipv4
-                    bool removed = false;
+
                     for (const auto& elementChunk : staticPtrCast<const SequenceChunk>(chunkAux)->getChunks()) {
                         if (elementChunk == networkHeader) {
                             removed = true;
@@ -477,6 +559,19 @@ void NS_CLASS packetFailed(const Packet *dgram)
                             pkt->insertAtBack(elementChunk->dupShared());
                     }
                 }
+                else if (chunk->getChunkType() == Chunk::CT_FIELDS) {
+                    if (chunk == networkHeader) {
+                        removed = true;
+                        insertNetworkProtocolHeader(pkt, Protocol::ipv4, dynamicPtrCast<NetworkHeaderBase> (networkHeader->dupShared()));
+                    }
+                    else if (removed)
+                        pkt->insertAtBack(chunk->dupShared());
+                }
+                else if (removed && (chunk->getChunkType() == Chunk::CT_BITCOUNT ||
+                        chunk->getChunkType() == Chunk::CT_BITS ||
+                        chunk->getChunkType() == Chunk::CT_BYTECOUNT ||
+                        chunk->getChunkType() == Chunk::CT_BYTES))
+                    pkt->insertAtBack(chunk->dupShared());
             }
         }
         else if (chunk->getChunkType() == Chunk::CT_SEQUENCE) {
@@ -492,6 +587,20 @@ void NS_CLASS packetFailed(const Packet *dgram)
                     pkt->insertAtBack(elementChunk->dupShared());
             }
         }
+        else if (chunk->getChunkType() == Chunk::CT_FIELDS) {
+            if (chunk == networkHeader) {
+                removed = true;
+                insertNetworkProtocolHeader(pkt, Protocol::ipv4, dynamicPtrCast<NetworkHeaderBase> (networkHeader->dupShared()));
+            }
+            else if (removed)
+                pkt->insertAtBack(chunk->dupShared());
+        }
+        else if (removed && (chunk->getChunkType() == Chunk::CT_BITCOUNT ||
+                chunk->getChunkType() == Chunk::CT_BITS ||
+                chunk->getChunkType() == Chunk::CT_BYTECOUNT ||
+                chunk->getChunkType() == Chunk::CT_BYTES))
+            pkt->insertAtBack(chunk->dupShared());
+
     }
     pkt->copyTags(*dgram);
     pkt->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::ipv4);
@@ -1033,7 +1142,7 @@ void NS_CLASS processMacPacket(Packet * p, const L3Address &dest, const L3Addres
                 DEBUG(LOG_DEBUG, 0, "Wait on reboot timer reset.");
                 timer_set_timeout(&worb_timer, DELETE_PERIOD);
             }
-            //drop (p);
+            //dropPacket (p);
             sendICMP(p);
             /* DEBUG(LOG_DEBUG, 0, "Dropping pkt uid=%d", ch->uid()); */
             //  icmpAccess.get()->sendErrorMessage(p, ICMP_DESTINATION_UNREACHABLE, 0);
@@ -1205,7 +1314,7 @@ INetfilter::IHook::Result  NS_CLASS processPacket(Packet * p, unsigned int ifind
             timer_set_timeout(&worb_timer, DELETE_PERIOD);
         }
 
-        //drop (p);
+        //dropPacket (p);
         sendICMP(p);
         /* DEBUG(LOG_DEBUG, 0, "Dropping pkt uid=%d", ch->uid()); */
         //  icmpAccess.get()->sendErrorMessage(p, ICMP_DESTINATION_UNREACHABLE, 0);
