@@ -15,11 +15,12 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
-#include "inet/linklayer/ethernet/common/MacAddressTable.h"
+#include "inet/linklayer/ethernet/common/MacForwardingTable.h"
 
 #include <map>
 
 #include "inet/common/ModuleAccess.h"
+#include "inet/common/stlutils.h"
 #include "inet/common/StringFormat.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 #include "inet/networklayer/contract/IInterfaceTable.h"
@@ -28,25 +29,36 @@ namespace inet {
 
 #define MAX_LINE    100
 
-Define_Module(MacAddressTable);
+Define_Module(MacForwardingTable);
 
-std::ostream& operator<<(std::ostream& os, const MacAddressTable::AddressEntry& entry)
+std::ostream& operator<<(std::ostream& os, const std::vector<int>& ids)
 {
-    os << "{VID=" << entry.vid << ", interfaceId=" << entry.interfaceId << ", insertionTime=" << entry.insertionTime << "}";
-    return os;
+    os << "[";
+    for (int i = 0; i < ids.size(); i++) {
+        auto id = ids[i];
+        if (i != 0)
+            os << ", ";
+        os << id;
+    }
+    return os << "]";
 }
 
-std::ostream& operator<<(std::ostream& os, const MacAddressTable::AddressTableKey& key)
+std::ostream& operator<<(std::ostream& os, const MacForwardingTable::AddressEntry& entry)
 {
-    os << "{VID=" << key.first << ", addr=" << key.second << "}";
-    return os;
+    return os << "{interfaceId=" << entry.interfaceId << ", insertionTime=" << entry.insertionTime << "}";
 }
 
-MacAddressTable::MacAddressTable()
+std::ostream& operator<<(std::ostream& os, const MacForwardingTable::AddressTableKey& key)
 {
+    return os << "{VID=" << key.first << ", addr=" << key.second << "}";
 }
 
-void MacAddressTable::initialize(int stage)
+std::ostream& operator<<(std::ostream& os, const MacForwardingTable::MulticastAddressEntry& entry)
+{
+    return os << "{interfaceIds=" << entry.interfaceIds << "}";
+}
+
+void MacForwardingTable::initialize(int stage)
 {
     OperationalBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
@@ -54,10 +66,11 @@ void MacAddressTable::initialize(int stage)
         lastPurge = SIMTIME_ZERO;
         ifTable.reference(this, "interfaceTableModule", true);
         WATCH_MAP(addressTable);
+        WATCH_MAP(multicastAddressTable);
     }
 }
 
-void MacAddressTable::handleParameterChange(const char *name)
+void MacForwardingTable::handleParameterChange(const char *name)
 {
     if (name != nullptr) {
         if (!strcmp(name, "addressTable")) {
@@ -92,22 +105,22 @@ static char *fgetline(FILE *fp)
     return line;
 }
 
-void MacAddressTable::handleMessage(cMessage *)
+void MacForwardingTable::handleMessage(cMessage *)
 {
     throw cRuntimeError("This module doesn't process messages");
 }
 
-void MacAddressTable::handleMessageWhenUp(cMessage *)
+void MacForwardingTable::handleMessageWhenUp(cMessage *)
 {
     throw cRuntimeError("This module doesn't process messages");
 }
 
-void MacAddressTable::refreshDisplay() const
+void MacForwardingTable::refreshDisplay() const
 {
     updateDisplayString();
 }
 
-void MacAddressTable::updateDisplayString() const
+void MacForwardingTable::updateDisplayString() const
 {
     if (getEnvir()->isGUI()) {
         auto text = StringFormat::formatString(par("displayStringTextFormat"), this);
@@ -115,7 +128,7 @@ void MacAddressTable::updateDisplayString() const
     }
 }
 
-const char *MacAddressTable::resolveDirective(char directive) const
+const char *MacForwardingTable::resolveDirective(char directive) const
 {
     static std::string result;
     switch (directive) {
@@ -130,71 +143,111 @@ const char *MacAddressTable::resolveDirective(char directive) const
     return result.c_str();
 }
 
-/*
- * getTableForVid
- * Returns a MAC Address Table for a specified VLAN ID
- * or nullptr pointer if it is not found
- */
-
-int MacAddressTable::getInterfaceIdForAddress(const MacAddress& address, unsigned int vid)
+int MacForwardingTable::getUnicastAddressForwardingInterface(const MacAddress& address, unsigned int vid) const
 {
-    Enter_Method("getInterfaceIdForAddress");
-
+    Enter_Method("getUnicastAddressForwardingInterface");
+    ASSERT(!address.isMulticast());
     AddressTableKey key(vid, address);
-    auto iter = addressTable.find(key);
-
-    if (iter == addressTable.end()) {
-        // not found
+    auto it = addressTable.find(key);
+    if (it == addressTable.end())
+        return -1;
+    else if (it->second.insertionTime <= simTime() - agingTime) {
+        EV_TRACE << "Ignoring aged entry: " << it->first << " --> " << it->second << "\n";
         return -1;
     }
-    if (iter->second.insertionTime + agingTime <= simTime()) {
-        // don't use (and throw out) aged entries
-        EV << "Ignoring and deleting aged entry: " << iter->first << " --> interfaceId " << iter->second.interfaceId << "\n";
-        addressTable.erase(iter);
-        return -1;
-    }
-    return iter->second.interfaceId;
+    else
+        return it->second.interfaceId;
 }
 
-/*
- * Register a new MAC address at addressTable.
- * True if refreshed. False if it is new.
- */
-
-bool MacAddressTable::updateTableWithAddress(int interfaceId, const MacAddress& address, unsigned int vid)
+void MacForwardingTable::setUnicastAddressForwardingInterface(int interfaceId, const MacAddress& address, unsigned int vid)
 {
-    Enter_Method("updateTableWithAddress");
-    if (address.isMulticast()) // broadcast or multicast
-        return false;
-
+    Enter_Method("setUnicastAddressForwardingInterface");
+    ASSERT(!address.isMulticast());
     AddressTableKey key(vid, address);
-    auto iter = addressTable.find(key);
+    auto it = addressTable.find(key);
+    if (it == addressTable.end())
+        addressTable[key] = AddressEntry(vid, interfaceId, -1);
+    else {
+        it->second.interfaceId = interfaceId;
+        it->second.insertionTime = SimTime::getMaxTime();
+    }
+}
 
-    if (iter == addressTable.end()) {
-        removeAgedEntriesIfNeeded();
+void MacForwardingTable::removeUnicastAddressForwardingInterface(int interfaceId, const MacAddress& address, unsigned int vid)
+{
+    Enter_Method("removeUnicastAddressForwardingInterface");
+    ASSERT(!address.isMulticast());
+    AddressTableKey key(vid, address);
+    auto it = addressTable.find(key);
+    if (it == addressTable.end())
+        throw cRuntimeError("Cannot find entry");
+    addressTable.erase(it);
+}
 
-        // Add entry to table
+void MacForwardingTable::learnUnicastAddressForwardingInterface(int interfaceId, const MacAddress& address, unsigned int vid)
+{
+    Enter_Method("learnUnicastAddressForwardingInterface");
+    ASSERT(!address.isMulticast());
+    removeAgedEntriesIfNeeded();
+    AddressTableKey key(vid, address);
+    auto it = addressTable.find(key);
+    if (it == addressTable.end()) {
         EV << "Adding entry" << EV_FIELD(address) << EV_FIELD(interfaceId) << EV_FIELD(vid) << EV_ENDL;
         addressTable[key] = AddressEntry(vid, interfaceId, simTime());
-        return false;
     }
-    else {
-        // Update existing entry
+    else if (it->second.insertionTime != SimTime::getMaxTime()) {
         EV << "Updating entry" << EV_FIELD(address) << EV_FIELD(interfaceId) << EV_FIELD(vid) << EV_ENDL;
-        AddressEntry& entry = iter->second;
-        entry.insertionTime = simTime();
+        AddressEntry& entry = it->second;
         entry.interfaceId = interfaceId;
+        entry.insertionTime = simTime();
     }
-    return true;
+    else
+        EV << "Ignoring manually configured entry" << EV_FIELD(address) << EV_FIELD(interfaceId) << EV_FIELD(vid) << EV_ENDL;
 }
 
-/*
- * Clears interfaceId MAC cache.
- */
-
-void MacAddressTable::flush(int interfaceId)
+std::vector<int> MacForwardingTable::getMulticastAddressForwardingInterfaces(const MacAddress& address, unsigned int vid) const
 {
-    Enter_Method("flush");
+    Enter_Method("getMulticastAddressForwardingInterfaces");
+    ASSERT(address.isMulticast());
+    AddressTableKey key(vid, address);
+    auto it = multicastAddressTable.find(key);
+    if (it == multicastAddressTable.end())
+        return std::vector<int>();
+    else
+        return it->second.interfaceIds;
+}
+
+void MacForwardingTable::addMulticastAddressForwardingInterface(int interfaceId, const MacAddress& address, unsigned int vid)
+{
+    Enter_Method("addMulticastAddressForwardingInterface");
+    ASSERT(address.isMulticast());
+    AddressTableKey key(vid, address);
+    auto it = multicastAddressTable.find(key);
+    if (it == multicastAddressTable.end())
+        multicastAddressTable[key] = MulticastAddressEntry(vid, {interfaceId});
+    else {
+        if (contains(it->second.interfaceIds, interfaceId))
+            throw cRuntimeError("Already contains interface");
+        it->second.interfaceIds.push_back(interfaceId);
+    }
+}
+
+void MacForwardingTable::removeMulticastAddressForwardingInterface(int interfaceId, const MacAddress& address, unsigned int vid)
+{
+    Enter_Method("removeMulticastAddressForwardingInterface");
+    ASSERT(address.isMulticast());
+    AddressTableKey key(vid, address);
+    auto it = multicastAddressTable.find(key);
+    if (it == multicastAddressTable.end())
+        throw cRuntimeError("Cannot find entry");
+    if (contains(it->second.interfaceIds, interfaceId))
+        throw cRuntimeError("Cannot find interface");
+    remove(it->second.interfaceIds, interfaceId);
+}
+
+void MacForwardingTable::removeForwardingInterface(int interfaceId)
+{
+    Enter_Method("removeForwardingInterface");
     for (auto cur = addressTable.begin(); cur != addressTable.end();) {
         if (cur->second.interfaceId == interfaceId)
             cur = addressTable.erase(cur);
@@ -203,11 +256,7 @@ void MacAddressTable::flush(int interfaceId)
     }
 }
 
-/*
- * Prints verbose information
- */
-
-void MacAddressTable::printState()
+void MacForwardingTable::printState()
 {
     EV << endl << "MAC Address Table" << endl;
     EV << "VLAN ID    MAC    IfId    Inserted" << endl;
@@ -215,20 +264,20 @@ void MacAddressTable::printState()
         EV << elem.first.first << "   " << elem.first.second << "   " << elem.second.interfaceId << "   " << elem.second.insertionTime << endl;
 }
 
-//TODO rename it (replace interfaceIdA to interfaceIdB in table)
-void MacAddressTable::copyTable(int interfaceIdA, int interfaceIdB)
+void MacForwardingTable::replaceForwardingInterface(int oldInterfaceId, int newInterfaceId)
 {
+    Enter_Method("replaceForwardingInterface");
     for (auto& elem : addressTable) {
-        if (elem.second.interfaceId == interfaceIdA)
-            elem.second.interfaceId = interfaceIdB;
+        if (elem.second.interfaceId == oldInterfaceId)
+            elem.second.interfaceId = newInterfaceId;
     }
 }
 
-void MacAddressTable::removeAgedEntriesFromAllVlans()
+void MacForwardingTable::removeAgedEntriesFromAllVlans()
 {
     for (auto cur = addressTable.begin(); cur != addressTable.end();) {
         AddressEntry& entry = cur->second;
-        if (entry.insertionTime + agingTime <= simTime()) {
+        if (entry.insertionTime <= simTime() - agingTime) {
             EV << "Removing aged entry from Address Table: "
                << cur->first.first << " " << cur->first.second << " --> interfaceId " << cur->second.interfaceId << "\n";
             cur = addressTable.erase(cur);
@@ -238,7 +287,7 @@ void MacAddressTable::removeAgedEntriesFromAllVlans()
     }
 }
 
-void MacAddressTable::removeAgedEntriesIfNeeded()
+void MacForwardingTable::removeAgedEntriesIfNeeded()
 {
     simtime_t now = simTime();
 
@@ -248,7 +297,7 @@ void MacAddressTable::removeAgedEntriesIfNeeded()
     lastPurge = simTime();
 }
 
-void MacAddressTable::readAddressTable(const char *fileName)
+void MacForwardingTable::readAddressTable(const char *fileName)
 {
     FILE *fp = fopen(fileName, "r");
     if (fp == nullptr)
@@ -313,7 +362,7 @@ void MacAddressTable::readAddressTable(const char *fileName)
     fclose(fp);
 }
 
-void MacAddressTable::parseAddressTableParameter()
+void MacForwardingTable::parseAddressTableParameter()
 {
     auto addressTable = check_and_cast<cValueArray *>(par("addressTable").objectValue());
     for (int i = 0; i < addressTable->size(); i++) {
@@ -328,11 +377,14 @@ void MacAddressTable::parseAddressTableParameter()
         auto networkInterface = ifTable->findInterfaceByName(interfaceName);
         if (networkInterface == nullptr)
             throw cRuntimeError("Cannot find network interface '%s'", interfaceName);
-        updateTableWithAddress(networkInterface->getInterfaceId(), macAddress, vlan);
+        if (macAddress.isMulticast())
+            addMulticastAddressForwardingInterface(networkInterface->getInterfaceId(), macAddress, vlan);
+        else
+            setUnicastAddressForwardingInterface(networkInterface->getInterfaceId(), macAddress, vlan);
     }
 }
 
-void MacAddressTable::initializeTable()
+void MacForwardingTable::initializeTable()
 {
     clearTable();
     parseAddressTableParameter();
@@ -343,23 +395,14 @@ void MacAddressTable::initializeTable()
         readAddressTable(addressTableFile);
 }
 
-void MacAddressTable::clearTable()
+void MacForwardingTable::clearTable()
 {
     addressTable.clear();
 }
 
-MacAddressTable::~MacAddressTable()
+void MacForwardingTable::setAgingTime(simtime_t agingTime)
 {
-}
-
-void MacAddressTable::setAgingTime(simtime_t agingTime)
-{
-    this->agingTime = agingTime;
-}
-
-void MacAddressTable::resetDefaultAging()
-{
-    agingTime = par("agingTime");
+    this->agingTime = agingTime == -1 ? par("agingTime") : agingTime;
 }
 
 } // namespace inet

@@ -121,7 +121,7 @@ void Stp::handleBPDU(Packet *packet, const Ptr<const BpduCfg>& bpdu)
         EV_INFO << "Configuration BPDU " << bpdu << " arrived from Root Switch." << endl;
 
         if (bpdu->getTcFlag()) {
-            EV_DEBUG << "MacAddressTable aging time set to " << currentFwdDelay << "." << endl;
+            EV_DEBUG << "MacForwardingTable aging time set to " << currentFwdDelay << "." << endl;
             macTable->setAgingTime(currentFwdDelay);
 
             // config BPDU with TC flag
@@ -129,7 +129,7 @@ void Stp::handleBPDU(Packet *packet, const Ptr<const BpduCfg>& bpdu)
                 generateBPDU(elem, MacAddress::STP_MULTICAST_ADDRESS, true, false);
         }
         else {
-            macTable->resetDefaultAging();
+            macTable->setAgingTime(-1);
 
             EV_INFO << "Sending BPDUs on all designated ports." << endl;
 

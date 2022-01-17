@@ -30,7 +30,7 @@ void RelayInterfaceLearner::initialize(int stage)
 {
     PacketFlowBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        macAddressTable.reference(this, "macTableModule", true);
+        macForwardingTable.reference(this, "macTableModule", true);
         interfaceTable.reference(this, "interfaceTableModule", true);
     }
 }
@@ -52,8 +52,10 @@ void RelayInterfaceLearner::processPacket(Packet *packet)
         vid = vlanInd->getVlanId();
     auto incomingInterface = interfaceTable->getInterfaceById(packet->getTag<InterfaceInd>()->getInterfaceId());
     auto sourceAddress = packet->getTag<MacAddressInd>()->getSrcAddress();
-    EV_INFO << "Learning peer address" << EV_FIELD(sourceAddress) << EV_FIELD(incomingInterface) << EV_ENDL;
-    macAddressTable->updateTableWithAddress(incomingInterface->getInterfaceId(), sourceAddress, vid);
+    if (!sourceAddress.isMulticast()) {
+        EV_INFO << "Learning peer address" << EV_FIELD(sourceAddress) << EV_FIELD(incomingInterface) << EV_ENDL;
+        macForwardingTable->learnUnicastAddressForwardingInterface(incomingInterface->getInterfaceId(), sourceAddress, vid);
+    }
 }
 
 } // namespace inet
