@@ -296,7 +296,7 @@ class INET_API Ipv4 : public OperationalBase, public NetfilterBase, public INetw
      */
     virtual void reinjectQueuedDatagram(const Packet *datagram) override;
 
-    virtual void enqueueRoutingHook(Packet *datagram, const IHook::Type &hook) override {queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, hook));}
+    virtual void enqueueRoutingHook(Packet *datagram, const IHook::Type &hook) override {take(datagram); queuedDatagramsForHooks.push_back(QueuedDatagramForHook(datagram, hook));}
 
     /**
      * ILifecycle methods
