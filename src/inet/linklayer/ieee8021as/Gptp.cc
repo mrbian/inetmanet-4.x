@@ -51,6 +51,7 @@ void Gptp::initialize(int stage)
 
     if (stage == INITSTAGE_LOCAL) {
         gptpNodeType = static_cast<GptpNodeType>(cEnum::get("GptpNodeType", "inet")->resolve(par("gptpNodeType")));
+        domainNumber = par("domainNumber");
         syncInterval = par("syncInterval");
         pDelayReqProcessingTime = par("pDelayReqProcessingTime");
     }
@@ -87,10 +88,14 @@ void Gptp::initialize(int stage)
         }
 
         if (slavePortId != -1) {
-            interfaceTable->getInterfaceById(slavePortId)->addMulticastMacAddress(GPTP_MULTICAST_ADDRESS);
+            auto networkInterface = interfaceTable->getInterfaceById(slavePortId);
+            if (!networkInterface->matchesMulticastMacAddress(GPTP_MULTICAST_ADDRESS))
+                networkInterface->addMulticastMacAddress(GPTP_MULTICAST_ADDRESS);
         }
         for (auto id: masterPortIds) {
-            interfaceTable->getInterfaceById(id)->addMulticastMacAddress(GPTP_MULTICAST_ADDRESS);
+            auto networkInterface = interfaceTable->getInterfaceById(id);
+            if (!networkInterface->matchesMulticastMacAddress(GPTP_MULTICAST_ADDRESS))
+                networkInterface->addMulticastMacAddress(GPTP_MULTICAST_ADDRESS);
         }
 
         correctionField = par("correctionField");
@@ -225,6 +230,7 @@ void Gptp::sendSync()
     auto packet = new Packet("GptpSync");
     packet->addTag<MacAddressReq>()->setDestAddress(GPTP_MULTICAST_ADDRESS);
     auto gptp = makeShared<GptpSync>();
+    gptp->setDomainNumber(domainNumber);
     /* OriginTimestamp always get Sync departure time from grand master */
     if (gptpNodeType == MASTER_NODE) {
         originTimestamp = clock->getClockTime();
@@ -247,6 +253,7 @@ void Gptp::sendFollowUp(int portId, const GptpSync *sync, clocktime_t preciseOri
     auto packet = new Packet("GptpFollowUp");
     packet->addTag<MacAddressReq>()->setDestAddress(GPTP_MULTICAST_ADDRESS);
     auto gptp = makeShared<GptpFollowUp>();
+    gptp->setDomainNumber(domainNumber);
     gptp->setPreciseOriginTimestamp(preciseOriginTimestamp);
     gptp->setSequenceId(sync->getSequenceId());
 
@@ -272,6 +279,7 @@ void Gptp::sendPdelayResp(GptpReqAnswerEvent* req)
     auto packet = new Packet("GptpPdelayResp");
     packet->addTag<MacAddressReq>()->setDestAddress(GPTP_MULTICAST_ADDRESS);
     auto gptp = makeShared<GptpPdelayResp>();
+    gptp->setDomainNumber(domainNumber);
     //??? gptp->setSentTime(clock->getClockTime());
     gptp->setRequestingPortIdentity(req->getSourcePortIdentity());
     gptp->setSequenceId(req->getSequenceId());
@@ -287,6 +295,7 @@ void Gptp::sendPdelayRespFollowUp(int portId, const GptpPdelayResp* resp)
     packet->addTag<MacAddressReq>()->setDestAddress(GPTP_MULTICAST_ADDRESS);
     auto gptp = makeShared<GptpPdelayRespFollowUp>();
     auto now = clock->getClockTime();
+    gptp->setDomainNumber(domainNumber);
     gptp->setResponseOriginTimestamp(now);
     gptp->setRequestingPortIdentity(resp->getRequestingPortIdentity());
     gptp->setSequenceId(resp->getSequenceId());
@@ -300,6 +309,7 @@ void Gptp::sendPdelayReq()
     auto packet = new Packet("GptpPdelayReq");
     packet->addTag<MacAddressReq>()->setDestAddress(GPTP_MULTICAST_ADDRESS);
     auto gptp = makeShared<GptpPdelayReq>();
+    gptp->setDomainNumber(domainNumber);
     gptp->setCorrectionField(CLOCKTIME_ZERO);
     //save and send IDs
     PortIdentity portId;
@@ -367,6 +377,7 @@ void Gptp::synchronize()
      *****************************************************************************/
     clocktime_t newTime = peerSentTimeSync + peerDelay + correctionField + residenceTime;
 
+    ASSERT(gptpNodeType != MASTER_NODE);
     check_and_cast<SettableClock *>(clock.get())->setClockTime(newTime);
 
     // TODO computeGmRateRatio:
@@ -467,7 +478,16 @@ void Gptp::receiveSignal(cComponent *source, simsignal_t signal, cObject *obj, c
         auto signal = check_and_cast<cPacket *>(obj);
         auto packet = check_and_cast_nullable<Packet *>(signal->getEncapsulatedPacket());
         if (packet) {
-            packet->addTagIfAbsent<GptpIngressTimeInd>()->setArrivalClockTime(clock->getClockTime());
+            auto protocol = packet->getTag<PacketProtocolTag>()->getProtocol();
+            if (*protocol == Protocol::ethernetPhy) {
+                const auto& ethPhyHeader = packet->peekAtFront<physicallayer::EthernetPhyHeader>();
+                const auto& ethMacHeader = packet->peekAt<EthernetMacHeader>(ethPhyHeader->getChunkLength());
+                if (ethMacHeader->getTypeOrLength() == ETHERTYPE_GPTP) {
+                    const auto& gptp = packet->peekAt<GptpBase>(ethPhyHeader->getChunkLength() + ethMacHeader->getChunkLength());
+                    if (gptp->getDomainNumber() == domainNumber)
+                        packet->addTagIfAbsent<GptpIngressTimeInd>()->setArrivalClockTime(clock->getClockTime());
+                }
+            }
         }
     }
     else if (signal == transmissionEndedSignal) {
@@ -480,24 +500,26 @@ void Gptp::receiveSignal(cComponent *source, simsignal_t signal, cObject *obj, c
                 const auto& ethMacHeader = packet->peekAt<EthernetMacHeader>(ethPhyHeader->getChunkLength());
                 if (ethMacHeader->getTypeOrLength() == ETHERTYPE_GPTP) {
                     const auto& gptp = packet->peekAt<GptpBase>(ethPhyHeader->getChunkLength() + ethMacHeader->getChunkLength());
-                    int portId = getContainingNicModule(check_and_cast<cModule*>(source))->getInterfaceId();
-                    switch (gptp->getMessageType()) {
-                        case GPTPTYPE_PDELAY_RESP: {
-                            auto gptpResp = dynamicPtrCast<const GptpPdelayResp>(gptp);
-                            sendPdelayRespFollowUp(portId, gptpResp.get());
-                            break;
+                    if (gptp->getDomainNumber() == domainNumber) {
+                        int portId = getContainingNicModule(check_and_cast<cModule*>(source))->getInterfaceId();
+                        switch (gptp->getMessageType()) {
+                            case GPTPTYPE_PDELAY_RESP: {
+                                auto gptpResp = dynamicPtrCast<const GptpPdelayResp>(gptp);
+                                sendPdelayRespFollowUp(portId, gptpResp.get());
+                                break;
+                            }
+                            case GPTPTYPE_SYNC: {
+                                auto gptpSync = dynamicPtrCast<const GptpSync>(gptp);
+                                sendFollowUp(portId, gptpSync.get(), clock->getClockTime());
+                                break;
+                            }
+                            case GPTPTYPE_PDELAY_REQ:
+                                if (portId == slavePortId)
+                                    pdelayReqEventEgressTimestamp = clock->getClockTime();
+                                break;
+                            default:
+                                break;
                         }
-                        case GPTPTYPE_SYNC: {
-                            auto gptpSync = dynamicPtrCast<const GptpSync>(gptp);
-                            sendFollowUp(portId, gptpSync.get(), clock->getClockTime());
-                            break;
-                        }
-                        case GPTPTYPE_PDELAY_REQ:
-                            if (portId == slavePortId)
-                                pdelayReqEventEgressTimestamp = clock->getClockTime();
-                            break;
-                        default:
-                            break;
                     }
                 }
             }

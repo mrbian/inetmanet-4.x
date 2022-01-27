@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -53,7 +55,7 @@ void LinkBreakVisualizerBase::initialize(int stage)
         displayLinkBreaks = par("displayLinkBreaks");
         nodeFilter.setPattern(par("nodeFilter"));
         interfaceFilter.setPattern(par("interfaceFilter"));
-        packetFilter.setPattern(par("packetFilter"), par("packetDataFilter"));
+        packetFilter.setExpression(par("packetFilter").objectValue());
         icon = par("icon");
         iconTintAmount = par("iconTintAmount");
         if (iconTintAmount != 0)
@@ -75,7 +77,7 @@ void LinkBreakVisualizerBase::handleParameterChange(const char *name)
         else if (!strcmp(name, "interfaceFilter"))
             interfaceFilter.setPattern(par("interfaceFilter"));
         else if (!strcmp(name, "packetFilter"))
-            packetFilter.setPattern(par("packetFilter"), par("packetDataFilter"));
+            packetFilter.setExpression(par("packetFilter").objectValue());
         removeAllLinkBreakVisualizations();
     }
 }

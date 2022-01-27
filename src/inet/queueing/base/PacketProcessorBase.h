@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -43,9 +45,11 @@ class INET_API PacketProcessorBase : public cSimpleModule, public virtual IPacke
   protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     virtual void initialize(int stage) override;
+    virtual void refreshDisplay() const override;
     virtual void handlePacketProcessed(Packet *packet);
 
     virtual void checkPacketOperationSupport(cGate *gate) const;
+    virtual void checkPacketOperationSupport(cGate *startGate, cGate *endGate) const;
 
     virtual void animate(Packet *packet, cGate *gate, const SendOptions& sendOptions, Action action) const;
     virtual void animatePacket(Packet *packet, cGate *gate, Action action) const;

@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2005 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -113,7 +115,18 @@ extern INET_API simsignal_t // admin
     packetReceivedSignal,
 
     packetPushedSignal,
+    packetPushedInSignal,
+    packetPushedOutSignal,
+    packetPushStartedSignal,
+    packetPushEndedSignal,
+
     packetPulledSignal,
+    packetPulledInSignal,
+    packetPulledOutSignal,
+    packetPullStartedSignal,
+    packetPullEndedSignal,
+
+    packetFilteredSignal,
 
     packetFlowStartedSignal,
     packetFlowEndedSignal,
@@ -121,7 +134,12 @@ extern INET_API simsignal_t // admin
     transmissionStartedSignal,
     transmissionEndedSignal,
     receptionStartedSignal,
-    receptionEndedSignal;
+    receptionEndedSignal,
+
+    tokensChangedSignal,
+    tokensAddedSignal,
+    tokensRemovedSignal,
+    tokensDepletedSignal;
 
 /**
  * Utility function

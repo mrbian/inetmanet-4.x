@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -35,6 +37,7 @@ module EthernetMacLayer like IEthernetMacLayer
         inboundEmitter.signalName = "packetReceivedFromLower";
         inboundEmitter.direction = "inbound";
         @display("i=block/layer");
+        @class(EthernetMacLayer);
     gates:
         input upperLayerIn;
         output upperLayerOut;
@@ -44,13 +47,13 @@ module EthernetMacLayer like IEthernetMacLayer
         lifetimer: <default("")> like IPacketLifeTimer if typename != "" {
             @display("p=100,100;is=s");
         }
-        queue: <default("PacketQueue")> like IPacketQueue if typename != "" {
+        queue: <default("PacketQueue")> like IPacketQueue {
             @display("p=200,100");
         }
         server: <default("InstantServer")> like IPacketServer {
             @display("p=200,200");
         }
-        streamer: <default("OmittedPacketFlow")> like IPacketFlow {
+        streamer: <default("")> like IPacketFlow {
             @display("p=200,300");
         }
         fcsInserter: <default("EthernetFcsInserter")> like IPacketFlow {

@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -40,6 +42,8 @@ class INET_API PacketSourceBase : public PacketProcessorBase
     virtual const char *createPacketName(const Ptr<const Chunk>& data) const;
     virtual Ptr<Chunk> createPacketContent() const;
     virtual Packet *createPacket();
+    virtual const cModule *findContainingApplication() const;
+    virtual const cModule *getContainingApplication() const;
 };
 
 } // namespace queueing

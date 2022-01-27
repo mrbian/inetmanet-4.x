@@ -3,9 +3,11 @@
 // Copyright (C) 2008 Alfonso Ariza Quintana (global arp)
 // Copyright (C) 2014 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -202,19 +204,67 @@ MacAddress GlobalArp::mapUnicastAddress(L3Address address)
     }
 }
 
-MacAddress GlobalArp::mapMulticastAddress(L3Address address)
-{
-    ASSERT(address.isMulticast());
-
+MacAddress GlobalArp::toMulticastMacAddress(Ipv4Address ipv4Address) {
     MacAddress macAddress;
     macAddress.setAddressByte(0, 0x01);
     macAddress.setAddressByte(1, 0x00);
-    macAddress.setAddressByte(2, 0x5e);
-    // TODO
-//    macAddress.setAddressByte(3, addr.getDByte(1) & 0x7f);
-//    macAddress.setAddressByte(4, addr.getDByte(2));
-//    macAddress.setAddressByte(5, addr.getDByte(3));
+    macAddress.setAddressByte(2, 0x5E);
+    macAddress.setAddressByte(3, ipv4Address.getDByte(1) & 0x7F);
+    macAddress.setAddressByte(4, ipv4Address.getDByte(2));
+    macAddress.setAddressByte(5, ipv4Address.getDByte(3));
     return macAddress;
+}
+
+MacAddress GlobalArp::toMulticastMacAddress(Ipv6Address ipv6Address) {
+    uint32_t id = ipv6Address.words()[3];
+    MacAddress macAddress;
+    macAddress.setAddressByte(0, 0x33);
+    macAddress.setAddressByte(1, 0x33);
+    macAddress.setAddressByte(2, (id >> 24) & 0xFF);
+    macAddress.setAddressByte(3, (id >> 16) & 0xFF);
+    macAddress.setAddressByte(4, (id >> 8)  & 0xFF);
+    macAddress.setAddressByte(5, (id >> 0)  & 0xFF);
+    return macAddress;
+}
+
+MacAddress GlobalArp::mapMulticastAddress(L3Address l3Address)
+{
+    ASSERT(l3Address.isMulticast());
+    int id = 0;
+    switch (l3Address.getType()) {
+        case L3Address::IPv4:
+            return toMulticastMacAddress(l3Address.toIpv4());
+        case L3Address::IPv6:
+            return toMulticastMacAddress(l3Address.toIpv6());
+        case L3Address::MAC:
+            return l3Address.toMac();
+        case L3Address::MODULEID: {
+            ModuleIdAddress moduleIdAddress = l3Address.toModuleId();
+            id = moduleIdAddress.getId();
+            MacAddress macAddress;
+            macAddress.setAddressByte(0, 0x01);
+            macAddress.setAddressByte(1, 0x00);
+            macAddress.setAddressByte(2, (id >> 24) & 0xFF);
+            macAddress.setAddressByte(3, (id >> 16) & 0xFF);
+            macAddress.setAddressByte(4, (id >> 8)  & 0xFF);
+            macAddress.setAddressByte(5, (id >> 0)  & 0xFF);
+            return macAddress;
+        }
+        case L3Address::MODULEPATH: {
+            ModulePathAddress modulePathAddress = l3Address.toModulePath();
+            id = modulePathAddress.getId();
+            MacAddress macAddress;
+            macAddress.setAddressByte(0, 0x01);
+            macAddress.setAddressByte(1, 0x00);
+            macAddress.setAddressByte(2, (id >> 24) & 0xFF);
+            macAddress.setAddressByte(3, (id >> 16) & 0xFF);
+            macAddress.setAddressByte(4, (id >> 8)  & 0xFF);
+            macAddress.setAddressByte(5, (id >> 0)  & 0xFF);
+            return macAddress;
+        }
+        default:
+            throw cRuntimeError("Unknown address type");
+    }
 }
 
 L3Address GlobalArp::getL3AddressFor(const MacAddress& macAddress) const

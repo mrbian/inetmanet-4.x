@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2012 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -21,6 +23,7 @@ namespace inet {
 
 void registerInterface(const NetworkInterface& interface, cGate *in, cGate *out)
 {
+    EV_INFO << "Registering network interface" << EV_FIELD(interface) << EV_FIELD(in) << EV_FIELD(out) << EV_ENDL;
     auto outPathEnd = out->getPathEndGate();
     auto inPathStart = in->getPathStartGate();
     IInterfaceRegistrationListener *interfaceRegistration = dynamic_cast<IInterfaceRegistrationListener *>(outPathEnd->getOwner());

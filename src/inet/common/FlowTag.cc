@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -29,7 +31,7 @@ void startPacketFlow(cModule *module, Packet *packet, const char *name)
         for (int i = 0; i < (int)flowTag->getNamesArraySize(); i++)
             if (!strcmp(name, flowTag->getNames(i)))
                 throw cRuntimeError("Flow already exists");
-        flowTag->insertNames(name);
+        flowTag->appendNames(name);
     });
     cNamedObject details(name);
     module->emit(packetFlowStartedSignal, packet, &details);

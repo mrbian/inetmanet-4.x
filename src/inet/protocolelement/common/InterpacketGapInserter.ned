@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -28,6 +30,8 @@ simple InterpacketGapInserter extends PacketProcessorBase
         displayStringTextFormat = default("delayed %p pk (%l)\nifg: %g");
         @display("i=block/timer");
         @class(InterpacketGapInserter);
+        @signal[interpacketGapStarted](type=double);
+        @signal[interpacketGapEnded](type=double);
     gates:
         input in;
         output out;

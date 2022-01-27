@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -53,7 +55,8 @@ module AccessPoint
         wlan[*].llc.typename = default("Ieee80211Portal");
         wlan[*].agent.typename = default("");
         wlan[*].radio.antenna.mobilityModule = default("^.^.^.mobility");
-        eth[*].encap.typename = "OmittedEthernetEncapsulation";
+        eth[*].encap.typename = "";
+        *.macTableModule = default(absPath(".macTable"));
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         bridging.hasStp = false;
     gates:

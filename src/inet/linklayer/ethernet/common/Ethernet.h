@@ -1,9 +1,11 @@
 //
 // Copyright (C) 2003 Andras Varga; CTIE, Monash University, Australia
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -38,6 +40,8 @@ const b INTERFRAME_GAP_BITS              = b(96);
 #define ETHERNET_TXRATE                        10000000.0   /* 10 Mbit/sec (in bit/s) */
 #define FAST_ETHERNET_TXRATE                   100000000.0   /* 100 Mbit/sec (in bit/s) */
 #define GIGABIT_ETHERNET_TXRATE                1000000000.0   /* 1 Gbit/sec (in bit/s) */
+#define TWOANDHALFGIGABIT_ETHERNET_TXRATE      2500000000.0   /* 2.5 Gbit/sec (in bit/s) */
+#define FIVEGIGABIT_ETHERNET_TXRATE            5000000000.0   /* 5 Gbit/sec (in bit/s) */
 #define FAST_GIGABIT_ETHERNET_TXRATE           10000000000.0   /* 10 Gbit/sec (in bit/s) */
 #define TWENTYFIVE_GIGABIT_ETHERNET_TXRATE     25000000000.0   /* 25 Gbit/sec (in bit/s) */
 #define FOURTY_GIGABIT_ETHERNET_TXRATE         40000000000.0   /* 40 Gbit/sec (in bit/s) */

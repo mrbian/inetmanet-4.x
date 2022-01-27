@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -57,7 +59,7 @@ void MediumVisualizerBase::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         networkNodeFilter.setPattern(par("nodeFilter"));
         interfaceFilter.setPattern(par("interfaceFilter"));
-        packetFilter.setPattern(par("packetFilter"), par("packetDataFilter"));
+        packetFilter.setExpression(par("packetFilter").objectValue());
         displaySignals = par("displaySignals");
         signalColorSet.parseColors(par("signalColor"));
         signalPropagationAnimationSpeed = par("signalPropagationAnimationSpeed");
@@ -193,7 +195,7 @@ void MediumVisualizerBase::handleParameterChange(const char *name)
         else if (!strcmp(name, "interfaceFilter"))
             interfaceFilter.setPattern(par("interfaceFilter"));
         else if (!strcmp(name, "packetFilter"))
-            packetFilter.setPattern(par("packetFilter"), par("packetDataFilter"));
+            packetFilter.setExpression(par("packetFilter").objectValue());
         else if (!strcmp(name, "signalPropagationAnimationSpeed"))
             signalPropagationAnimationSpeed = par("signalPropagationAnimationSpeed");
         else if (!strcmp(name, "signalTransmissionAnimationSpeed"))

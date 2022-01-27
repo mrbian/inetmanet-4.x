@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -28,15 +30,17 @@ Define_Module(StreamIdentifier);
 void StreamIdentifier::initialize(int stage)
 {
     PacketFlowBase::initialize(stage);
-    if (stage == INITSTAGE_LOCAL)
-        streamMappings = check_and_cast<cValueArray *>(par("streamMappings").objectValue());
+    if (stage == INITSTAGE_LOCAL) {
+        hasSequenceNumbering = par("hasSequenceNumbering");
+        mapping = check_and_cast<cValueArray *>(par("mapping").objectValue());
+    }
 }
 
 void StreamIdentifier::handleParameterChange(const char *name)
 {
     if (name != nullptr) {
-        if (!strcmp(name, "streamMappings"))
-            streamMappings = check_and_cast<cValueArray *>(par("streamMappings").objectValue());
+        if (!strcmp(name, "mapping"))
+            mapping = check_and_cast<cValueArray *>(par("mapping").objectValue());
    }
 }
 
@@ -60,19 +64,24 @@ int StreamIdentifier::incrementSequenceNumber(const char *stream)
 
 void StreamIdentifier::processPacket(Packet *packet)
 {
-    for (int i = 0; i < streamMappings->size(); i++) {
-        auto streamMapping = check_and_cast<cValueMap *>(streamMappings->get(i).objectValue());
-        PacketFilter packetFilter;
-        auto packetPattern = streamMapping->containsKey("packet") ? streamMapping->get("packet").stringValue() : "*";
-        auto dataPattern = streamMapping->containsKey("data") ? streamMapping->get("data").stringValue() : "*";
-        packetFilter.setPattern(packetPattern, dataPattern);
-        if (packetFilter.matches(packet)) {
-            auto streamName = streamMapping->get("stream").stringValue();
-            packet->addTag<StreamReq>()->setStreamName(streamName);
-            auto sequenceNumber = incrementSequenceNumber(streamName);
-            const auto& sequenceNumberTag = packet->addTag<SequenceNumberReq>();
-            sequenceNumberTag->setSequenceNumber(sequenceNumber);
-            break;
+    const char *streamName = nullptr;
+    auto streamReq = packet->findTag<StreamReq>();
+    if (streamReq != nullptr)
+        streamName = streamReq->getStreamName();
+    else {
+        for (int i = 0; i < mapping->size(); i++) {
+            auto element = check_and_cast<cValueMap *>(mapping->get(i).objectValue());
+            PacketFilter packetFilter;
+            auto packetPattern = element->containsKey("packetFilter") ? element->get("packetFilter") : cValue("*");
+            packetFilter.setExpression(packetPattern);
+            if (packetFilter.matches(packet)) {
+                streamName = element->get("stream").stringValue();
+                packet->addTag<StreamReq>()->setStreamName(streamName);
+                auto sequenceNumber = incrementSequenceNumber(streamName);
+                if (hasSequenceNumbering && element->containsKey("sequenceNumbering") && element->get("sequenceNumbering").boolValue())
+                    packet->addTag<SequenceNumberReq>()->setSequenceNumber(sequenceNumber);
+                break;
+            }
         }
     }
     handlePacketProcessed(packet);

@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -32,10 +34,12 @@ void OmittedModule::initialize(int stage)
                 auto gateOut = gateIn->getNextGate();
                 auto previousGate = gateIn->getPreviousGate();
                 auto nextGate = gateOut->getNextGate();
-                EV_INFO << "Reconnecting gates: " << previousGate->getFullPath() << " --> " << nextGate->getFullPath() << std::endl;
-                gateOut->disconnect();
-                previousGate->disconnect();
-                previousGate->connectTo(nextGate);
+                if (previousGate != nullptr && nextGate != nullptr) {
+                    EV_INFO << "Reconnecting gates: " << previousGate->getFullPath() << " --> " << nextGate->getFullPath() << std::endl;
+                    gateOut->disconnect();
+                    previousGate->disconnect();
+                    previousGate->connectTo(nextGate);
+                }
             }
         }
     }

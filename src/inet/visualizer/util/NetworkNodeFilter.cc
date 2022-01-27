@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -29,8 +31,7 @@ void NetworkNodeFilter::setPattern(const char *pattern)
 bool NetworkNodeFilter::matches(const cModule *module) const
 {
     MatchableObject matchableObject(MatchableObject::ATTRIBUTE_FULLNAME, module);
-    // TODO eliminate const_cast when cMatchExpression::matches becomes const
-    return const_cast<NetworkNodeFilter *>(this)->matchExpression.matches(&matchableObject);
+    return matchExpression.matches(&matchableObject);
 }
 
 } // namespace visualizer

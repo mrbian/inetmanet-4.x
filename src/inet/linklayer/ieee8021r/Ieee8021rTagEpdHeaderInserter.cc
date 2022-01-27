@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -58,8 +60,16 @@ void Ieee8021rTagEpdHeaderInserter::processPacket(Packet *packet)
     packet->insertAtFront(header);
     packetProtocolTag->setProtocol(&Protocol::ieee8021rTag);
     packetProtocolTag->setFrontOffset(b(0));
-    if (nextProtocol != nullptr)
-        packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(nextProtocol);
+    const Protocol *dispatchProtocol = nullptr;
+    if (auto encapsulationProtocolReq = packet->findTagForUpdate<EncapsulationProtocolReq>()) {
+        dispatchProtocol = encapsulationProtocolReq->getProtocol(0);
+        encapsulationProtocolReq->eraseProtocol(0);
+    }
+    else if (nextProtocol != nullptr)
+        dispatchProtocol = nextProtocol;
+    else
+        dispatchProtocol = &Protocol::ethernetMac;
+    packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(dispatchProtocol);
 }
 
 } // namespace inet

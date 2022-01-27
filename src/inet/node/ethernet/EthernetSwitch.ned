@@ -2,9 +2,11 @@
 // Copyright (C) 2003 Andras Varga; CTIE, Monash University, Australia
 //               2010 Zoltan Bojthe
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -21,6 +23,7 @@ package inet.node.ethernet;
 
 import inet.applications.contract.IApp;
 import inet.clock.contract.IClock;
+import inet.common.IMeasurer;
 import inet.common.MessageDispatcher;
 import inet.common.lifecycle.NodeStatus;
 import inet.common.packet.recorder.PcapRecorder;
@@ -31,8 +34,9 @@ import inet.linklayer.contract.ISpanningTree;
 import inet.linklayer.ethernet.contract.IEthernetLayer;
 import inet.linklayer.ieee8021q.IIeee8021qLayer;
 import inet.linklayer.ieee8021r.IIeee8021rLayer;
-import inet.linklayer.ieee8022.Ieee8022Llc;
+import inet.linklayer.ieee8022.IIeee8022Llc;
 import inet.networklayer.common.InterfaceTable;
+import inet.node.contract.IEthernetNetworkNode;
 import inet.protocolelement.contract.IProtocolLayer;
 
 //
@@ -43,22 +47,23 @@ import inet.protocolelement.contract.IProtocolLayer;
 // it must be set to false, otherwise it can be set to true.
 // By default used half duples CSMA/CD mac
 //
-module EthernetSwitch
+module EthernetSwitch like IEthernetNetworkNode
 {
     parameters:
         @networkNode();
         @labels(node,ethernet-node);
         @display("i=device/switch");
-        int numPcapRecorders = default(0);
+        bool recordPcap = default(false);
+        int numPcapRecorders = default(recordPcap ? 1 : 0);
         int numApps = default(0);
         bool hasStatus = default(false);
         bool hasStp = default(false);
         bool hasGptp = default(false);
-        bool enableCutthrough = default(false);
+        bool hasCutthroughSwitching = default(false);
         string fcsMode @enum("declared","computed") = default("declared");
         string spanningTreeProtocol = default("Stp");
         int numEthInterfaces = default(0);  // minimum number of ethernet interfaces
-        eth[*].encap.typename = default("OmittedEthernetEncapsulation");
+        eth[*].encap.typename = default("");
         *.fcsMode = this.fcsMode;
         **.interfaceTableModule = default(absPath(".interfaceTable"));
         **.macTableModule = default(absPath(".macTable"));
@@ -89,12 +94,15 @@ module EthernetSwitch
         pcapRecorder[numPcapRecorders]: PcapRecorder {
             @display("p=100,600;is=s");
         }
+        measurer: <default("")> like IMeasurer if typename != "" {
+            @display("p=125,700;is=s");
+        }
         stp: <spanningTreeProtocol> like ISpanningTree if hasStp {
             @display("p=500,75");
         }
         gptp: <default("Gptp")> like IApp if hasGptp {
             @display("p=700,75");
-	        gptpNodeType = default("BRIDGE_NODE"); // @enum("gptpNodeType"): MASTER_NODE, BRIDGE_NODE, SLAVE_NODE
+            gptpNodeType = default("BRIDGE_NODE"); // @enum("gptpNodeType"): MASTER_NODE, BRIDGE_NODE, SLAVE_NODE
         }
         app[numApps]: <> like IApp {
             parameters:
@@ -103,7 +111,7 @@ module EthernetSwitch
         sc: MessageDispatcher {
             @display("p=800,150;b=1200,5");
         }
-        llc: Ieee8022Llc {
+        llc: <default("Ieee8022Llc")> like IIeee8022Llc if typename != "" {
             @display("p=700,225");
         }
         cb: MessageDispatcher {
@@ -127,10 +135,10 @@ module EthernetSwitch
         li: MessageDispatcher {
             @display("p=800,600;b=1200,5");
         }
-        cutthrough: MessageDispatcher if enableCutthrough {
+        cutthrough: MessageDispatcher if hasCutthroughSwitching {
             @display("p=800,675;b=1200,5");
         }
-        eth[sizeof(ethg)]: <default(enableCutthrough ? "EthernetCutthroughInterface" : "EthernetInterface")> like IEthernetInterface {
+        eth[sizeof(ethg)]: <default(hasCutthroughSwitching ? "EthernetCutthroughInterface" : "EthernetInterface")> like IEthernetInterface {
             @display("p=250,750,row,150;q=txQueue");
         }
     connections:
@@ -144,21 +152,21 @@ module EthernetSwitch
         li.out++ --> ieee8021r.lowerLayerIn if exists(ieee8021r);
 
         for i=0..sizeof(ethg)-1 {
-            eth[i].cutthroughOut --> cutthrough.in++ if enableCutthrough;
-            eth[i].cutthroughIn <-- cutthrough.out++ if enableCutthrough;
+            eth[i].cutthroughOut --> cutthrough.in++ if hasCutthroughSwitching;
+            eth[i].cutthroughIn <-- cutthrough.out++ if hasCutthroughSwitching;
         }
 
         bl.out++ --> li.in++;
         li.out++ --> bl.in++;
 
-        llc.upperLayerOut --> sc.in++;
-        sc.out++ --> llc.upperLayerIn;
+        llc.upperLayerOut --> sc.in++ if exists(llc);
+        sc.out++ --> llc.upperLayerIn if exists(llc);
 
         sc.out++ --> cb.in++;
         cb.out++ --> sc.in++;
 
-        cb.out++ --> llc.lowerLayerIn;
-        llc.lowerLayerOut --> cb.in++;
+        cb.out++ --> llc.lowerLayerIn if exists(llc);
+        llc.lowerLayerOut --> cb.in++ if exists(llc);
 
         cb.out++ --> bridging.upperLayerIn;
         bridging.upperLayerOut --> cb.in++;

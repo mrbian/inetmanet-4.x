@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -19,6 +21,10 @@ package inet.linklayer.ieee8021q;
 
 import inet.queueing.contract.IPacketFlow;
 
+//
+// This module implements the IEEE 802.1Q protocol encapsulation/decapsulation.
+// It also provides socket support so applications can use the protocol directly.
+//
 module Ieee8021qProtocol like IIeee8021qLayer
 {
     parameters:
@@ -36,13 +42,13 @@ module Ieee8021qProtocol like IIeee8021qLayer
         socketTable: Ieee8021qSocketTable if hasSocketSupport {
             @display("p=100,100");
         }
-        socketCommandProcessor: <default(hasSocketSupport ? "Ieee8021qSocketCommandProcessor" : "OmittedPacketFlow")> like IPacketFlow {
+        socketCommandProcessor: <default(hasSocketSupport ? "Ieee8021qSocketCommandProcessor" : "")> like IPacketFlow {
             @display("p=300,100");
         }
         qTagHeaderInserter: <default("Ieee8021qTagEpdHeaderInserter")> like IIeee8021qTagEpdHeaderInserter {
             @display("p=300,200");
         }
-        socketPacketProcessor: <default(hasSocketSupport ? "Ieee8021qSocketPacketProcessor" : "OmittedPacketFlow")> like IPacketFlow {
+        socketPacketProcessor: <default(hasSocketSupport ? "Ieee8021qSocketPacketProcessor" : "")> like IPacketFlow {
             @display("p=600,100");
         }
         qTagHeaderChecker: <default("Ieee8021qTagEpdHeaderChecker")> like IIeee8021qTagEpdHeaderChecker {

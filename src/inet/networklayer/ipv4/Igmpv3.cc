@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2012 - 2013 Brno University of Technology (http://nes.fit.vutbr.cz/ansa)
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -1024,7 +1026,7 @@ void Igmpv3::sendReportToIP(Packet *msg, NetworkInterface *ie, Ipv4Address dest)
 
     // TODO fill Router Alert option
     auto raOption = new Ipv4OptionRouterAlert();
-    msg->addTag<Ipv4OptionsReq>()->insertOption(raOption);
+    msg->addTag<Ipv4OptionsReq>()->appendOption(raOption);
     // TODO set Type of Service to 0xc0
 //    msg->addTag<DscpReq>()->setDifferentiatedServicesCodePoint(0xc0 >> 2);
     send(msg, "ipOut");
@@ -1043,7 +1045,7 @@ void Igmpv3::sendQueryToIP(Packet *msg, NetworkInterface *ie, Ipv4Address dest)
 
     // TODO fill Router Alert option
     auto raOption = new Ipv4OptionRouterAlert();
-    msg->addTag<Ipv4OptionsReq>()->insertOption(raOption);
+    msg->addTag<Ipv4OptionsReq>()->appendOption(raOption);
     // set Type of Service to 0xc0
     msg->addTag<DscpReq>()->setDifferentiatedServicesCodePoint(0xc0 >> 2);
     send(msg, "ipOut");

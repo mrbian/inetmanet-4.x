@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -27,12 +29,23 @@ void PacketGateBase::initialize(int stage)
     PacketFlowBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         bitrate = bps(par("bitrate"));
-        guardBand = par("guardBand");
+        extraLength = b(par("extraLength"));
+        extraDuration = par("extraDuration");
         getDisplayString().setTagArg("i", 2, 20);
         WATCH(isOpen_);
     }
     else if (stage == INITSTAGE_LAST)
         emit(gateStateChangedSignal, isOpen_);
+}
+
+cGate *PacketGateBase::getRegistrationForwardingGate(cGate *gate)
+{
+    if (gate == outputGate)
+        return inputGate;
+    else if (gate == inputGate)
+        return outputGate;
+    else
+        throw cRuntimeError("Unknown gate");
 }
 
 void PacketGateBase::open()

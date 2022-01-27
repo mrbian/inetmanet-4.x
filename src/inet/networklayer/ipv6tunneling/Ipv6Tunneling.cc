@@ -3,6 +3,8 @@
 // Christian Bauer
 // Institute of Communications and Navigation, German Aerospace Center (DLR)
 //
+// SPDX-License-Identifier: GPL-2.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
@@ -428,7 +430,7 @@ void Ipv6Tunneling::encapsulateDatagram(Packet *packet)
             t2RH->setAddress(0, rh2);
 
             // append T2RH to routing headers
-            packet->addTagIfAbsent<Ipv6ExtHeaderReq>()->insertExtensionHeader(t2RH);
+            packet->addTagIfAbsent<Ipv6ExtHeaderReq>()->appendExtensionHeader(t2RH);
 
             EV_INFO << "Added Type 2 Routing Header." << endl;
         }
@@ -441,7 +443,7 @@ void Ipv6Tunneling::encapsulateDatagram(Packet *packet)
             haOpt->setHomeAddress(rh2);
 
             // append HA option to routing headers
-            packet->addTagIfAbsent<Ipv6ExtHeaderReq>()->insertExtensionHeader(haOpt);
+            packet->addTagIfAbsent<Ipv6ExtHeaderReq>()->appendExtensionHeader(haOpt);
 
             EV_INFO << "Added Home Address Option header." << endl;
         }

@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -28,6 +30,8 @@ void PacketMultiplexer::initialize(int stage)
 {
     PacketProcessorBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
+        forwardServiceRegistration = par("forwardServiceRegistration");
+        forwardProtocolRegistration = par("forwardProtocolRegistration");
         for (int i = 0; i < gateSize("in"); i++) {
             auto inputGate = gate("in", i);
             auto input = findConnectedModule<IActivePacketSource>(inputGate);
@@ -48,6 +52,18 @@ void PacketMultiplexer::handleMessage(cMessage *message)
 {
     auto packet = check_and_cast<Packet *>(message);
     pushPacket(packet, packet->getArrivalGate());
+}
+
+void PacketMultiplexer::mapRegistrationForwardingGates(cGate *gate, std::function<void(cGate *)> f)
+{
+    if (gate == outputGate) {
+        for (auto inputGate : inputGates)
+            f(inputGate);
+    }
+    else if (std::find(inputGates.begin(), inputGates.end(), gate) != inputGates.end())
+        f(outputGate);
+    else
+        throw cRuntimeError("Unknown gate");
 }
 
 void PacketMultiplexer::checkPacketStreaming(Packet *packet)
@@ -130,28 +146,6 @@ void PacketMultiplexer::handleCanPushPacketChanged(cGate *gate)
 void PacketMultiplexer::handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful)
 {
     Enter_Method("handlePushPacketProcessed");
-}
-
-void PacketMultiplexer::handleRegisterService(const Protocol& protocol, cGate *g, ServicePrimitive servicePrimitive)
-{
-    Enter_Method("handleRegisterService");
-    if (g == outputGate) {
-        int size = gateSize("in");
-        for (int i = 0; i < size; i++)
-            registerService(protocol, gate("in", i), servicePrimitive);
-    }
-}
-
-void PacketMultiplexer::handleRegisterProtocol(const Protocol& protocol, cGate *g, ServicePrimitive servicePrimitive)
-{
-    Enter_Method("handleRegisterProtocol");
-    // NOTE: this may be called before initstage local
-    auto outputGate = gate("out");
-    if (g != outputGate)
-        registerProtocol(protocol, outputGate, servicePrimitive);
-    else if (g == outputGate && servicePrimitive == SP_INDICATION)
-        for (auto& inputGate : inputGates)
-            registerProtocol(protocol, inputGate, servicePrimitive);
 }
 
 } // namespace queueing

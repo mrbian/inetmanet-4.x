@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2013 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -57,10 +59,10 @@ simple Stp like ISpanningTree
         int bridgePriority = default(32768);
 
         // The path to the InterfaceTable module
-        string interfaceTableModule = default("^.interfaceTable");
+        string interfaceTableModule;
 
         // The path to the MacForwardingTable module
-        string macTableModule = default("^.macTable");
+        string macTableModule;
 
         // Shows the spanning tree by coloring connections in the network graphics.
         // Label ethernet interface with port role and status. Mark root switch

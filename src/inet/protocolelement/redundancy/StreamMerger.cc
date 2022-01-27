@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -29,7 +31,7 @@ void StreamMerger::initialize(int stage)
 {
     PacketFilterBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        streamMapping = check_and_cast<cValueMap *>(par("streamMapping").objectValue());
+        mapping = check_and_cast<cValueMap *>(par("mapping").objectValue());
         bufferSize = par("bufferSize");
     }
 }
@@ -37,8 +39,8 @@ void StreamMerger::initialize(int stage)
 void StreamMerger::handleParameterChange(const char *name)
 {
     if (name != nullptr) {
-        if (!strcmp(name, "streamMapping"))
-            streamMapping = check_and_cast<cValueMap *>(par("streamMapping").objectValue());
+        if (!strcmp(name, "mapping"))
+            mapping = check_and_cast<cValueMap *>(par("mapping").objectValue());
    }
 }
 
@@ -54,41 +56,47 @@ cGate *StreamMerger::getRegistrationForwardingGate(cGate *gate)
 
 void StreamMerger::processPacket(Packet *packet)
 {
-    const auto& streamInd = packet->getTag<StreamInd>();
-    auto inputStreamName = streamInd->getStreamName();
-    if (streamMapping->containsKey(inputStreamName)) {
-        auto outputStreamName = streamMapping->get(inputStreamName).stringValue();
-        auto& it = sequenceNumbers[outputStreamName];
-        it.push_back(packet->getTag<SequenceNumberInd>()->getSequenceNumber());
-        if (it.size() > bufferSize)
-            it.erase(it.begin(), it.begin() + it.size() - bufferSize);
-        if (*outputStreamName != '\0')
-            packet->getTagForUpdate<StreamInd>()->setStreamName(outputStreamName);
-        else {
-            packet->removeTag<StreamInd>();
-            packet->removeTag<SequenceNumberInd>();
+    const auto& streamInd = packet->findTag<StreamInd>();
+    if (streamInd != nullptr) {
+        auto inputStreamName = streamInd->getStreamName();
+        if (mapping->containsKey(inputStreamName)) {
+            auto outputStreamName = mapping->get(inputStreamName).stringValue();
+            auto& it = sequenceNumbers[outputStreamName];
+            it.push_back(packet->getTag<SequenceNumberInd>()->getSequenceNumber());
+            if (it.size() > bufferSize)
+                it.erase(it.begin(), it.begin() + it.size() - bufferSize);
+            if (*outputStreamName != '\0')
+                packet->getTagForUpdate<StreamInd>()->setStreamName(outputStreamName);
+            else {
+                packet->removeTag<StreamInd>();
+                packet->removeTag<SequenceNumberInd>();
+            }
         }
     }
 }
 
 bool StreamMerger::matchesPacket(const Packet *packet) const
 {
-    const auto& streamInd = packet->getTag<StreamInd>();
-    auto inputStreamName = streamInd->getStreamName();
-    if (!streamMapping->containsKey(inputStreamName))
+    const auto& streamInd = packet->findTag<StreamInd>();
+    if (streamInd == nullptr)
         return true;
     else {
-        auto outputStreamName = streamMapping->get(inputStreamName).stringValue();
-        if (!matchesInputStream(inputStreamName))
-            throw cRuntimeError("Unknown stream");
-        else
-            return matchesSequenceNumber(outputStreamName, packet->getTag<SequenceNumberInd>()->getSequenceNumber());
+        auto inputStreamName = streamInd->getStreamName();
+        if (!mapping->containsKey(inputStreamName))
+            return true;
+        else {
+            auto outputStreamName = mapping->get(inputStreamName).stringValue();
+            if (!matchesInputStream(inputStreamName))
+                throw cRuntimeError("Unknown stream");
+            else
+                return matchesSequenceNumber(outputStreamName, packet->getTag<SequenceNumberInd>()->getSequenceNumber());
+        }
     }
 }
 
 bool StreamMerger::matchesInputStream(const char *streamName) const
 {
-    return streamMapping->containsKey(streamName);
+    return mapping->containsKey(streamName);
 }
 
 bool StreamMerger::matchesSequenceNumber(const char *streamName, int sequenceNumber) const

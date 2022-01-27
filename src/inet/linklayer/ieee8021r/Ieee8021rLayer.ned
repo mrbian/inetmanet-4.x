@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +24,8 @@ import inet.protocolelement.contract.IProtocolLayer;
 module Ieee8021rLayer like IIeee8021rLayer
 {
     parameters:
+        string interfaceTableModule;
+        *.interfaceTableModule = default(this.interfaceTableModule);
         @display("i=block/layer");
     gates:
         input upperLayerIn;
@@ -29,7 +33,7 @@ module Ieee8021rLayer like IIeee8021rLayer
         input lowerLayerIn;
         output lowerLayerOut;
     submodules:
-        policy: <default("StreamLayer")> like IProtocolLayer {
+        policy: <default("StreamPolicyLayer")> like IProtocolLayer {
             @display("p=300,150");
         }
         protocol: <default("Ieee8021rProtocol")> like IIeee8021rLayer {

@@ -1,9 +1,11 @@
 //
 // Copyright (C) 2003 Andras Varga; CTIE, Monash University, Australia
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -35,7 +37,7 @@ import inet.protocolelement.contract.IProtocolLayer;
 // Entries are also deleted if their age exceeds a certain limit.
 //
 // If needed, address tables can be pre-loaded from text files at the beginning
-// of the simulation; this controlled by the addressTableFile module parameter.
+// of the simulation; this controlled by the forwardingTableFile module parameter.
 //
 // This module is not a concrete implementation, it just defines gates and
 // parameters a ~IMacRelayUnit should have. Concrete inplementations add

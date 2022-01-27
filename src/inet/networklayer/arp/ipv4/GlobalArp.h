@@ -2,6 +2,8 @@
 // Copyright (C) 2004 OpenSim Ltd.
 // Copyright (C) 2014 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -64,6 +66,9 @@ class INET_API GlobalArp : public OperationalBase, public IArp, public cListener
     GlobalArp();
     virtual ~GlobalArp();
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+
+    static MacAddress toMulticastMacAddress(Ipv4Address address);
+    static MacAddress toMulticastMacAddress(Ipv6Address address);
 
     /** @name IArp implementation */
     //@{

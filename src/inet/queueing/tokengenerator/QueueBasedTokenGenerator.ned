@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -39,6 +41,4 @@ simple QueueBasedTokenGenerator extends TokenGeneratorBase
         volatile double numTokens = default(1); // number of tokens generated when the queue becomes empty
         @class(QueueBasedTokenGenerator);
         @display("i=block/control");
-        @signal[tokensCreated](type=double);
-        @statistic[tokensCreated](title="tokens created"; record=count,sum,vector; interpolationmode=none);
 }

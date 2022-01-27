@@ -2,9 +2,11 @@
 // Copyright (C) 2011 CoCo Communications
 // Copyright (C) 2012 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -711,7 +713,7 @@ void Igmpv2::sendReport(NetworkInterface *ie, HostGroupData *group)
     packet->insertAtFront(msg);
     // TODO fill Router Alert option
     auto raOption = new Ipv4OptionRouterAlert();
-    packet->addTag<Ipv4OptionsReq>()->insertOption(raOption);
+    packet->addTag<Ipv4OptionsReq>()->appendOption(raOption);
     sendToIP(packet, ie, group->groupAddr);
     numReportsSent++;
 }
@@ -729,7 +731,7 @@ void Igmpv2::sendLeave(NetworkInterface *ie, HostGroupData *group)
     packet->insertAtFront(msg);
     // TODO fill Router Alert option
     auto raOption = new Ipv4OptionRouterAlert();
-    packet->addTag<Ipv4OptionsReq>()->insertOption(raOption);
+    packet->addTag<Ipv4OptionsReq>()->appendOption(raOption);
     sendToIP(packet, ie, Ipv4Address::ALL_ROUTERS_MCAST);
     numLeavesSent++;
 }

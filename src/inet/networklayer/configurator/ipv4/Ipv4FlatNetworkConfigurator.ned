@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2004 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -17,7 +19,7 @@
 
 package inet.networklayer.configurator.ipv4;
 
-import inet.networklayer.configurator.contract.INetworkConfigurator;
+import inet.networklayer.configurator.contract.IL3NetworkConfigurator;
 
 //
 // Configures IPv4 addresses and routing tables for a "flat" network,
@@ -58,7 +60,7 @@ import inet.networklayer.configurator.contract.INetworkConfigurator;
 // interfaces register themselves in the ~InterfaceTable modules, and
 // in stage 1, routing files are read.)
 //
-simple Ipv4FlatNetworkConfigurator like INetworkConfigurator
+simple Ipv4FlatNetworkConfigurator like IL3NetworkConfigurator
 {
     parameters:
         string networkAddress = default("192.168.0.0"); // network part of the address (see netmask parameter)

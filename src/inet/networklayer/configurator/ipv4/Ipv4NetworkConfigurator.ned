@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2012 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -17,7 +19,7 @@
 
 package inet.networklayer.configurator.ipv4;
 
-import inet.networklayer.configurator.base.NetworkConfiguratorBase;
+import inet.networklayer.configurator.base.L3NetworkConfiguratorBase;
 
 //
 // This module assigns IPv4 addresses and sets up static routing for an IPv4 network.
@@ -405,7 +407,7 @@ import inet.networklayer.configurator.base.NetworkConfiguratorBase;
 //        Mandatory parameter attribute that specifies the cost. Valid values are
 //        "infinite" and numbers.
 //
-simple Ipv4NetworkConfigurator extends NetworkConfiguratorBase
+simple Ipv4NetworkConfigurator extends L3NetworkConfiguratorBase
 {
     parameters:
         @class(Ipv4NetworkConfigurator);

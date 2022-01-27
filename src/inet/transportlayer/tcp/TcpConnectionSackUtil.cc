@@ -3,9 +3,11 @@
 // Copyright (C) 2009-2011 Thomas Reschka
 // Copyright (C) 2011 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -587,7 +589,7 @@ TcpHeader TcpConnection::addSacks(const Ptr<TcpHeader>& tcpHeader)
     }
 
     while (optArrSize < optArrSizeAligned) {
-        tcpHeader->insertHeaderOption(new TcpOptionNop());
+        tcpHeader->appendHeaderOption(new TcpOptionNop());
         optArrSize++;
     }
 
@@ -610,7 +612,7 @@ TcpHeader TcpConnection::addSacks(const Ptr<TcpHeader>& tcpHeader)
 
     ASSERT(options_len <= TCP_OPTIONS_MAX_SIZE); // Options length allowed? - maximum: 40 Bytes
 
-    tcpHeader->insertHeaderOption(option);
+    tcpHeader->appendHeaderOption(option);
     tcpHeader->setHeaderLength(TCP_MIN_HEADER_LENGTH + tcpHeader->getHeaderOptionArrayLength());
     tcpHeader->setChunkLength(tcpHeader->getHeaderLength());
     // update number of sent sacks

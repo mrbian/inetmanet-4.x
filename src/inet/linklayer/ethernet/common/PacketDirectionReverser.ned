@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2021 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -20,6 +22,11 @@ package inet.linklayer.ethernet.common;
 import inet.queueing.base.PacketFlowBase;
 import inet.queueing.contract.IPacketFlow;
 
+//
+// This module is part of the layer 2 architecture. It turns an incoming packet
+// into an outgoing packet simply by removing all attached indication tags and
+// turning some of them into an attached request tag on the packet.
+//
 simple PacketDirectionReverser extends PacketFlowBase like IPacketFlow
 {
     parameters:

@@ -1,4 +1,6 @@
 //
+// SPDX-License-Identifier: GPL-2.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
@@ -88,17 +90,17 @@ void WiseRoute::initialize(int stage)
 
         routeFloodTimer = new cMessage("route-flood-timer", SEND_ROUTE_FLOOD_TIMER);
     }
+    else if (stage == INITSTAGE_NETWORK_INTERFACE_CONFIGURATION) {
+        for (int i = 0; i < interfaceTable->getNumInterfaces(); i++)
+            interfaceTable->getInterface(i)->setHasModulePathAddress(true);
+    }
     else if (stage == INITSTAGE_NETWORK_LAYER) {
         L3AddressResolver addressResolver;
         sinkAddress = addressResolver.resolve(par("sinkAddress"));
 
         IInterfaceTable *interfaceTable = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-        auto ie = interfaceTable->findFirstNonLoopbackInterface();
-        if (ie != nullptr) {
+        if (auto ie = interfaceTable->findFirstNonLoopbackInterface())
             myNetwAddr = ie->getNetworkAddress();
-            if (myNetwAddr.isUnspecified())
-                myNetwAddr = ie->getModulePathAddress();
-        }
         else
             throw cRuntimeError("No non-loopback interface found!");
 

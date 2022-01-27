@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -20,6 +22,7 @@
 #include "inet/common/IProtocolRegistrationListener.h"
 #include "inet/common/ProtocolGroup.h"
 #include "inet/common/ProtocolTag_m.h"
+#include "inet/linklayer/common/PcpTag_m.h"
 #include "inet/linklayer/common/UserPriorityTag_m.h"
 #include "inet/linklayer/common/VlanTag_m.h"
 #include "inet/linklayer/ieee8021q/Ieee8021qTagHeader_m.h"
@@ -43,6 +46,7 @@ void Ieee8021qTagEpdHeaderInserter::initialize(int stage)
         if (*nextProtocolAsString != '\0')
             nextProtocol = Protocol::getProtocol(nextProtocolAsString);
         defaultVlanId = par("defaultVlanId");
+        defaultPcp = par("defaultPcp");
         defaultUserPriority = par("defaultUserPriority");
     }
     else if (stage == INITSTAGE_LINK_LAYER)
@@ -58,6 +62,13 @@ void Ieee8021qTagEpdHeaderInserter::processPacket(Packet *packet)
         EV_INFO << "Setting PCP" << EV_FIELD(pcp, userPriority) << EV_ENDL;
         header->setPcp(userPriority);
         packet->addTagIfAbsent<UserPriorityInd>()->setUserPriority(userPriority);
+    }
+    auto pcpReq = packet->removeTagIfPresent<PcpReq>();
+    auto pcp = pcpReq != nullptr ? pcpReq->getPcp() : defaultPcp;
+    if (pcp != -1) {
+        EV_INFO << "Setting PCP" << EV_FIELD(vid, pcp) << EV_ENDL;
+        header->setPcp(pcp);
+        packet->addTagIfAbsent<PcpInd>()->setPcp(pcp);
     }
     auto vlanReq = packet->removeTagIfPresent<VlanReq>();
     auto vlanId = vlanReq != nullptr ? vlanReq->getVlanId() : defaultVlanId;
@@ -75,8 +86,16 @@ void Ieee8021qTagEpdHeaderInserter::processPacket(Packet *packet)
     packet->insertAtFront(header);
     packetProtocolTag->setProtocol(qtagProtocol);
     packetProtocolTag->setFrontOffset(b(0));
-    if (nextProtocol != nullptr)
-        packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(nextProtocol);
+    const Protocol *dispatchProtocol = nullptr;
+    if (auto encapsulationProtocolReq = packet->findTagForUpdate<EncapsulationProtocolReq>()) {
+        dispatchProtocol = encapsulationProtocolReq->getProtocol(0);
+        encapsulationProtocolReq->eraseProtocol(0);
+    }
+    else if (nextProtocol != nullptr)
+        dispatchProtocol = nextProtocol;
+    else
+        dispatchProtocol = &Protocol::ethernetMac;
+    packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(dispatchProtocol);
 }
 
 } // namespace inet

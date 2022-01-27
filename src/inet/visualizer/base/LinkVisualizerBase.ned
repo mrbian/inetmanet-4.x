@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -44,8 +46,7 @@ simple LinkVisualizerBase extends VisualizerBase
 
         string nodeFilter @mutable = default("*"); // which nodes are considered, matches all nodes by default
         string interfaceFilter @mutable = default("*"); // which interfaces are considered, matches all interfaces by default
-        string packetFilter @mutable = default("*"); // which packets are considered, matches all packets by default
-        string packetDataFilter @mutable = default("*"); // which packets are considered based on the data they contain, matches all packets by default
+        object packetFilter @mutable = default("*"); // which packets are considered, matches all packets by default
 
         string lineColor = default("black"); // link arrow color, black by default
         string lineStyle = default("solid"); // link arrow style (solid, dashed, dotted)

@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -26,7 +28,6 @@ import inet.queueing.contract.IPacketMarker;
 simple ContentBasedLabeler extends PacketLabelerBase like IPacketMarker
 {
     parameters:
-        string packetFilters = default("*"); // semicolon separated packet filter expressions (e.g. ping-*), matches all packets by default
-        string packetDataFilters = default("*"); // semicolon separated packet data filter expression (e.g. inet::Ipv4Header and srcAddress = "10.0.0.1"), matches all packets by default
+        object packetFilters = default(["*"]); // array of packet filter expressions, matches all packets by default
         @class(ContentBasedLabeler);
 }

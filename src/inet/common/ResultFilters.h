@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2011 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -18,7 +20,7 @@
 #ifndef __INET_RESULTFILTERS_H
 #define __INET_RESULTFILTERS_H
 
-#include "inet/common/INETDefs.h"
+#include "inet/common/INETMath.h"
 
 namespace inet {
 
@@ -143,6 +145,33 @@ class INET_API ZCoordFilter : public cPointerResultFilter
 };
 
 /**
+ * Filter that expects a packet and outputs its duration
+ */
+class INET_API PacketDurationFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+/**
+ * Filter that expects a packet and outputs its length
+ */
+class INET_API PacketLengthFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+/**
+ * Filter that expects a packet and a flow and outputs the flow specific data length
+ */
+class INET_API FlowPacketLengthFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+/**
  * Filter that expects a cMessage and outputs its source address as string
  */
 class INET_API MessageSourceAddrFilter : public cObjectResultFilter
@@ -151,10 +180,219 @@ class INET_API MessageSourceAddrFilter : public cObjectResultFilter
     virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
 };
 
+class INET_API GroupRegionsPerPacketFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+class INET_API LengthWeightedValuePerRegionFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+class INET_API MaxPerGroupFilter : public cObjectResultFilter
+{
+  protected:
+    double max = NaN;
+    cObject *identifier = nullptr;
+    simtime_t time = -1;
+
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+    virtual void finish(cComponent *component, simsignal_t signalID) override;
+};
+
+class INET_API WeighedMeanPerGroupFilter : public cObjectResultFilter
+{
+  protected:
+    double weight = NaN;
+    double sum = NaN;
+    cObject *identifier = nullptr;
+    simtime_t time = -1;
+
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+    virtual void finish(cComponent *component, simsignal_t signalID) override;
+};
+
+class INET_API WeighedSumPerGroupFilter : public cObjectResultFilter
+{
+  protected:
+    double sum = NaN;
+    cObject *identifier = nullptr;
+    simtime_t time = -1;
+
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+    virtual void finish(cComponent *component, simsignal_t signalID) override;
+};
+
+class INET_API DropWeightFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+class INET_API WeightTimesFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
 /**
- * Filter that expects a cPacket and outputs the throughput as double.
- * Throughput is computed for the *past* interval every 0.1s or 100 packets,
+ * The filter expects a packet and forwards it along with the flow names as details
+ * that were found. The filter has a flowName parameter that is read from the INI
+ * file configuration.
+ */
+class INET_API DemuxFlowFilter : public DemuxFilter
+{
+  protected:
+    cMatchExpression flowNameMatcher;
+
+  protected:
+    virtual void init(Context *ctx) override;
+
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+class INET_API ResidenceTimePerRegionFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+class INET_API LifeTimePerRegionFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+class INET_API ElapsedTimePerRegionFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+class INET_API DelayingTimePerRegionFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+class INET_API ProcessingTimePerRegionFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+class INET_API QueueingTimePerRegionFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+class INET_API PropagationTimePerRegionFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+class INET_API TransmissionTimePerRegionFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+class INET_API PacketTransmissionTimePerRegionFilter : public cObjectResultFilter
+{
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
+/**
+ * Filter that expects numbers and outputs their variance
+ */
+class INET_API VarianceFilter : public cNumericResultFilter
+{
+  protected:
+    int64_t numValues = 0;
+    double sumValues = 0;
+    double sumSquaredValues = 0;
+
+  protected:
+    virtual bool process(simtime_t& t, double& value, cObject *details) override;
+    virtual double getVariance() const;
+};
+
+/**
+ * Filter that expects numbers and outputs their standard deviation
+ */
+class INET_API StddevFilter : public VarianceFilter
+{
+  protected:
+    virtual bool process(simtime_t& t, double& value, cObject *details) override;
+};
+
+/**
+ * Filter that expects numbers and outputs their jitter (difference between subsequent values)
+ */
+class INET_API JitterFilter : public cNumericResultFilter
+{
+  protected:
+    double last = 0;
+
+  protected:
+    virtual bool process(simtime_t& t, double& value, cObject *details) override;
+};
+
+/**
+ * Filter that expects numbers and outputs their difference to their mean
+ */
+class INET_API DifferenceToMeanFilter : public cNumericResultFilter
+{
+  protected:
+    intval_t count = 0;
+    double sum = 0;
+
+  protected:
+    virtual bool process(simtime_t& t, double& value, cObject *details) override;
+};
+
+/**
+ * Filter that expects 0 or 1 and outputs the utilization as double.
+ * The value is computed for the *past* interval every 0.1s or 100 values,
  * whichever comes first.
+ *
+ * Recommended interpolation mode: backward sample-hold.
+ */
+class INET_API UtilizationFilter : public cNumericResultFilter
+{
+  protected:
+    simtime_t interval = 0.1;
+    int numValueLimit = 100;
+    bool emitIntermediateZeros = true;
+
+    simtime_t lastValue = 0;
+    simtime_t lastSignal = 0;
+    double totalValue = 0;
+    int numValues = 0;
+
+  protected:
+    virtual bool process(simtime_t& t, double& value, cObject *details) override;
+    virtual void emitUtilization(simtime_t endInterval, cObject *details);
+
+  public:
+    virtual void finish(cComponent *component, simsignal_t signalID) override;
+};
+
+/**
+ * Filter that expects a Packet or a packet length and outputs the throughput as double.
+ * Throughput is computed for the *past* interval every 0.1s or 100 packets,
+ * whichever comes first. The filter reads the interval and numLengthLimit
+ * parameters from the INI file configuration.
  *
  * Note that this filter is unsuitable for interactive use (with instrument figures,
  * for example), because zeroes for long silent periods are only emitted retroactively,
@@ -165,24 +403,27 @@ class INET_API MessageSourceAddrFilter : public cObjectResultFilter
 class INET_API ThroughputFilter : public cObjectResultFilter
 {
   protected:
-    simtime_t interval = 0.1;
-    int packetLimit = 100;
+    simtime_t interval = -1;
+    int numLengthLimit = -1;
     bool emitIntermediateZeros = true;
 
     simtime_t lastSignal = 0;
-    double bytes = 0;
-    int packets = 0;
+    double totalLength = 0;
+    int numLengths = 0;
 
   protected:
-    void emitThroughput(simtime_t endInterval, cObject *details);
+    virtual void init(Context *ctx) override;
+    virtual ThroughputFilter *clone() const override;
+    virtual void emitThroughput(simtime_t endInterval, cObject *details);
 
   public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, intval_t value, cObject *details) override;
     virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
     virtual void finish(cComponent *component, simsignal_t signalID) override;
 };
 
 /**
- * Filter that expects a cPacket and outputs the throughput as double.
+ * Filter that expects a Packet or a packet length and outputs the throughput as double.
  * Throughput is computed and emitted for the *past* interval strictly
  * every 0.1s. (To achieve that, this filter employs a timer event.)
  *
@@ -196,12 +437,13 @@ class INET_API LiveThroughputFilter : public cObjectResultFilter
   protected:
     simtime_t interval = 0.1;
     simtime_t lastSignal = 0;
-    double bytes = 0;
+    double totalLength = 0;
     cEvent *event = nullptr;
 
   public:
     ~LiveThroughputFilter();
     virtual void init(Context *ctx) override;
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, intval_t value, cObject *details) override;
     virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
     virtual void finish(cComponent *component, simsignal_t signalID) override;
     virtual void timerExpired();

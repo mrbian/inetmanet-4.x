@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2005 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -71,6 +73,25 @@ std::string NetworkInterfaceChangeDetails::str() const
     return out.str();
 }
 
+bool NetworkInterface::LocalGate::deliver(cMessage *msg, const SendOptions &options, simtime_t t) {
+    if (networkInterface->isDown()) {
+        if (networkInterface->upperLayerIn == this) {
+            auto packet = check_and_cast<Packet*>(msg);
+            EV_WARN << "Network interface is down, dropping packet" << EV_FIELD(packet) << EV_ENDL;
+            PacketDropDetails details;
+            details.setReason(INTERFACE_DOWN);
+            networkInterface->emit(packetDroppedSignal, packet, &details);
+        }
+        else
+            // TODO remove call to base class deliver: breaks fingerprint tests
+            // EV_WARN << "Network interface is down, ignoring physical signal" << EV_FIELD(signal, msg) << EV_ENDL;
+            return cGate::deliver(msg, options, t);
+        return false;
+    }
+    else
+        return cGate::deliver(msg, options, t);
+}
+
 NetworkInterface::NetworkInterface()
 {
 }
@@ -95,6 +116,7 @@ void NetworkInterface::clearProtocolDataSet()
 void NetworkInterface::initialize(int stage)
 {
     if (stage == INITSTAGE_LOCAL) {
+        upperLayerIn = gate("upperLayerIn");
         upperLayerOut = gate("upperLayerOut");
         subscribe(POST_MODEL_CHANGE, this);
         if (hasGate("phys$i")) {
@@ -109,7 +131,8 @@ void NetworkInterface::initialize(int stage)
             if (txTransmissionChannel != nullptr)
                 txTransmissionChannel->subscribe(POST_MODEL_CHANGE, this);
         }
-        consumer = findConnectedModule<IPassivePacketSink>(upperLayerOut);
+        upperLayerInConsumer = findConnectedModule<IPassivePacketSink>(upperLayerIn, 1);
+        upperLayerOutConsumer = findConnectedModule<IPassivePacketSink>(upperLayerOut, 1);
         interfaceTable.reference(this, "interfaceTableModule", false);
         setInterfaceName(utils::stripnonalnum(getFullName()).c_str());
         setCarrier(computeCarrier());
@@ -174,8 +197,74 @@ void NetworkInterface::arrived(cMessage *message, cGate *gate, const SendOptions
 void NetworkInterface::pushPacket(Packet *packet, cGate *gate)
 {
     Enter_Method("pushPacket");
-    packet->addTagIfAbsent<InterfaceInd>()->setInterfaceId(interfaceId);
-    consumer->pushPacket(packet, upperLayerOut->getPathEndGate());
+    take(packet);
+    if (gate == upperLayerIn) {
+        if (isDown()) {
+            EV_WARN << "Network interface is down, dropping packet" << EV_FIELD(packet) << EV_ENDL;
+            dropPacket(packet, INTERFACE_DOWN);
+        }
+        else if (!hasCarrier()) {
+            EV_WARN << "Network interface has no carrier, dropping packet" << EV_FIELD(packet) << EV_ENDL;
+            dropPacket(packet, NO_CARRIER);
+        }
+        else
+            pushOrSendPacket(packet, upperLayerIn, upperLayerInConsumer);
+    }
+    else if (gate == upperLayerOut) {
+        packet->addTagIfAbsent<InterfaceInd>()->setInterfaceId(interfaceId);
+        pushOrSendPacket(packet, upperLayerOut, upperLayerOutConsumer);
+    }
+    else
+        throw cRuntimeError("Unknown gate: %s", gate->getName());
+}
+
+void NetworkInterface::pushPacketStart(Packet *packet, cGate *gate, bps datarate)
+{
+    Enter_Method("pushPacket");
+    take(packet);
+    if (gate == upperLayerIn) {
+        if (isDown()) {
+            EV_WARN << "Network interface is down, dropping packet" << EV_FIELD(packet) << EV_ENDL;
+            dropPacket(packet, INTERFACE_DOWN);
+        }
+        else if (!hasCarrier()) {
+            EV_WARN << "Network interface has no carrier, dropping packet" << EV_FIELD(packet) << EV_ENDL;
+            dropPacket(packet, NO_CARRIER);
+        }
+        else
+            pushOrSendPacketStart(packet, upperLayerIn, upperLayerInConsumer, datarate, packet->getTransmissionId());
+    }
+    else if (gate == upperLayerOut) {
+        packet->addTagIfAbsent<InterfaceInd>()->setInterfaceId(interfaceId);
+        pushOrSendPacketStart(packet, upperLayerOut, upperLayerOutConsumer, datarate, packet->getTransmissionId());
+    }
+    else
+        throw cRuntimeError("Unknown gate: %s", gate->getName());
+}
+
+
+void NetworkInterface::pushPacketEnd(Packet *packet, cGate *gate)
+{
+    Enter_Method("pushPacketEnd");
+    take(packet);
+    if (gate == upperLayerIn) {
+        if (isDown()) {
+            EV_WARN << "Network interface is down, dropping packet" << EV_FIELD(packet) << EV_ENDL;
+            dropPacket(packet, INTERFACE_DOWN);
+        }
+        else if (!hasCarrier()) {
+            EV_WARN << "Network interface has no carrier, dropping packet" << EV_FIELD(packet) << EV_ENDL;
+            dropPacket(packet, NO_CARRIER);
+        }
+        else
+            pushOrSendPacketEnd(packet, upperLayerIn, upperLayerInConsumer, packet->getTransmissionId());
+    }
+    else if (gate == upperLayerOut) {
+        packet->addTagIfAbsent<InterfaceInd>()->setInterfaceId(interfaceId);
+        pushOrSendPacketEnd(packet, upperLayerOut, upperLayerOutConsumer, packet->getTransmissionId());
+    }
+    else
+        throw cRuntimeError("Unknown gate: %s", gate->getName());
 }
 
 void NetworkInterface::refreshDisplay() const
@@ -362,6 +451,10 @@ const L3Address NetworkInterface::getNetworkAddress() const
     if (auto nextHopData = findProtocolData<NextHopInterfaceData>())
         return nextHopData->getAddress();
 #endif // ifdef INET_WITH_NEXTHOP
+    if (hasModuleIdAddress)
+        return getModuleIdAddress();
+    if (hasModulePathAddress)
+        return getModulePathAddress();
     return L3Address();
 }
 
@@ -390,14 +483,25 @@ bool NetworkInterface::hasNetworkAddress(const L3Address& address) const
     case L3Address::MAC: {
         return getMacAddress() == address.toMac();
     }
-    case L3Address::MODULEID:
+    case L3Address::MODULEID: {
+#ifdef INET_WITH_NEXTHOP
+        auto nextHopData = findProtocolData<NextHopInterfaceData>();
+        if (nextHopData != nullptr && nextHopData->getAddress() == address)
+            return true;
+#endif // ifdef INET_WITH_NEXTHOP
+        if (hasModuleIdAddress)
+            return getModuleIdAddress() == address.toModuleId();
+        return false;
+    }
     case L3Address::MODULEPATH: {
 #ifdef INET_WITH_NEXTHOP
         auto nextHopData = findProtocolData<NextHopInterfaceData>();
-        return nextHopData != nullptr && nextHopData->getAddress() == address;
-#else
-        return false;
+        if (nextHopData != nullptr && nextHopData->getAddress() == address)
+            return true;
 #endif // ifdef INET_WITH_NEXTHOP
+        if (hasModulePathAddress)
+            return getModulePathAddress() == address.toModulePath();
+        return false;
     }
     default:
         break;

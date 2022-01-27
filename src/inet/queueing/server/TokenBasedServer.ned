@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -32,13 +34,14 @@ simple TokenBasedServer extends PacketServerBase like IPacketServer
         double initialNumTokens = default(0); // initial number of tokens
         double maxNumTokens = default(nan); // maximum number of tokens
         volatile double tokenConsumptionPerPacket = default(1); // how many tokens are consumed per processed packet
-        volatile double tokenConsumptionPerBit = default(0); // how may tokens are consumed per processed bit
+        volatile double tokenConsumptionPerBit = default(0); // how many tokens are consumed per processed bit
         displayStringTextFormat = default("contains %n tk\nserved %p pk (%l)"); // determines display string text above the submodule
         @signal[tokensAdded](type=double);
         @signal[tokensRemoved](type=double);
         @signal[tokensDepleted](type=double);
-        @statistic[tokensAdded](title="tokens added"; record=sum; interpolationmode=none);
-        @statistic[tokensRemoved](title="tokens removed"; record=sum; interpolationmode=none);
-        @statistic[tokensDepleted](title="tokens depleted"; record=count; interpolationmode=none);
+        @statistic[addedTokens](title="added tokens"; source=tokensAdded; record=sum; unit=tk; interpolationmode=none);
+        @statistic[removedTokens](title="removed tokens"; source=tokensRemoved; record=sum; unit=tk; interpolationmode=none);
+        @statistic[numTokensDepleted](title="number of times tokens are depleted"; source=tokensDepleted; record=count; unit=tk; interpolationmode=none);
+        @statistic[numTokens](title="number of tokens"; source=sum(tokensAdded) - sum(tokensRemoved); record=vector; unit=tk; interpolationmode=sample-hold);
         @class(TokenBasedServer);
 }

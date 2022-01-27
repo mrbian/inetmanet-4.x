@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -27,14 +29,14 @@ void StreamSplitter::initialize(int stage)
 {
     PacketDuplicatorBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL)
-        streamMapping = check_and_cast<cValueMap *>(par("streamMapping").objectValue());
+        mapping = check_and_cast<cValueMap *>(par("mapping").objectValue());
 }
 
 void StreamSplitter::handleParameterChange(const char *name)
 {
     if (name != nullptr) {
-        if (!strcmp(name, "streamMapping"))
-            streamMapping = check_and_cast<cValueMap *>(par("streamMapping").objectValue());
+        if (!strcmp(name, "mapping"))
+            mapping = check_and_cast<cValueMap *>(par("mapping").objectValue());
    }
 }
 
@@ -53,17 +55,23 @@ void StreamSplitter::pushPacket(Packet *packet, cGate *gate)
     Enter_Method("pushPacket");
     take(packet);
     auto streamReq = packet->findTag<StreamReq>();
-    auto streamName = streamReq != nullptr ? streamReq->getStreamName() : "";
-    if (streamMapping->containsKey(streamName)) {
-        cValueArray *outputStreams = check_and_cast<cValueArray *>(streamMapping->get(streamName).objectValue());
-        for (int i = 0; i < outputStreams->size(); i++) {
-            const char *splitStreamName = outputStreams->get(i).stringValue();
-            auto duplicate = packet->dup();
-            duplicate->addTagIfAbsent<StreamReq>()->setStreamName(splitStreamName);
-            pushOrSendPacket(duplicate, outputGate, consumer);
+    if (streamReq != nullptr) {
+        auto streamName = streamReq->getStreamName();
+        if (mapping->containsKey(streamName)) {
+            cValueArray *outputStreams = check_and_cast<cValueArray *>(mapping->get(streamName).objectValue());
+            for (int i = 0; i < outputStreams->size(); i++) {
+                const char *splitStreamName = outputStreams->get(i).stringValue();
+                auto duplicate = packet->dup();
+                duplicate->addTagIfAbsent<StreamReq>()->setStreamName(splitStreamName);
+                pushOrSendPacket(duplicate, outputGate, consumer);
+            }
+            handlePacketProcessed(packet);
+            delete packet;
         }
-        handlePacketProcessed(packet);
-        delete packet;
+        else {
+            handlePacketProcessed(packet);
+            pushOrSendPacket(packet, outputGate, consumer);
+        }
     }
     else {
         handlePacketProcessed(packet);
@@ -76,8 +84,8 @@ int StreamSplitter::getNumPacketDuplicates(Packet *packet)
 {
     auto streamReq = packet->findTag<StreamReq>();
     auto streamName = streamReq != nullptr ? streamReq->getStreamName() : "";
-    if (streamMapping->containsKey(streamName)) {
-        cValueArray *outputStreams = check_and_cast<cValueArray *>(streamMapping->get(streamName).objectValue());
+    if (mapping->containsKey(streamName)) {
+        cValueArray *outputStreams = check_and_cast<cValueArray *>(mapping->get(streamName).objectValue());
         return outputStreams->size() - 1;
     }
     else

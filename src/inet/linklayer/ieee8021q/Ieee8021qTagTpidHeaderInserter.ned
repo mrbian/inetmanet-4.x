@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -25,6 +27,7 @@ simple Ieee8021qTagTpidHeaderInserter extends PacketFlowBase like IIeee8021qTagT
         string vlanTagType @enum("c","s") = default("c");
         string nextProtocol = default("ethernetmac");
         int defaultVlanId = default(-1);
+        int defaultPcp = default(-1);
         int defaultUserPriority = default(-1);
         @class(Ieee8021qTagTpidHeaderInserter);
         @display("i=block/inserter");

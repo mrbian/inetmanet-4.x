@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -54,7 +56,9 @@ void StreamThroughReceiver::receivePacketStart(cPacket *cpacket, cGate *gate, bp
 {
     ASSERT(rxSignal == nullptr);
     take(cpacket);
-    rxSignal = check_and_cast<Signal *>(cpacket);
+    auto signal = check_and_cast<Signal *>(cpacket);
+    EV_INFO << "Receiving signal start from channel" << EV_FIELD(signal) << EV_ENDL;
+    rxSignal = signal;
     emit(receptionStartedSignal, rxSignal);
     auto packet = decodePacket(rxSignal);
     pushOrSendPacketStart(packet, outputGate, consumer, datarate, rxSignal->getTransmissionId());
@@ -64,6 +68,7 @@ void StreamThroughReceiver::receivePacketProgress(cPacket *cpacket, cGate *gate,
 {
     take(cpacket);
     auto signal = check_and_cast<Signal *>(cpacket);
+    EV_INFO << "Receiving signal start from channel" << EV_FIELD(signal) << EV_ENDL;
     if (rxSignal) {
         delete rxSignal;
         rxSignal = signal;
@@ -78,6 +83,7 @@ void StreamThroughReceiver::receivePacketEnd(cPacket *cpacket, cGate *gate, bps 
 {
     take(cpacket);
     auto signal = check_and_cast<Signal *>(cpacket);
+    EV_INFO << "Receiving signal start from channel" << EV_FIELD(signal) << EV_ENDL;
     emit(receptionEndedSignal, signal);
     if (rxSignal) {
         delete rxSignal;

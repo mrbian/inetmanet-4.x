@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2015 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -33,7 +35,7 @@ TlvOptionBase *TlvOptions::dropTlvOption(TlvOptionBase *option)
 {
     for (size_t i = 0; i < tlvOption_arraysize; i++) {
         if (tlvOption[i] == option) {
-            dropTlvOption(i);
+            removeTlvOption(i);
             eraseTlvOption(i);
             return option;
         }
@@ -45,7 +47,7 @@ void TlvOptions::deleteOptionByType(int type, bool firstOnly)
 {
     for (size_t i = 0; i < tlvOption_arraysize;) {
         if (tlvOption[i] && tlvOption[i]->getType() == type) {
-            dropTlvOption(i);
+            removeTlvOption(i);
             eraseTlvOption(i);
             if (firstOnly)
                 break;

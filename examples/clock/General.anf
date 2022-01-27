@@ -8,7 +8,7 @@
         <chart icon="icons/full/obj/linechart.png" id="12" name="Clock time" template="linechart_native" type="LINE">
             <script>
                 <![CDATA[import math
-from omnetpp.scave import results, chart, utils, plot, vectorops as ops
+from omnetpp.scave import results, chart, utils, ideplot, vectorops as ops
 
 # get chart properties
 props = chart.get_properties()
@@ -23,7 +23,7 @@ end_time = float(props["vector_end_time"] or math.inf)
 df = results.get_vectors(filter_expression, include_attrs=True, include_itervars=True, start_time=start_time, end_time=end_time)
 
 if df.empty:
-    plot.set_warning("The result filter returned no data.")
+    ideplot.set_warning("The result filter returned no data.")
     exit(1)
 
 # apply vector operations
@@ -555,7 +555,7 @@ utils.export_data_if_needed(df, props)
             <property name="Legend.Border" value="false"/>
             <property name="title" value=""/>
             <property name="Plot.Title.Font" value="Arial-regular-10"/>
-            <property name="vector_operations" value="apply:lineartrend, a=-1 # Add a linear trend to the values, with the given steepness"/>
+            <property name="vector_operations" value="apply:lineartrend(-1)"/>
             <property name="cycle_seed" value="0"/>
             <property name="Axis.Title.Font" value="Arial-regular-8"/>
             <property name="yaxis_log" value="false"/>
@@ -590,7 +590,7 @@ utils.export_data_if_needed(df, props)
         <chart icon="icons/full/obj/linechart.png" id="13" name="Oscillator drift rate" template="linechart_native" type="LINE">
             <script>
                 <![CDATA[import math
-from omnetpp.scave import results, chart, utils, plot, vectorops as ops
+from omnetpp.scave import results, chart, utils, ideplot, vectorops as ops
 
 # get chart properties
 props = chart.get_properties()
@@ -605,7 +605,7 @@ end_time = float(props["vector_end_time"] or math.inf)
 df = results.get_vectors(filter_expression, include_attrs=True, include_itervars=True, start_time=start_time, end_time=end_time)
 
 if df.empty:
-    plot.set_warning("The result filter returned no data.")
+    ideplot.set_warning("The result filter returned no data.")
     exit(1)
 
 # apply vector operations

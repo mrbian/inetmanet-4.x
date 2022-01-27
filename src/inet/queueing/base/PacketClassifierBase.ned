@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -32,7 +34,12 @@ simple PacketClassifierBase extends PacketProcessorBase
         @class(PacketClassifierBase);
         @display("i=block/classifier");
         @signal[packetPushed](type=inet::Packet);
-        @statistic[packetPushed](title="packets pushed"; record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
+        // the statistical value is the classified packet
+        @statistic[packets](title="packets"; source=packetPushed; record=count; unit=pk);
+        // the statistical value is the length of the classified packet
+        @statistic[packetLengths](title="packet lengths"; source=packetLength(packetPushed); record=sum,histogram,vector; unit=b; interpolationmode=none);
+        // the statistical value is the data rate of the classified packets
+        @statistic[dataRate](title="data rate"; source=throughput(packetPushed); record=vector; unit=bps; interpolationmode=linear);
     gates:
         input in;
         output out[];

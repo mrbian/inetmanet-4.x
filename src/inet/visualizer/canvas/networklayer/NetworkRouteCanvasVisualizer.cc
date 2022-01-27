@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -16,6 +18,8 @@
 //
 
 #include "inet/visualizer/canvas/networklayer/NetworkRouteCanvasVisualizer.h"
+
+#include "inet/protocolelement/common/PacketEmitter.h"
 
 #ifdef INET_WITH_ETHERNET
 #include "inet/linklayer/ethernet/common/MacRelayUnit.h"
@@ -57,6 +61,10 @@ bool NetworkRouteCanvasVisualizer::isPathEnd(cModule *module) const
 
 bool NetworkRouteCanvasVisualizer::isPathElement(cModule *module) const
 {
+    // KLUDGE: for visualizing when using the layered Ethernet model
+    if (dynamic_cast<PacketEmitter *>(module) != nullptr)
+        return true;
+
 #ifdef INET_WITH_ETHERNET
     if (dynamic_cast<MacRelayUnit *>(module) != nullptr)
         return true;

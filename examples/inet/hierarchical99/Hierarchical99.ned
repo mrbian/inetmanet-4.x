@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2012 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -17,7 +19,7 @@
 
 package inet.examples.inet.hierarchical99;
 
-import inet.networklayer.configurator.contract.INetworkConfigurator;
+import inet.networklayer.configurator.contract.IL3NetworkConfigurator;
 import inet.networklayer.ipv4.RoutingTableRecorder;
 import inet.node.ethernet.Eth100M;
 import inet.node.ethernet.Eth10G;
@@ -106,7 +108,7 @@ network Hierarchical99
         recorder: RoutingTableRecorder {
             @display("p=100,200;is=s");
         }
-        networkConfigurator: <> like INetworkConfigurator {
+        networkConfigurator: <> like IL3NetworkConfigurator {
             @display("p=100,100;is=s");
         }
         area11: Area {

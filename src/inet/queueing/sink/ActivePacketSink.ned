@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -17,14 +19,14 @@
 
 package inet.queueing.sink;
 
-import inet.queueing.base.PacketSinkBase;
+import inet.queueing.base.ActivePacketSinkBase;
 import inet.queueing.contract.IActivePacketSink;
 
 //
 // This module is an active packet sink which pulls packets from the connected
 // packet provider. All pulled packets are counted and deleted.
 //
-simple ActivePacketSink extends PacketSinkBase like IActivePacketSink
+simple ActivePacketSink extends ActivePacketSinkBase like IActivePacketSink
 {
     parameters:
         string clockModule = default(""); // relative path of a module that implements IClock; optional

@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -40,7 +42,7 @@ module EthernetLayer like IEthernetLayer
         socketTable: EthernetSocketTable if hasSocketSupport {
             @display("p=100,100");
         }
-        socketCommandProcessor: <default(hasSocketSupport ? "EthernetSocketCommandProcessor" : "OmittedPacketFlow")> like IPacketFlow {
+        socketCommandProcessor: <default(hasSocketSupport ? "EthernetSocketCommandProcessor" : "")> like IPacketFlow {
             @display("p=300,100");
         }
         macHeaderInserter: <default("EthernetMacHeaderInserter")> like IProtocolHeaderInserter {
@@ -49,7 +51,7 @@ module EthernetLayer like IEthernetLayer
         paddingInserter: <default("PaddingInserter")> like IPacketFlow {
             @display("p=300,300");
         }
-        socketPacketProcessor: <default(hasSocketSupport ? "EthernetSocketPacketProcessor" : "OmittedPacketFlow")> like IPacketFlow {
+        socketPacketProcessor: <default(hasSocketSupport ? "EthernetSocketPacketProcessor" : "")> like IPacketFlow {
             @display("p=600,100");
         }
         macHeaderChecker: <default("EthernetMacHeaderChecker")> like IProtocolHeaderChecker {

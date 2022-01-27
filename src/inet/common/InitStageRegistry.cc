@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2013 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -51,6 +53,7 @@ int InitStageRegistry::getNumInitStages()
 
 void InitStageRegistry::assignInitStageNumbers()
 {
+    EV_DEBUG << "Assigning initialization stage numbers" << EV_ENDL;
     for (auto stage : stages) {
         stage->number = -1;
         stage->followingStages.clear();
@@ -84,7 +87,7 @@ void InitStageRegistry::assignInitStageNumbers()
     EV_STATICCONTEXT;
     for (auto stage : stages)
         EV_DEBUG << "Initialization stage: " << stage->name << " = " << stage->number << std::endl;
-    EV_DEBUG << "Total initialization stages: " << numInitStages << std::endl;
+    EV_DEBUG << "Total number of initialization stages: " << numInitStages << std::endl;
 }
 
 } // namespace inet

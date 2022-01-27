@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -18,8 +20,7 @@
 package inet.queueing.common;
 
 import inet.queueing.base.PacketProcessorBase;
-import inet.queueing.contract.IActivePacketSource;
-import inet.queueing.contract.IPassivePacketSink;
+import inet.queueing.contract.IPacketDelayer;
 
 //
 // This module connects one packet producer to one packet consumer. It can be
@@ -28,7 +29,7 @@ import inet.queueing.contract.IPassivePacketSink;
 // order of packets may change if the delay parameter is configured to be a
 // distribution.
 //
-simple PacketDelayer extends PacketProcessorBase like IPassivePacketSink, IActivePacketSource
+simple PacketDelayer extends PacketProcessorBase like IPacketDelayer
 {
     parameters:
         string clockModule = default(""); // relative path of a module that implements IClock; optional

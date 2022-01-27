@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -50,6 +52,18 @@ void PacketClassifierBase::handleMessage(cMessage *message)
 {
     auto packet = check_and_cast<Packet *>(message);
     pushPacket(packet, packet->getArrivalGate());
+}
+
+void PacketClassifierBase::mapRegistrationForwardingGates(cGate *gate, std::function<void(cGate *)> f)
+{
+    if (gate == inputGate) {
+        for (auto outputGate : outputGates)
+            f(outputGate);
+    }
+    else if (std::find(outputGates.begin(), outputGates.end(), gate) != outputGates.end())
+        f(inputGate);
+    else
+        throw cRuntimeError("Unknown gate");
 }
 
 int PacketClassifierBase::callClassifyPacket(Packet *packet) const

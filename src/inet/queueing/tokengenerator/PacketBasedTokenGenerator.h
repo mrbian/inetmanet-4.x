@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -20,7 +22,7 @@
 
 #include "inet/common/ModuleRefByPar.h"
 #include "inet/queueing/base/PassivePacketSinkBase.h"
-#include "inet/queueing/server/TokenBasedServer.h"
+#include "inet/queueing/contract/ITokenStorage.h"
 
 namespace inet {
 namespace queueing {
@@ -33,7 +35,7 @@ class INET_API PacketBasedTokenGenerator : public PassivePacketSinkBase, public 
 
     cGate *inputGate = nullptr;
     opp_component_ptr<IActivePacketSource> producer;
-    ModuleRefByPar<TokenBasedServer> server;
+    ModuleRefByPar<ITokenStorage> storage;
 
     int numTokensGenerated = -1;
 
@@ -44,8 +46,8 @@ class INET_API PacketBasedTokenGenerator : public PassivePacketSinkBase, public 
     virtual bool supportsPacketPushing(cGate *gate) const override { return true; }
     virtual bool supportsPacketPulling(cGate *gate) const override { return false; }
 
-    virtual bool canPushSomePacket(cGate *gate) const override { return server->getNumTokens() == 0; }
-    virtual bool canPushPacket(Packet *packet, cGate *gate) const override { return server->getNumTokens() == 0; }
+    virtual bool canPushSomePacket(cGate *gate) const override { return storage->getNumTokens() == 0; }
+    virtual bool canPushPacket(Packet *packet, cGate *gate) const override { return storage->getNumTokens() == 0; }
     virtual void pushPacket(Packet *packet, cGate *gate) override;
 
     virtual const char *resolveDirective(char directive) const override;

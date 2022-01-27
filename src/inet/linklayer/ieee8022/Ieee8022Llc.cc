@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -172,11 +174,12 @@ void Ieee8022Llc::processPacketFromMac(Packet *packet)
 
 void Ieee8022Llc::encapsulate(Packet *frame)
 {
+    const auto& sapReq = frame->findTag<Ieee802SapReq>();
     const auto& protocolTag = frame->findTag<PacketProtocolTag>();
     const Protocol *protocol = protocolTag ? protocolTag->getProtocol() : nullptr;
     int ethType = -1;
     int snapOui = -1;
-    if (protocol) {
+    if (sapReq == nullptr && protocol != nullptr) {
         ethType = ProtocolGroup::ethertype.findProtocolNumber(protocol);
         if (ethType == -1)
             snapOui = ProtocolGroup::snapOui.findProtocolNumber(protocol);
@@ -196,13 +199,12 @@ void Ieee8022Llc::encapsulate(Packet *frame)
     else {
         const auto& llcHeader = makeShared<Ieee8022LlcHeader>();
         int sapData = ProtocolGroup::ieee8022protocol.findProtocolNumber(protocol);
-        if (sapData != -1) {
+        if (sapReq == nullptr && sapData != -1) {
             llcHeader->setSsap((sapData >> 8) & 0xFF);
             llcHeader->setDsap(sapData & 0xFF);
             llcHeader->setControl(3);
         }
         else {
-            auto sapReq = frame->getTag<Ieee802SapReq>();
             llcHeader->setSsap(sapReq->getSsap());
             llcHeader->setDsap(sapReq->getDsap());
             llcHeader->setControl(3); // TODO get from sapTag

@@ -1,9 +1,11 @@
 //
 // Copyright (C) 2006 Andras Babos and Andras Varga
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -230,6 +232,13 @@ class Ospfv2DatabaseDescriptionPacket extends Ospfv2Packet
     unsigned long ddSequenceNumber;
     Ospfv2LsaHeader lsaHeaders[];     //TODO
 }
+
+cplusplus(Ospfv2DatabaseDescriptionPacket) {{
+#if (OMNETPP_BUILDNUM < 1530)
+  public:
+    void appendLsaHeaders(const Ospfv2LsaHeader& lsaHeaders) { insertLsaHeaders(lsaHeaders); }
+#endif
+}}
 
 struct Ospfv2LsaRequest
 {

@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -34,13 +36,10 @@ void ContentBasedLabeler::initialize(int stage)
 {
     PacketLabelerBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        cStringTokenizer packetFiltersTokenizer(par("packetFilters"), ";");
-        cStringTokenizer packetDataFiltersTokenizer(par("packetDataFilters"), ";");
-        while (packetFiltersTokenizer.hasMoreTokens()) {
-            auto packetFilter = packetFiltersTokenizer.nextToken();
-            auto packetDataFilter = packetDataFiltersTokenizer.nextToken();
+        auto packetFilters = check_and_cast<cValueArray *>(par("packetFilters").objectValue());
+        for (int i = 0; i < packetFilters->size(); i++) {
             auto filter = new PacketFilter();
-            filter->setPattern(packetFilter, packetDataFilter);
+            filter->setExpression((cValue&)packetFilters->get(i));
             filters.push_back(filter);
         }
     }
@@ -53,7 +52,7 @@ void ContentBasedLabeler::markPacket(Packet *packet)
         auto filter = filters[i];
         if (filter->matches(packet)) {
             EV_INFO << "Marking packet" << EV_FIELD(label, labels[i]) << EV_FIELD(packet) << EV_ENDL;
-            labelsTag->insertLabels(labels[i].c_str());
+            labelsTag->appendLabels(labels[i].c_str());
         }
     }
 }

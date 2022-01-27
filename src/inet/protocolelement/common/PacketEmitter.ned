@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -23,8 +25,7 @@ import inet.queueing.contract.IPacketFlow;
 simple PacketEmitter extends PacketFlowBase like IPacketFlow
 {
     parameters:
-        string packetFilter = default("*"); // which packets are considered, matches all packets by default
-        string packetDataFilter = default("*"); // which packets are considered based on the data they contain, matches all packets by default
+        object packetFilter = default("*"); // which packets are considered, matches all packets by default
         string direction @enum("undefined", "inbound", "outbound") = default("undefined");
         string signalName;
         @class(PacketEmitter);

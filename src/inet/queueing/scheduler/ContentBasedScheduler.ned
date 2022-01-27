@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -31,7 +33,6 @@ simple ContentBasedScheduler extends PacketSchedulerBase like IPacketScheduler
 {
     parameters:
         int defaultGateIndex = default(0); // default gate index if no matching labels are found
-        string packetFilters; // semicolon separated list of packet filter expressions (e.g. ping-*;udp-*), matches all packets by default
-        string packetDataFilters; // semicolon separated list of packet data filter expressions (e.g. inet::Ipv4Header and srcAddress = "10.0.0.1"), matches all packets by default
+        object packetFilters; // array of packet filter expressions
         @class(ContentBasedScheduler);
 }

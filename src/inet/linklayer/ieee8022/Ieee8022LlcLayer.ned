@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -37,7 +39,7 @@ module Ieee8022LlcLayer like IIeee8022LlcLayer
         socketTable: Ieee8022LlcSocketTable if hasSocketSupport {
             @display("p=100,100");
         }
-        socketCommandProcessor: <default(hasSocketSupport ? "Ieee8022LlcSocketCommandProcessor" : "OmittedPacketFlow")> like IPacketFlow {
+        socketCommandProcessor: <default(hasSocketSupport ? "Ieee8022LlcSocketCommandProcessor" : "")> like IPacketFlow {
             @display("p=400,100");
         }
         classifier: <default("PacketClassifier")> like IPacketClassifier {
@@ -55,7 +57,7 @@ module Ieee8022LlcLayer like IIeee8022LlcLayer
         m2: PacketMultiplexer {
             @display("p=400,600");
         }
-        socketPacketProcessor: <default(hasSocketSupport ? "Ieee8022LlcSocketPacketProcessor" : "OmittedPacketFlow")> like IPacketFlow {
+        socketPacketProcessor: <default(hasSocketSupport ? "Ieee8022LlcSocketPacketProcessor" : "")> like IPacketFlow {
             @display("p=700,100");
         }
         protocolChecker: ProtocolChecker {

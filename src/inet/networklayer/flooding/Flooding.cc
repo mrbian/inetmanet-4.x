@@ -1,4 +1,6 @@
 //
+// SPDX-License-Identifier: GPL-2.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
@@ -71,13 +73,13 @@ void Flooding::initialize(int stage)
                << " bcDelTime = " << bcDelTime << endl;
         }
     }
+    else if (stage == INITSTAGE_NETWORK_INTERFACE_CONFIGURATION) {
+        for (int i = 0; i < interfaceTable->getNumInterfaces(); i++)
+            interfaceTable->getInterface(i)->setHasModulePathAddress(true);
+    }
     else if (stage == INITSTAGE_NETWORK_LAYER) {
-        auto ie = interfaceTable->findFirstNonLoopbackInterface();
-        if (ie != nullptr) {
+        if (auto ie = interfaceTable->findFirstNonLoopbackInterface())
             myNetwAddr = ie->getNetworkAddress();
-            if (myNetwAddr.isUnspecified())
-                myNetwAddr = ie->getModulePathAddress();
-        }
         else
             throw cRuntimeError("No non-loopback interface found!");
     }

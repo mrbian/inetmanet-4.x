@@ -5,9 +5,11 @@
 // Copyright (C) 2009 Thomas Reschka
 // Copyright (C) 2011 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -57,7 +59,7 @@ void PcapRecorder::initialize()
     snaplen = this->par("snaplen");
     dumpBadFrames = par("dumpBadFrames");
     signalList.clear();
-    packetFilter.setPattern(par("packetFilter"), par("packetDataFilter"));
+    packetFilter.setExpression(par("packetFilter").objectValue());
 
     {
         cStringTokenizer signalTokenizer(par("sendingSignalNames"));
@@ -193,8 +195,6 @@ void PcapRecorder::recordPacket(const cPacket *cpacket, Direction direction, cCo
         if (verbose)
             EV_DEBUG << "Dumping packet" << EV_FIELD(packet, packetPrinter.printPacketToString(const_cast<Packet *>(packet), "%i")) << EV_ENDL;
         if (recordPcap && packetFilter.matches(packet) && (dumpBadFrames || !packet->hasBitError())) {
-            auto protocol = packet->getTag<PacketProtocolTag>()->getProtocol();
-
             // get Direction
             if (direction == DIRECTION_UNDEFINED) {
                 if (auto directionTag = packet->findTag<DirectionTag>())
@@ -220,7 +220,9 @@ void PcapRecorder::recordPacket(const cPacket *cpacket, Direction direction, cCo
                 }
             }
 
-            if (contains(dumpProtocols, protocol)) {
+            const auto& packetProtocolTag = packet->getTag<PacketProtocolTag>();
+            auto protocol = packetProtocolTag->getProtocol();
+            if (packetProtocolTag->getFrontOffset() == b(0) && packetProtocolTag->getBackOffset() == b(0) && contains(dumpProtocols, protocol)) {
                 auto pcapLinkType = protocolToLinkType(protocol);
                 if (pcapLinkType == LINKTYPE_INVALID)
                     throw cRuntimeError("Cannot determine the PCAP link type from protocol '%s'", protocol->getName());

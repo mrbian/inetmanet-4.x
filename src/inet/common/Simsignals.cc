@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2005 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -104,7 +106,18 @@ simsignal_t packetSentSignal = cComponent::registerSignal("packetSent");
 simsignal_t packetReceivedSignal = cComponent::registerSignal("packetReceived");
 
 simsignal_t packetPushedSignal = cComponent::registerSignal("packetPushed");
+simsignal_t packetPushedInSignal = cComponent::registerSignal("packetPushedIn");
+simsignal_t packetPushedOutSignal = cComponent::registerSignal("packetPushedOut");
+simsignal_t packetPushStartedSignal = cComponent::registerSignal("packetPushStarted");
+simsignal_t packetPushEndedSignal = cComponent::registerSignal("packetPushEnded");
+
 simsignal_t packetPulledSignal = cComponent::registerSignal("packetPulled");
+simsignal_t packetPulledInSignal = cComponent::registerSignal("packetPulledIn");
+simsignal_t packetPulledOutSignal = cComponent::registerSignal("packetPulledOut");
+simsignal_t packetPullStartedSignal = cComponent::registerSignal("packetPullStarted");
+simsignal_t packetPullEndedSignal = cComponent::registerSignal("packetPullEnded");
+
+simsignal_t packetFilteredSignal = cComponent::registerSignal("packetFiltered");
 
 simsignal_t packetFlowStartedSignal = cComponent::registerSignal("packetFlowStarted");
 simsignal_t packetFlowEndedSignal = cComponent::registerSignal("packetFlowEnded");
@@ -113,6 +126,11 @@ simsignal_t transmissionStartedSignal = cComponent::registerSignal("transmission
 simsignal_t transmissionEndedSignal = cComponent::registerSignal("transmissionEnded");
 simsignal_t receptionStartedSignal = cComponent::registerSignal("receptionStarted");
 simsignal_t receptionEndedSignal = cComponent::registerSignal("receptionEnded");
+
+simsignal_t tokensChangedSignal = cComponent::registerSignal("tokensChanged");
+simsignal_t tokensAddedSignal = cComponent::registerSignal("tokensAdded");
+simsignal_t tokensRemovedSignal = cComponent::registerSignal("tokensRemoved");
+simsignal_t tokensDepletedSignal = cComponent::registerSignal("tokensDepleted");
 
 void printSignalBanner(simsignal_t signalID, const cObject *obj, const cObject *details)
 {

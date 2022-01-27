@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -52,7 +54,7 @@ static Coord intersectLines(const LineSegment& segment1, const LineSegment& segm
     return Coord(x, y, 0);
 }
 
-bool isPointOnSegment(const LineSegment& segment, const Coord& point)
+static bool isPointOnSegment(const LineSegment& segment, const Coord& point)
 {
     auto& p1 = segment.getPoint1();
     auto& p2 = segment.getPoint2();

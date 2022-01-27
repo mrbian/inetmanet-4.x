@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -111,8 +113,8 @@ bool PeriodicGate::canPacketFlowThrough(Packet *packet) const
     else if (packet == nullptr)
         return false;
     else {
-        clocktime_t flowEndTime = getClockTime() + s(packet->getTotalLength() / bitrate).get();
-        return flowEndTime <= getArrivalClockTime(changeTimer) - SIMTIME_AS_CLOCKTIME(guardBand);
+        clocktime_t flowEndTime = getClockTime() + s((packet->getDataLength() + extraLength) / bitrate).get() + SIMTIME_AS_CLOCKTIME(extraDuration);
+        return !changeTimer->isScheduled() || flowEndTime <= getArrivalClockTime(changeTimer);
     }
 }
 

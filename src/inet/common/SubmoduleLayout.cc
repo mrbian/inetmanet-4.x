@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -39,7 +41,7 @@ void layoutSubmodulesWithoutGates(cModule *module, int dimensionIndex, double mo
         if (submodule->getGateNames().empty()) {
             auto& displayString = submodule->getDisplayString();
             const char *dimension = dimensionIndex == 0 ? "x" : "y";
-            EV_INFO << "Setting submodule position" << EV_FIELD(submodule, submodule->getFullPath()) << EV_FIELD(dimension) << EV_FIELD(position) << EV_ENDL;
+            EV_DEBUG << "Setting submodule position" << EV_FIELD(submodule, submodule->getFullPath()) << EV_FIELD(dimension) << EV_FIELD(position) << EV_ENDL;
             displayString.setTagArg("p", dimensionIndex, position);
             position += moduleSpacing;
         }

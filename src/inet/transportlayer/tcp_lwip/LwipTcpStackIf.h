@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2010 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -18,18 +20,13 @@
 #ifndef __INET_LWIPTCPSTACKIF_H
 #define __INET_LWIPTCPSTACKIF_H
 
+#include "inet/networklayer/common/L3Address.h"
 #include "lwip/lwip_tcp.h"
 #include "lwip/opt.h"
+#include "lwip/pbuf.h"
 
 namespace inet {
-
-// forward declarations:
-class L3Address;
-
 namespace tcp {
-
-// forward declarations:
-struct pbuf;
 
 /**
  * Interface class between TcpLwip and LwipTcpLayer
@@ -73,7 +70,6 @@ class LwipTcpStackIf
 };
 
 } // namespace tcp
-
 } // namespace inet
 
 #endif

@@ -2,6 +2,8 @@
 // Copyright (C) 2004 OpenSim Ltd.
 // Copyright (C) 2014 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -1048,7 +1050,7 @@ void Ipv4::encapsulate(Packet *transportPacket)
 
     if (auto& optReq = transportPacket->removeTagIfPresent<Ipv4OptionsReq>()) {
         for (size_t i = 0; i < optReq->getOptionArraySize(); i++) {
-            auto opt = optReq->dropOption(i);
+            auto opt = optReq->removeOption(i);
             ipv4Header->addOption(opt);
             ipv4Header->addChunkLength(B(opt->getLength()));
         }
@@ -1164,11 +1166,17 @@ void Ipv4::sendPacketToNIC(Packet *packet)
     EV_INFO << "Sending " << packet << " to output interface = " << networkInterface->getInterfaceName() << ".\n";
     packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::ipv4);
     packet->addTagIfAbsent<DispatchProtocolInd>()->setProtocol(&Protocol::ipv4);
-    auto protocol = networkInterface->getProtocol();
-    if (protocol != nullptr)
-        packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(protocol);
-    else
+    auto networkInterfaceProtocol = networkInterface->getProtocol();
+    auto dispatchProtocol = networkInterfaceProtocol;
+    if (auto encapsulationProtocolReq = packet->findTagForUpdate<EncapsulationProtocolReq>()) {
+        dispatchProtocol = encapsulationProtocolReq->getProtocol(0);
+        encapsulationProtocolReq->eraseProtocol(0);
+        encapsulationProtocolReq->insertProtocol(encapsulationProtocolReq->getProtocolArraySize(), networkInterfaceProtocol);
+    }
+    if (dispatchProtocol == nullptr)
         packet->removeTagIfPresent<DispatchProtocolReq>();
+    else
+        packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(dispatchProtocol);
     ASSERT(packet->findTag<InterfaceReq>() != nullptr);
     send(packet, "queueOut");
 }

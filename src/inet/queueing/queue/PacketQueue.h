@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -19,7 +21,6 @@
 #define __INET_PACKETQUEUE_H
 
 #include "inet/queueing/base/PacketQueueBase.h"
-#include "inet/queueing/compat/cpacketqueue.h"
 #include "inet/queueing/contract/IActivePacketSink.h"
 #include "inet/queueing/contract/IActivePacketSource.h"
 #include "inet/queueing/contract/IPacketBuffer.h"
@@ -64,6 +65,7 @@ class INET_API PacketQueue : public PacketQueueBase, public IPacketBuffer::ICall
     virtual bool isEmpty() const override { return getNumPackets() == 0; }
     virtual Packet *getPacket(int index) const override;
     virtual void removePacket(Packet *packet) override;
+    virtual void removeAllPackets() override;
 
     virtual bool supportsPacketPushing(cGate *gate) const override { return inputGate == gate; }
     virtual bool canPushSomePacket(cGate *gate) const override;

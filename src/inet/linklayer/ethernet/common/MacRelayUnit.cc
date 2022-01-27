@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2013 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -21,8 +23,8 @@
 #include "inet/common/Simsignals.h"
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/linklayer/common/MacAddressTag_m.h"
-#include "inet/linklayer/common/VlanTag_m.h"
 #include "inet/linklayer/common/UserPriorityTag_m.h"
+#include "inet/linklayer/common/VlanTag_m.h"
 
 namespace inet {
 
@@ -57,6 +59,22 @@ void MacRelayUnit::handleLowerPacket(Packet *incomingPacket)
     macAddressReq->setDestAddress(destinationAddress);
     if (destinationAddress.isBroadcast())
         broadcastPacket(outgoingPacket, destinationAddress, incomingInterface);
+    else if (destinationAddress.isMulticast()) {
+        auto outgoingInterfaceIds = macForwardingTable->getMulticastAddressForwardingInterfaces(destinationAddress, vlanId);
+        if (outgoingInterfaceIds.size() == 0)
+            broadcastPacket(incomingPacket, destinationAddress, incomingInterface);
+        else {
+            for (auto outgoingInterfaceId : outgoingInterfaceIds) {
+                if (interfaceInd != nullptr && outgoingInterfaceId == interfaceInd->getInterfaceId())
+                    EV_WARN << "Ignoring outgoing interface because it is the same as incoming interface" << EV_FIELD(destinationAddress) << EV_FIELD(incomingInterface) << EV_FIELD(incomingPacket) << EV_ENDL;
+                else {
+                    auto outgoingInterface = interfaceTable->getInterfaceById(outgoingInterfaceId);
+                    sendPacket(incomingPacket->dup(), destinationAddress, outgoingInterface);
+                }
+            }
+            delete incomingPacket;
+        }
+    }
     else {
         // Find output interface of destination address and send packet to output interface
         // if not found then broadcasts to all other interfaces instead

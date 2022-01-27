@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -37,8 +39,8 @@ class NetworkInterface extends cSimpleModule
     bool loopback @getter("isLoopback");
     int mtu;
     MacAddress macAddress;
-    Ipv4Address ipv4Address @byValue;
-    Ipv4Address ipv4Netmask @byValue;
+    Ipv4Address ipv4Address @byValue @toValue(.str()) @fromValue(Ipv4Address($));
+    Ipv4Address ipv4Netmask @byValue @toValue(.str()) @fromValue(Ipv4Address($));
     cObject *protocolData[] @getter(getProtocolData) @sizeGetter(getNumProtocolData);
 }
 

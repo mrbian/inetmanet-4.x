@@ -2,9 +2,11 @@
 // Copyright (C) 2005 OpenSim Ltd.
 // Copyright (C) 2005 Wei Yang, Ng
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -1231,13 +1233,13 @@ void Ipv6NeighbourDiscovery::createAndSendRaPacket(const Ipv6Address& destAddr, 
             interface.  (Assumption: We always send this)*/
         auto sla = new Ipv6NdSourceLinkLayerAddress();
         sla->setLinkLayerAddress(ie->getMacAddress());
-        ra->getOptionsForUpdate().insertOption(sla);
+        ra->getOptionsForUpdate().appendOption(sla);
         ra->addChunkLength(IPv6ND_LINK_LAYER_ADDRESS_OPTION_LENGTH);
 
         // set MTU option
         auto mtu = new Ipv6NdMtu();
         mtu->setMtu(ie->getProtocolData<Ipv6InterfaceData>()->getAdvLinkMtu());
-        ra->getOptionsForUpdate().insertOption(mtu);
+        ra->getOptionsForUpdate().appendOption(mtu);
         ra->addChunkLength(IPv6ND_MTU_OPTION_LENGTH);
 
         // Add all Advertising Prefixes to the RA
@@ -1285,7 +1287,7 @@ void Ipv6NeighbourDiscovery::createAndSendRaPacket(const Ipv6Address& destAddr, 
             // - In the Preferred Lifetime field: the entry's AdvPreferredLifetime.
             prefixInfo->setPreferredLifetime(SIMTIME_DBL(advPrefix.advPreferredLifetime));
             // Now we pop the prefix info into the RA.
-            ra->getOptionsForUpdate().insertOption(prefixInfo);
+            ra->getOptionsForUpdate().appendOption(prefixInfo);
             ra->addChunkLength(IPv6ND_PREFIX_INFORMATION_OPTION_LENGTH);
         }
 
@@ -1841,7 +1843,7 @@ void Ipv6NeighbourDiscovery::createAndSendNsPacket(const Ipv6Address& nsTargetAd
     {
         auto sla = new Ipv6NdSourceLinkLayerAddress();
         sla->setLinkLayerAddress(myMacAddr);
-        ns->getOptionsForUpdate().insertOption(sla);
+        ns->getOptionsForUpdate().appendOption(sla);
         ns->addChunkLength(IPv6ND_LINK_LAYER_ADDRESS_OPTION_LENGTH);
     }
     auto packet = new Packet("NSpacket");
@@ -2031,7 +2033,7 @@ void Ipv6NeighbourDiscovery::sendSolicitedNa(Packet *packet, const Ipv6Neighbour
        address, the Target Link-Layer option MUST be included in the advertisement.*/
     auto tla = new Ipv6NdTargetLinkLayerAddress();
     tla->setLinkLayerAddress(ie->getMacAddress());
-    na->getOptionsForUpdate().insertOption(tla);
+    na->getOptionsForUpdate().appendOption(tla);
     na->addChunkLength(IPv6ND_LINK_LAYER_ADDRESS_OPTION_LENGTH);
 
     /*Furthermore, if the node is a router, it MUST set the Router flag to one;
@@ -2128,7 +2130,7 @@ void Ipv6NeighbourDiscovery::sendUnsolicitedNa(NetworkInterface *ie)
     na->setTargetAddress(myIPv6Addr);
     auto sla = new Ipv6NdTargetLinkLayerAddress();
     sla->setLinkLayerAddress(ie->getMacAddress());
-    na->getOptionsForUpdate().insertOption(sla);
+    na->getOptionsForUpdate().appendOption(sla);
     na->addChunkLength(IPv6ND_LINK_LAYER_ADDRESS_OPTION_LENGTH);
 #endif /* INET_WITH_xMIPv6 */
 

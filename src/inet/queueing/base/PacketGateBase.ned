@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -27,9 +29,10 @@ simple PacketGateBase extends PacketFlowBase
     parameters:
         displayStringTextFormat = default("passed %p pk (%l)");
         double bitrate @unit(bps) = default(nan bps);
-        double guardBand @unit(s) = default(0s);
+        int extraLength @unit(b) = default(0b);
+        double extraDuration @unit(s) = default(0s);
         @class(PacketGateBase);
         @display("i=block/cogwheel");
         @signal[gateStateChanged](type=bool);
-        @statistic[gateStateChanged](title="gate states"; type=enum; enum=CLOSED, OPEN; record=vector; interpolationmode=sample-hold);
+        @statistic[gateState](title="gate state"; type=enum; enum=CLOSED, OPEN; source=gateStateChanged; record=vector; interpolationmode=sample-hold);
 }

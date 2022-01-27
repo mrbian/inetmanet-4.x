@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -99,8 +101,7 @@ void PacketDropVisualizerBase::DetailsFilter::setPattern(const char *pattern)
 bool PacketDropVisualizerBase::DetailsFilter::matches(const PacketDropDetails *details) const
 {
     MatchableObject matchableObject(MatchableObject::ATTRIBUTE_FULLNAME, details);
-    // TODO eliminate const_cast when cMatchExpression::matches becomes const
-    return const_cast<DetailsFilter *>(this)->matchExpression.matches(&matchableObject);
+    return matchExpression.matches(&matchableObject);
 }
 
 void PacketDropVisualizerBase::preDelete(cComponent *root)
@@ -119,7 +120,7 @@ void PacketDropVisualizerBase::initialize(int stage)
         displayPacketDrops = par("displayPacketDrops");
         nodeFilter.setPattern(par("nodeFilter"));
         interfaceFilter.setPattern(par("interfaceFilter"));
-        packetFilter.setPattern(par("packetFilter"), par("packetDataFilter"));
+        packetFilter.setExpression(par("packetFilter").objectValue());
         detailsFilter.setPattern(par("detailsFilter"));
         icon = par("icon");
         iconTintAmount = par("iconTintAmount");
@@ -144,7 +145,7 @@ void PacketDropVisualizerBase::handleParameterChange(const char *name)
         else if (!strcmp(name, "interfaceFilter"))
             interfaceFilter.setPattern(par("interfaceFilter"));
         else if (!strcmp(name, "packetFilter"))
-            packetFilter.setPattern(par("packetFilter"), par("packetDataFilter"));
+            packetFilter.setExpression(par("packetFilter").objectValue());
         else if (!strcmp(name, "detailsFilter"))
             detailsFilter.setPattern(par("detailsFilter"));
         else if (!strcmp(name, "labelFormat"))

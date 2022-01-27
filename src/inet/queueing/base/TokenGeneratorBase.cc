@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -29,7 +31,7 @@ void TokenGeneratorBase::initialize(int stage)
     PacketProcessorBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         displayStringTextFormat = par("displayStringTextFormat");
-        server.reference(this, "serverModule", true);
+        storage.reference(this, "storageModule", true);
         numTokensGenerated = 0;
         WATCH(numTokensGenerated);
     }
@@ -40,7 +42,7 @@ const char *TokenGeneratorBase::resolveDirective(char directive) const
     static std::string result;
     switch (directive) {
         case 's': {
-            result = par("serverModule").stringValue();
+            result = par("storageModule").stringValue();
             break;
         }
         case 't': {

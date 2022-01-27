@@ -1,4 +1,6 @@
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -15,7 +17,7 @@
 
 package inet.examples.timing;
 
-import inet.networks.WiredNetworkBase;
+import inet.networks.base.WiredNetworkBase;
 import inet.node.ethernet.Eth100M;
 import inet.node.ethernet.EthernetSwitch;
 import inet.node.inet.StandardHost;

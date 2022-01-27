@@ -2,6 +2,8 @@
 // Copyright (C) 2004 OpenSim Ltd.
 // Copyright (C) 2012 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -34,6 +36,7 @@
 #endif // ifdef INET_WITH_IPv6
 
 #ifdef INET_WITH_NEXTHOP
+#include "inet/networklayer/configurator/nexthop/NextHopNetworkConfigurator.h"
 #include "inet/networklayer/nexthop/NextHopInterfaceData.h"
 #include "inet/networklayer/nexthop/NextHopRoutingTable.h"
 #endif // ifdef INET_WITH_NEXTHOP
@@ -44,7 +47,7 @@ L3Address L3AddressResolver::resolve(const char *s, int addrType)
 {
     L3Address addr;
     if (!tryResolve(s, addr, addrType))
-        throw cRuntimeError("L3AddressResolver: address `%s' not configured (yet?)", s);
+        throw cRuntimeError("L3AddressResolver: Cannot resolve address `%s'", s);
     return addr;
 }
 
@@ -252,8 +255,6 @@ L3Address L3AddressResolver::getAddressFrom(IInterfaceTable *ift, int addrType)
         return ret;
     else if ((addrType & ADDR_MODULEID) && getModuleIdAddressFrom(ret, ift, netmask))
         return ret;
-    else
-        throw cRuntimeError("L3AddressResolver: unknown addrType %d", addrType);
     return ret;
 }
 
@@ -261,7 +262,6 @@ L3Address L3AddressResolver::getAddressFrom(NetworkInterface *ie, int addrType)
 {
     L3Address ret;
     bool mask = addrType & ADDR_MASK;
-
     if ((addrType & ADDR_IPv4) && getInterfaceIpv4Address(ret, ie, mask))
         return ret;
     else if ((addrType & ADDR_IPv6) && getInterfaceIpv6Address(ret, ie, mask))
@@ -272,9 +272,6 @@ L3Address L3AddressResolver::getAddressFrom(NetworkInterface *ie, int addrType)
         return ret;
     else if ((addrType & ADDR_MODULEID) && getInterfaceModuleIdAddress(ret, ie, mask))
         return ret;
-    else
-        throw cRuntimeError("L3AddressResolver: unknown addrType %d at %s", addrType, ie->getInterfaceFullPath().c_str());
-
     return ret;
 }
 
@@ -429,12 +426,44 @@ bool L3AddressResolver::getInterfaceMacAddress(L3Address& ret, NetworkInterface 
 
 bool L3AddressResolver::getInterfaceModulePathAddress(L3Address& ret, NetworkInterface *ie, bool netmask)
 {
+#ifdef INET_WITH_NEXTHOP
+    if (auto nextHopData = ie->findProtocolData<NextHopInterfaceData>()) {
+        L3Address addr = nextHopData->getAddress();
+        if (!addr.isUnspecified() && addr.getType() == L3Address::MODULEPATH) {
+            ret = addr;
+            return true;
+        }
+    }
+    else {
+        // find address in the configurator's notebook
+        // TODO how do we know where is the configurator? getNextHopNetworkConfigurator the path from a NED parameter?
+        NextHopNetworkConfigurator *configurator = dynamic_cast<NextHopNetworkConfigurator *>(getSimulation()->findModuleByPath("configurator"));
+        if (configurator)
+            return static_cast<L3AddressResolver *>(configurator)->getInterfaceIpv4Address(ret, ie, netmask);
+    }
+#endif // ifdef INET_WITH_NEXTHOP
     ret = ie->getModulePathAddress();
     return true;
 }
 
 bool L3AddressResolver::getInterfaceModuleIdAddress(L3Address& ret, NetworkInterface *ie, bool netmask)
 {
+#ifdef INET_WITH_NEXTHOP
+    if (auto nextHopData = ie->findProtocolData<NextHopInterfaceData>()) {
+        L3Address addr = nextHopData->getAddress();
+        if (!addr.isUnspecified() && addr.getType() == L3Address::MODULEID) {
+            ret = addr;
+            return true;
+        }
+    }
+    else {
+        // find address in the configurator's notebook
+        // TODO how do we know where is the configurator? getNextHopNetworkConfigurator the path from a NED parameter?
+        NextHopNetworkConfigurator *configurator = dynamic_cast<NextHopNetworkConfigurator *>(getSimulation()->findModuleByPath("configurator"));
+        if (configurator)
+            return static_cast<L3AddressResolver *>(configurator)->getInterfaceIpv4Address(ret, ie, netmask);
+    }
+#endif // ifdef INET_WITH_NEXTHOP
     ret = ie->getModuleIdAddress();
     return true;
 }

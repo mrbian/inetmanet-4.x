@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -26,7 +28,7 @@ namespace queueing {
 class INET_API CreditBasedGate : public PacketGateBase, public cListener
 {
   public:
-    static simsignal_t currentCreditChangedSignal;
+    static simsignal_t creditsChangedSignal;
 
   protected:
     // parameters
@@ -37,10 +39,12 @@ class INET_API CreditBasedGate : public PacketGateBase, public cListener
     double maxCredit = NaN;
 
     // state
+    bool isTransmitting = false;
+    bool isInterpacketGap = false;
     double currentCredit = NaN;
     double currentCreditGainRate = NaN;
     double lastCurrentCreditEmitted = NaN;
-    simtime_t lastCurrentCreditEmittedTime;
+    simtime_t lastCurrentCreditEmittedTime = -1;
 
     cMessage *changeTimer = nullptr;
 
@@ -51,7 +55,9 @@ class INET_API CreditBasedGate : public PacketGateBase, public cListener
     virtual void refreshDisplay() const override;
 
     virtual void processPacket(Packet *packet) override;
+    virtual bool hasAvailablePacket() const { return provider->canPullSomePacket(inputGate->getPathStartGate()); }
     virtual void updateCurrentCredit();
+    virtual void updateCurrentCreditGainRate();
     virtual void emitCurrentCredit();
     virtual void scheduleChangeTimer();
     virtual void processChangeTimer();
@@ -59,8 +65,11 @@ class INET_API CreditBasedGate : public PacketGateBase, public cListener
   public:
     virtual ~CreditBasedGate() { cancelAndDelete(changeTimer); }
 
+    virtual void handleCanPullPacketChanged(cGate *gate) override;
+
     virtual const char *resolveDirective(char directive) const override;
 
+    virtual void receiveSignal(cComponent *source, simsignal_t signal, double value, cObject *details) override;
     virtual void receiveSignal(cComponent *source, simsignal_t signal, cObject *object, cObject *details) override;
 };
 

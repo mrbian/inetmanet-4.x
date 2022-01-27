@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -19,6 +21,10 @@ package inet.protocolelement.common;
 
 import inet.protocolelement.contract.IProtocolLayer;
 
+//
+// This module implements the module given interface and can be used as an omitted
+// optional module that removes itself from the module hierarchy during initialize.
+//
 module OmittedProtocolLayer like IProtocolLayer
 {
     parameters:

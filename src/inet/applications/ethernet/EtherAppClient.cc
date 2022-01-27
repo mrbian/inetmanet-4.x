@@ -1,9 +1,11 @@
 //
 // Copyright (C) 2003 Andras Varga; CTIE, Monash University, Australia
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -80,7 +82,7 @@ void EtherAppClient::handleMessageWhenUp(cMessage *msg)
         if (msg->getKind() == START) {
             EV_DEBUG << getFullPath() << " registering DSAP " << localSap << "\n";
             int interfaceId = CHK(interfaceTable->findInterfaceByName(par("interface")))->getInterfaceId();
-            llcSocket.open(interfaceId, localSap);
+            llcSocket.open(interfaceId, localSap, -1);
 
             destMacAddress = resolveDestMacAddress();
             // if no dest address given, nothing to do

@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -50,6 +52,12 @@ void PacketTransmitterBase::initialize(int stage)
     }
 }
 
+void PacketTransmitterBase::finish()
+{
+    if (auto channel = dynamic_cast<cDatarateChannel *>(outputGate->findTransmissionChannel()))
+        recordScalar("propagationTime", channel->getDelay());
+}
+
 void PacketTransmitterBase::handleMessageWhenUp(cMessage *message)
 {
     auto packet = check_and_cast<Packet *>(message);
@@ -66,14 +74,15 @@ Signal *PacketTransmitterBase::encodePacket(Packet *packet)
 {
     txDurationClockTime = calculateClockTimeDuration(packet);
     // TODO: this is just a weak approximation which ignores the past and future drift and drift rate changes of the clock
+    simtime_t packetTransmissionTime = CLOCKTIME_AS_SIMTIME(txDurationClockTime);
     simtime_t bitTransmissionTime = CLOCKTIME_AS_SIMTIME(txDurationClockTime / packet->getBitLength());
     auto packetEvent = new PacketTransmittedEvent();
     packetEvent->setDatarate(packet->getTotalLength() / s(txDurationClockTime.dbl()));
     insertPacketEvent(this, packet, PEK_TRANSMITTED, bitTransmissionTime, packetEvent);
-    increaseTimeTag<TransmissionTimeTag>(packet, bitTransmissionTime);
+    increaseTimeTag<TransmissionTimeTag>(packet, bitTransmissionTime, packetTransmissionTime);
     if (auto channel = dynamic_cast<cDatarateChannel *>(outputGate->findTransmissionChannel())) {
         insertPacketEvent(this, packet, PEK_PROPAGATED, channel->getDelay());
-        increaseTimeTag<PropagationTimeTag>(packet, channel->getDelay());
+        increaseTimeTag<PropagationTimeTag>(packet, channel->getDelay(), channel->getDelay());
     }
     auto signal = new Signal(packet->getName());
     signal->encapsulate(packet);
@@ -94,7 +103,7 @@ void PacketTransmitterBase::prepareSignal(Signal *signal)
 
 void PacketTransmitterBase::sendSignalStart(Signal *signal, int transmissionId)
 {
-    EV_INFO << "Sending signal start to channel" << EV_FIELD(signal) << EV_ENDL;
+    EV_INFO << "Transmitting signal start to channel" << EV_FIELD(signal) << EV_ENDL;
     prepareSignal(signal);
     send(signal, SendOptions().duration(signal->getDuration()).transmissionId(transmissionId), outputGate);
 }
@@ -102,14 +111,14 @@ void PacketTransmitterBase::sendSignalStart(Signal *signal, int transmissionId)
 void PacketTransmitterBase::sendSignalProgress(Signal *signal, int transmissionId, b bitPosition, clocktime_t timePosition)
 {
     simtime_t remainingDuration = signal->getDuration() - CLOCKTIME_AS_SIMTIME(timePosition);
-    EV_INFO << "Sending signal progress to channel" << EV_FIELD(signal) << EV_FIELD(transmissionId) << EV_FIELD(remainingDuration, simsec(remainingDuration)) << EV_ENDL;
+    EV_INFO << "Transmitting signal progress to channel" << EV_FIELD(signal) << EV_FIELD(transmissionId) << EV_FIELD(remainingDuration, simsec(remainingDuration)) << EV_ENDL;
     prepareSignal(signal);
     send(signal, SendOptions().duration(signal->getDuration()).updateTx(transmissionId, remainingDuration), outputGate);
 }
 
 void PacketTransmitterBase::sendSignalEnd(Signal *signal, int transmissionId)
 {
-    EV_INFO << "Sending signal end to channel" << EV_FIELD(signal) << EV_FIELD(transmissionId) << EV_ENDL;
+    EV_INFO << "Transmitting signal end to channel" << EV_FIELD(signal) << EV_FIELD(transmissionId) << EV_ENDL;
     prepareSignal(signal);
     send(signal, SendOptions().duration(signal->getDuration()).finishTx(transmissionId), outputGate);
 }

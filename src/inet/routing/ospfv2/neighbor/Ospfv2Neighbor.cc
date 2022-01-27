@@ -1,9 +1,11 @@
 //
 // Copyright (C) 2006 Andras Babos and Andras Varga
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -212,7 +214,7 @@ void Neighbor::sendDatabaseDescriptionPacket(bool init)
         while ((!databaseSummaryList.empty()) && (packetSize <= (maxPacketSize - OSPFv2_LSA_HEADER_LENGTH))) {
             Ospfv2LsaHeader *lsaHeader = *(databaseSummaryList.begin());
             setLsaHeaderCrc(*lsaHeader, crcMode);
-            ddPacket->insertLsaHeaders(*lsaHeader);
+            ddPacket->appendLsaHeaders(*lsaHeader);
             delete lsaHeader;
             databaseSummaryList.pop_front();
             packetSize += OSPFv2_LSA_HEADER_LENGTH;

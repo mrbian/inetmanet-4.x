@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2008 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -81,13 +83,13 @@ class INET_API Ipv4Route : public cObject, public IRoute
     virtual void setMetric(int _metric) override { if (metric != _metric) { metric = _metric; changed(F_METRIC); } }
 
     /** Destination address prefix to match */
-    Ipv4Address getDestination() const { return dest; }
+    const Ipv4Address& getDestination() const { return dest; }
 
     /** Represents length of prefix to match */
-    Ipv4Address getNetmask() const { return netmask; }
+    const Ipv4Address& getNetmask() const { return netmask; }
 
     /** Next hop address */
-    Ipv4Address getGateway() const { return gateway; }
+    const Ipv4Address& getGateway() const { return gateway; }
 
     /** Next hop interface */
     NetworkInterface *getInterface() const override { return interfacePtr; }

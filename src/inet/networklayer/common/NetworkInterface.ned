@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2012 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -31,9 +33,13 @@ module NetworkInterface
         int numPcapRecorders = default(recordPcap ? 1 : 0);
         pcapRecorder[*].pcapFile = default("results/" + expand("${configname}-") + fullPath() + ".pcap");
         **.clockModule = default(exists(clock) ? absPath(".clock") : "");
-        @networkInterface();
+        @networkInterface;
+        @lifecycleSupport;
         @class(NetworkInterface);
         @display("i=block/ifcard");
+        @signal[packetDropped](type=inet::Packet);
+        @statistic[packetDropInterfaceDown](title="packet drops: interface down"; source=packetDropReasonIsInterfaceDown(packetDropped); record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
+        @statistic[packetDropNoCarrier](title="packet drops: no carrier"; source=packetDropReasonIsNoCarrier(packetDropped); record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
     submodules:
         pcapRecorder[numPcapRecorders]: PcapRecorder {
             parameters:

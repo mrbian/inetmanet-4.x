@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -42,6 +44,21 @@ class ProtocolTagBase extends TagBase
 }
 
 //
+// This is an abstract base class that should not be directly added as a tag.
+//
+class ProtocolListTagBase extends TagBase
+{
+    const Protocol *protocol[] @toString("->str()") = nullptr; // specifies a list of protocols (internal class with an artificial identifier)
+}
+
+cplusplus(ProtocolListTagBase) {{
+#if (OMNETPP_BUILDNUM < 1530)
+  public:
+    void appendProtocol(const Protocol *protocol) { insertProtocol(protocol); }
+#endif
+}}
+
+//
 // OSI layered service primitives
 //
 enum ServicePrimitive
@@ -66,6 +83,27 @@ class DispatchProtocolReq extends ProtocolTagBase
 // when it's sent from one protocol module to another using the ~MessageDispatcher.
 //
 class DispatchProtocolInd extends ProtocolTagBase
+{
+}
+
+//
+// This request determines the expected protocol encapsulation order of the
+// packet. If this tag is attached to a packet, then the first encapsulation
+// protocol specifies the next dispatch protocol. Otherwise the individual
+// protocol modules are expected to request dispatching to their default
+// following encapsulation protocol.
+//
+class EncapsulationProtocolReq extends ProtocolListTagBase
+{
+}
+
+//
+// This indication determines the original protocol encapsulation order of the
+// packet. If this tag is attached to the packet, then the protocols specify the
+// order of encapsulation as it seen by the protocol modules when the packet was
+// processed and decapsulated.
+//
+class EncapsulationProtocolInd extends ProtocolListTagBase
 {
 }
 

@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2013 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -263,7 +265,7 @@ std::enable_if_t<!std::is_polymorphic<T>::value && has_str<T>::value && !has_pri
 }
 
 template<typename T>
-std::enable_if_t<!has_str<T>::value && !has_print_to_string<T>::value, std::string> printToStringIfPossible(const T& object, int evFlags)
+std::enable_if_t<!std::is_polymorphic<T>::value && !has_str<T>::value && !has_print_to_string<T>::value, std::string> printToStringIfPossible(const T& object, int evFlags)
 {
     std::stringstream s;
     s << object;

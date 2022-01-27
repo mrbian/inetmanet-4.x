@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -73,8 +75,8 @@ void SettableClock::setClockTime(clocktime_t newClockTime, bool resetOscillator)
     if (newClockTime != oldClockTime) {
         emit(timeChangedSignal, oldClockTime.asSimTime());
         if (resetOscillator) {
-            auto constantDriftOscillator = check_and_cast<ConstantDriftOscillator *>(oscillator);
-            constantDriftOscillator->setTickOffset(0);
+            if (auto constantDriftOscillator = dynamic_cast<ConstantDriftOscillator *>(oscillator))
+                constantDriftOscillator->setTickOffset(0);
         }
         simtime_t currentSimTime = simTime();
         EV_DEBUG << "Setting clock time from " << oldClockTime << " to " << newClockTime << " at simtime " << currentSimTime << ".\n";

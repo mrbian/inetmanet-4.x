@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -24,10 +26,6 @@ namespace inet {
 namespace queueing {
 
 Define_Module(TokenBasedServer);
-
-simsignal_t TokenBasedServer::tokensAddedSignal = cComponent::registerSignal("tokensAdded");
-simsignal_t TokenBasedServer::tokensRemovedSignal = cComponent::registerSignal("tokensRemoved");
-simsignal_t TokenBasedServer::tokensDepletedSignal = cComponent::registerSignal("tokensDepleted");
 
 void TokenBasedServer::initialize(int stage)
 {
@@ -57,9 +55,10 @@ void TokenBasedServer::processPackets()
             if (numTokens >= numRequiredTokens) {
                 packet = provider->pullPacket(inputGate->getPathStartGate());
                 take(packet);
+                emit(packetPulledSignal, packet);
                 EV_INFO << "Processing packet" << EV_FIELD(packet) << EV_ENDL;
                 processedTotalLength += packet->getDataLength();
-                emit(packetServedSignal, packet);
+                emit(packetPushedSignal, packet);
                 pushOrSendPacket(packet, outputGate, consumer);
                 numProcessedPackets++;
                 numTokens -= numRequiredTokens;

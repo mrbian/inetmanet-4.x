@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -59,6 +61,13 @@ Packet *LabelScheduler::getPacket(int index) const
 void LabelScheduler::removePacket(Packet *packet)
 {
     throw cRuntimeError("TODO");
+}
+
+void LabelScheduler::removeAllPackets()
+{
+    Enter_Method("removeAllPackets");
+    for (auto collection : collections)
+        collection->removeAllPackets();
 }
 
 int LabelScheduler::schedulePacket()

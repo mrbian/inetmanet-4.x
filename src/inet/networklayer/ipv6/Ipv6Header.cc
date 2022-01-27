@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2005 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -151,7 +153,7 @@ Ipv6ExtensionHeader *Ipv6Header::removeFirstExtensionHeader()
     handleChange();
     if (extensionHeader_arraysize == 0)
         return nullptr;
-    Ipv6ExtensionHeader *eh = dropExtensionHeader(0);
+    Ipv6ExtensionHeader *eh = removeExtensionHeader(0);
     eraseExtensionHeader(0);
     return eh;
 }
@@ -164,7 +166,7 @@ Ipv6ExtensionHeader *Ipv6Header::removeExtensionHeader(IpProtocolId extensionTyp
 
     for (size_t i = 0; i < extensionHeader_arraysize; i++) {
         if (extensionHeader[i]->getExtensionType() == extensionType) {
-            Ipv6ExtensionHeader *eh = dropExtensionHeader(i);
+            Ipv6ExtensionHeader *eh = removeExtensionHeader(i);
             eraseExtensionHeader(i);
             return eh;
         }

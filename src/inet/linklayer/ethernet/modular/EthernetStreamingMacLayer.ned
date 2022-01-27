@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -20,7 +22,7 @@ package inet.linklayer.ethernet.modular;
 module EthernetStreamingMacLayer extends EthernetMacLayer
 {
     parameters:
-        server.typename = default("OmittedPacketServer");
+        server.typename = default("");
         streamer.typename = default("PacketStreamer");
         transmitter.typename = default("StreamingTransmitter");
         receiver.typename = default("DestreamingReceiver");

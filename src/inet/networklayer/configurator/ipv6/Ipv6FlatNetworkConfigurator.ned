@@ -2,9 +2,11 @@
 // Copyright (C) 2004 Eric Wu
 // Copyright (C) 2004 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -19,7 +21,7 @@
 
 package inet.networklayer.configurator.ipv6;
 
-import inet.networklayer.configurator.contract.INetworkConfigurator;
+import inet.networklayer.configurator.contract.IL3NetworkConfigurator;
 
 //
 // Configures Ipv6 addresses and routing tables for a "flat" network,
@@ -30,7 +32,7 @@ import inet.networklayer.configurator.contract.INetworkConfigurator;
 //
 // @see ~Ipv4FlatNetworkConfigurator
 //
-simple Ipv6FlatNetworkConfigurator like INetworkConfigurator
+simple Ipv6FlatNetworkConfigurator like IL3NetworkConfigurator
 {
     parameters:
         @display("i=block/cogwheel");

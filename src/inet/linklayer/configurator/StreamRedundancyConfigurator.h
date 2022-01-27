@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2013 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -18,26 +20,18 @@
 #ifndef __INET_STREAMREDUNDANCYCONFIGURATOR_H
 #define __INET_STREAMREDUNDANCYCONFIGURATOR_H
 
-#include <algorithm>
-#include <vector>
-
-#include "inet/common/PatternMatcher.h"
-#include "inet/common/Topology.h"
-#include "inet/linklayer/configurator/Ieee8021dInterfaceData.h"
-#include "inet/networklayer/contract/IInterfaceTable.h"
+#include "inet/networklayer/configurator/base/NetworkConfiguratorBase.h"
 
 namespace inet {
 
-class INET_API StreamRedundancyConfigurator : public cSimpleModule
+class INET_API StreamRedundancyConfigurator : public NetworkConfiguratorBase
 {
   protected:
-    class InterfaceInfo;
-
     class StreamIdentification
     {
       public:
         std::string stream;
-        std::string packetFilter;
+        cValue packetFilter;
     };
 
     class StreamDecoding
@@ -69,16 +63,14 @@ class INET_API StreamRedundancyConfigurator : public cSimpleModule
         NetworkInterface *networkInterface = nullptr;
         std::string destination;
         int vlanId = -1;
+        int pcp = -1;
     };
 
     /**
      * Represents a node in the network.
      */
-    class Node : public Topology::Node {
+    class Node : public NetworkConfiguratorBase::Node {
       public:
-        cModule *module;
-        IInterfaceTable *interfaceTable;
-        std::vector<InterfaceInfo *> interfaceInfos;
         std::vector<StreamIdentification> streamIdentifications;
         std::vector<StreamEncoding> streamEncodings;
         std::vector<StreamDecoding> streamDecodings;
@@ -86,35 +78,39 @@ class INET_API StreamRedundancyConfigurator : public cSimpleModule
         std::vector<StreamSplitting> streamSplittings;
 
       public:
-        Node(cModule *module) : Topology::Node(module->getId()) { this->module = module; interfaceTable = nullptr; }
-        ~Node() { for (size_t i = 0; i < interfaceInfos.size(); i++) delete interfaceInfos[i]; }
+        Node(cModule *module) : NetworkConfiguratorBase::Node(module) { }
     };
 
-    /**
-     * Represents an interface in the network.
-     */
-    class InterfaceInfo : public cObject {
-      public:
-        NetworkInterface *networkInterface;
-
-      public:
-        InterfaceInfo(NetworkInterface *networkInterface) : networkInterface(networkInterface) {}
-        virtual std::string getFullPath() const override { return networkInterface->getInterfaceFullPath(); }
-    };
-
-    class Link : public Topology::Link {
-      public:
-        InterfaceInfo *sourceInterfaceInfo;
-        InterfaceInfo *destinationInterfaceInfo;
-
-      public:
-        Link() { sourceInterfaceInfo = nullptr; destinationInterfaceInfo = nullptr; }
-    };
-
-    class Topology : public inet::Topology {
+    class Topology : public NetworkConfiguratorBase::Topology {
       protected:
         virtual Node *createNode(cModule *module) override { return new StreamRedundancyConfigurator::Node(module); }
-        virtual Link *createLink() override { return new StreamRedundancyConfigurator::Link(); }
+    };
+
+    // TODO use this, see below
+    class StreamNodeTreeData
+    {
+      public:
+        std::string sender;
+        std::vector<std::string> receivers;
+        std::vector<std::string> distinctReceivers;
+    };
+
+    class StreamNode
+    {
+      public:
+        // TODO use this, see above
+        std::vector<StreamNodeTreeData> treeData;
+
+        std::vector<std::string> senders; // tree index to previous sender network node name
+        std::vector<std::vector<NetworkInterface *>> interfaces; // tree index to outgoing interface name
+        std::vector<std::vector<std::string>> receivers; // tree index to list of next receiver network node names
+        std::vector<std::vector<std::string>> distinctReceivers; // distinct non-empty receiver sets
+    };
+
+    class Stream
+    {
+      public:
+        std::map<std::string, StreamNode> streamNodes;
     };
 
   protected:
@@ -122,24 +118,13 @@ class INET_API StreamRedundancyConfigurator : public cSimpleModule
     int maxVlanId = -1;
     cValueArray *configuration;
 
-    Topology topology;
-    std::map<std::pair<std::string, std::string>, std::vector<std::string>> streamSenders; // maps network node name and stream name to list of previous sender network node names
-    std::map<std::pair<std::string, std::string>, std::vector<std::string>> receivers; // maps network node name and stream name to list of next receiver network node names
+    std::map<std::string, Stream> streams;
     std::map<std::pair<std::string, std::string>, int> nextVlanIds; // maps network node name and destination node name to next available VLAN ID
     std::map<std::tuple<std::string, std::string, std::string, std::string>, int> assignedVlanIds; // maps network node name, receiver network node name, destination network node name and stream name to VLAN ID
 
   protected:
-    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     virtual void initialize(int stage) override;
     virtual void handleParameterChange(const char *name) override;
-    virtual void handleMessage(cMessage *msg) override { throw cRuntimeError("this module doesn't handle messages, it runs only in initialize()"); }
-
-    /**
-     * Extracts network topology by walking through the module hierarchy.
-     * Creates vertices from modules having @networkNode property.
-     * Creates edges from connections (wired and wireless) between network interfaces.
-     */
-    virtual void extractTopology(Topology& topology);
 
     /**
      * Computes the network configuration for all nodes in the network.
@@ -156,12 +141,8 @@ class INET_API StreamRedundancyConfigurator : public cSimpleModule
     virtual void configureStreams();
     virtual void configureStreams(Node *node);
 
-    virtual Link *findLinkIn(Node *node, const char *neighbor);
-    virtual Link *findLinkOut(Node *node, const char *neighbor);
-    virtual Topology::LinkOut *findLinkOut(Node *node, int gateId);
-    virtual InterfaceInfo *findInterfaceInfo(Node *node, NetworkInterface *networkInterface);
-
   public:
+    virtual std::vector<std::string> getStreamNames();
     virtual std::vector<std::vector<std::string>> getPathFragments(const char *stream);
 };
 

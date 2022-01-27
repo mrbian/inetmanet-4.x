@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -62,6 +64,7 @@ void PacketTransmitter::startTx(Packet *packet)
     // 4. send signal start and notify subscribers
     emit(transmissionStartedSignal, signal);
     prepareSignal(signal);
+    EV_INFO << "Transmitting signal to channel" << EV_FIELD(signal) << EV_ENDL;
     send(signal, SendOptions().duration(signal->getDuration()), outputGate);
     // 5. schedule transmission end timer
     scheduleTxEndTimer(txSignal);

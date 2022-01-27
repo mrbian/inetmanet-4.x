@@ -2,6 +2,8 @@
 // Copyright (C) 1992-2004 OpenSim Ltd.
 // Copyright (C) 2014 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -283,6 +285,26 @@ Define_NED_Function2(nedf_selectWithRandomDistribution,
         "string selectWithRandomDistribution(string list, string probabilityList)",
         "string",
         "return an element of the first list using with the probability distribution of the second list"
+        );
+
+cNEDValue nedf_findArrayObjectElement(cComponent *context, cNEDValue argv[], int argc)
+{
+    cValueArray *array = check_and_cast<cValueArray *>(argv[0].objectValue());
+    for (int index = 0; index < array->size(); index++) {
+        cValueMap *map = check_and_cast<cValueMap *>(array->get(index).objectValue());
+        for (int i = 1; i < argc; i += 2)
+            if (map->get(argv[i].stringValue()).intValue() != argv[i + 1].intValue())
+                goto next;
+        return map;
+        next:;
+    }
+    return cNEDValue((cObject *)nullptr);
+}
+
+Define_NED_Function2(nedf_findArrayObjectElement,
+        "bool findArrayObjectElement(any array, string key, any value, ...)",
+        "misc",
+        "Returns the first object from the array that matches the given set of key-value pairs"
         );
 
 } // namespace utils

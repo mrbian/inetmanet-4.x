@@ -2,6 +2,8 @@
 // Copyright (C) 2005-2010 Irene Ruengeler
 // Copyright (C) 2009-2015 Thomas Dreibholz
 //
+// SPDX-License-Identifier: GPL-2.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
@@ -406,7 +408,7 @@ void Sctp::sendAbortFromMain(Ptr<SctpHeader>& sctpmsg, L3Address fromAddr, L3Add
         msg->setVTag(sctpmsg->getVTag());
     }
     abortChunk->setByteLength(SCTP_ABORT_CHUNK_LENGTH);
-    msg->insertSctpChunks(abortChunk);
+    msg->appendSctpChunks(abortChunk);
     Packet *pkt = new Packet("ABORT");
 
     auto addresses = pkt->addTag<L3AddressReq>();
@@ -437,7 +439,7 @@ void Sctp::sendShutdownCompleteFromMain(Ptr<SctpHeader>& sctpmsg, L3Address from
     msg->setVTag(sctpmsg->getVTag());
 
     scChunk->setByteLength(SCTP_SHUTDOWN_ACK_LENGTH);
-    msg->insertSctpChunks(scChunk);
+    msg->appendSctpChunks(scChunk);
 
     Packet *pkt = new Packet("SHUTDOWN_COMPLETE");
     auto addresses = pkt->addTag<L3AddressReq>();

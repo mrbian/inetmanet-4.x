@@ -1,19 +1,20 @@
 //
 // Copyright (C) 2015 Irene Ruengeler
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2.1
-// of the License, or (at your option) any later version.
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
+// GNU General Public License for more details.
 //
-// You should have received a copy of the GNU Lesser General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //
 
 #include "inet/applications/packetdrill/PacketDrill.h"
@@ -256,7 +257,7 @@ Packet *PacketDrill::buildTCPPacket(int address_family, enum direction_t directi
             PacketDrillTcpOption *opt = check_and_cast<PacketDrillTcpOption *>(*iter);
             option = setOptionValues(opt);
             // write option to tcp header
-            tcpHeader->insertHeaderOption(option);
+            tcpHeader->appendHeaderOption(option);
         } // for
     } // if options present
     tcpHeader->setHeaderLength(TCP_MIN_HEADER_LENGTH + B(tcpHeader->getHeaderOptionArrayLength()));
@@ -476,7 +477,7 @@ Packet *PacketDrill::buildSCTPPacket(int address_family, enum direction_t direct
 
     for (cQueue::Iterator iter(*chunks); !iter.end(); iter++) {
         PacketDrillSctpChunk *chunk = check_and_cast<PacketDrillSctpChunk *>(*iter);
-        sctpmsg->insertSctpChunks(chunk->getChunk());
+        sctpmsg->appendSctpChunks(chunk->getChunk());
     }
 
     insertTransportProtocolHeader(packet, Protocol::sctp, sctpmsg);

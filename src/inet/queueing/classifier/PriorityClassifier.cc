@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -26,7 +28,7 @@ int PriorityClassifier::classifyPacket(Packet *packet)
 {
     for (size_t i = 0; i < consumers.size(); i++) {
         size_t outputGateIndex = getOutputGateIndex(i);
-        if (consumers[outputGateIndex]->canPushSomePacket(outputGates[outputGateIndex]))
+        if (consumers[outputGateIndex]->canPushPacket(packet, outputGates[outputGateIndex]))
             return outputGateIndex;
     }
     return -1;

@@ -2,6 +2,8 @@
 // Copyright (C) 2008-2009 Irene Ruengeler
 // Copyright (C) 2009-2012 Thomas Dreibholz
 //
+// SPDX-License-Identifier: GPL-2.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
@@ -76,7 +78,7 @@ void SctpHeader::clean()
 
 void SctpHeader::setSctpChunksArraySize(size_t size)
 {
-    throw cException(this, "setSctpChunkArraySize() not supported, use insertSctpChunks()");
+    throw cException(this, "setSctpChunkArraySize() not supported, use appendSctpChunks()");
 }
 
 void SctpHeader::setSctpChunks(size_t k, SctpChunk *chunk)
@@ -103,7 +105,7 @@ void SctpHeader::replaceSctpChunk(SctpChunk *chunk, uint32_t k)
     setSctpChunks(k, chunk);
 }
 
-void SctpHeader::insertSctpChunks(SctpChunk *chunk)
+void SctpHeader::appendSctpChunks(SctpChunk *chunk)
 {
     handleChange();
     sctpChunkList.push_back(chunk);

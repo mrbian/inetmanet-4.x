@@ -103,7 +103,7 @@
         id = "Clock"
         name = "Clock"
         description = "Support for the simulation of hardware clocks and clock drifting."
-        initiallyEnabled = "false"
+        initiallyEnabled = "true"
         requires = ""
         labels = "oscillator time"
         nedPackages = "
@@ -121,7 +121,7 @@
         id = "ClockExamples"
         name = "Clock examples"
         description = "Examples for clock usage."
-        initiallyEnabled = "false"
+        initiallyEnabled = "true"
         requires = "Clock"
         labels = "oscillator time"
         nedPackages = "
@@ -1028,7 +1028,6 @@
                        inet.queueing.buffer
                        inet.queueing.classifier
                        inet.queueing.common
-                       inet.queueing.compat
                        inet.queueing.filter
                        inet.queueing.flow
                        inet.queueing.function
@@ -1619,6 +1618,20 @@
                       "
         extraSourceFolders = ""
         compileFlags = "-DINET_WITH_SELFDOC"
+        linkerFlags = ""
+        />
+    <feature
+        id = "Z3GateSchedulingConfigurator"
+        name = "Z3 Gate Scheduling Configurator"
+        description = "Z3 SAT solver based TSN gate scheduling configurator"
+        initiallyEnabled = "false"
+        requires = "Ethernet"
+        labels = ""
+        nedPackages = "
+                       inet.linklayer.configurator.gatescheduling.z3
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DINET_WITH_Z3_SAT_SOLVER"
         linkerFlags = ""
         />
 </features>

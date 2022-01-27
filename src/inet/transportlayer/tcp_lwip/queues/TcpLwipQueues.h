@@ -2,6 +2,8 @@
 // Copyright (C) 2004 OpenSim Ltd.
 // Copyright (C) 2010 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +24,7 @@
 #include "inet/common/packet/ChunkQueue.h"
 #include "inet/common/packet/Packet.h"
 #include "inet/common/packet/chunk/BytesChunk.h"
+#include "inet/transportlayer/tcp_common/TcpHeader.h"
 
 namespace inet {
 
@@ -29,7 +32,6 @@ namespace tcp {
 
 // forward declarations:
 class TcpLwipConnection;
-class TcpHeader;
 
 /**
  * TCP_LWIP send queue. In fact a single object

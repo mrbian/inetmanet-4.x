@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -34,20 +36,16 @@ module VlanPolicyLayer like IProtocolLayer
         output lowerLayerOut;
     submodules:
         outboundMapper: <default("VlanReqMapper")> like IPacketFlow {
-            parameters:
-                @display("p=200,100");
+            @display("p=200,150");
         }
         outboundFilter: <default("VlanReqFilter")> like IPacketFilter {
-            parameters:
-                @display("p=200,200");
+            @display("p=200,300");
         }
-        inboundMapper: <default("OmittedPacketFlow")> like IPacketFlow {
-            parameters:
-                @display("p=500,100");
+        inboundMapper: <default("")> like IPacketFlow {
+            @display("p=500,150");
         }
         inboundFilter: <default("VlanIndFilter")> like IPacketFilter {
-            parameters:
-                @display("p=500,200");
+            @display("p=500,300");
         }
     connections:
         upperLayerIn --> { @display("m=n"); } --> outboundMapper.in;

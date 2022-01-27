@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2021 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -22,10 +24,12 @@
 #include "inet/common/ProtocolTag_m.h"
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/linklayer/common/MacAddressTag_m.h"
+#include "inet/linklayer/common/PcpTag_m.h"
 #include "inet/linklayer/common/UserPriorityTag_m.h"
 #include "inet/linklayer/common/VlanTag_m.h"
 #include "inet/protocolelement/redundancy/SequenceNumberTag_m.h"
 #include "inet/protocolelement/redundancy/StreamTag_m.h"
+#include "inet/protocolelement/shaper/EligibilityTimeTag_m.h"
 
 namespace inet {
 
@@ -42,8 +46,10 @@ void PacketDirectionReverser::processPacket(Packet *packet)
 {
     auto packetProtocolTag = packet->findTag<PacketProtocolTag>();
     auto directionTag = packet->findTag<DirectionTag>();
+    auto eligibilityTimeTag = packet->findTag<EligibilityTimeTag>();
     auto macAddressInd = packet->findTag<MacAddressInd>();
     auto vlanInd = packet->findTag<VlanInd>();
+    auto pcpInd = packet->findTag<PcpInd>();
     auto userPriorityInd = packet->findTag<UserPriorityInd>();
     auto streamInd = packet->findTag<StreamInd>();
     auto sequenceNumberInd = packet->findTag<SequenceNumberInd>();
@@ -57,6 +63,8 @@ void PacketDirectionReverser::processPacket(Packet *packet)
             throw cRuntimeError("Packet must be inbound");
         packet->addTagIfAbsent<DirectionTag>()->setDirection(DIRECTION_OUTBOUND);
     }
+    if (eligibilityTimeTag != nullptr)
+        packet->addTag<EligibilityTimeTag>()->setEligibilityTime(eligibilityTimeTag->getEligibilityTime());
     if (interfaceInd != nullptr)
         packet->addTag<InterfaceInd>()->setInterfaceId(interfaceInd->getInterfaceId());
     if (macAddressInd != nullptr) {
@@ -66,6 +74,8 @@ void PacketDirectionReverser::processPacket(Packet *packet)
     }
     if (vlanInd != nullptr)
         packet->addTag<VlanReq>()->setVlanId(vlanInd->getVlanId());
+    if (pcpInd != nullptr)
+        packet->addTag<PcpReq>()->setPcp(pcpInd->getPcp());
     if (userPriorityInd != nullptr)
         packet->addTag<UserPriorityReq>()->setUserPriority(userPriorityInd->getUserPriority());
     if (streamInd != nullptr)

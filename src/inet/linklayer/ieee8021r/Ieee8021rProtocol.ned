@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -17,6 +19,9 @@
 
 package inet.linklayer.ieee8021r;
 
+//
+// This module implements the IEEE 802.1r protocol encapsulation/decapsulation.
+//
 module Ieee8021rProtocol like IIeee8021rLayer
 {
     parameters:

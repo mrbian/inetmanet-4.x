@@ -2,6 +2,8 @@
 // Copyright (C) 2005 Christian Dankbar, Irene Ruengeler, Michael Tuexen, Andras Varga
 // Copyright (C) 2010 Thomas Dreibholz
 //
+// SPDX-License-Identifier: GPL-2.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // as published by the Free Software Foundation; either version 2
@@ -1202,7 +1204,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                     chunk->encapsulate(msg);
                 }
                 EV_DETAIL << "datachunkLength=" << chunk->getByteLength() << "\n";
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1415,7 +1417,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                 }
                 chunk->setBitLength(chunklen * 8);
                 EV_INFO << "chunklen: " << chunk->getByteLength() << endl;
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
 //                chunkPtr += cLen;
                 break;
             }
@@ -1645,7 +1647,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
 //                    calculateSharedKey();
                 }
                 chunk->setByteLength(chunklen);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1678,7 +1680,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                 }
 
                 chunk->setBitLength(cLen * 8);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1708,7 +1710,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                     }
                 }
                 chunk->setBitLength(cLen * 8);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1743,7 +1745,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                     }
                 }
                 chunk->setBitLength(cLen * 8);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1758,7 +1760,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                     // TODO handle attached error causes
                 }
                 chunk->setBitLength(cLen * 8);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1784,7 +1786,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                     chunk->setStateCookie(stateCookie);
                 }
                 chunk->setBitLength(woPadding * 8);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1793,7 +1795,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                 SctpCookieAckChunk *chunk = new SctpCookieAckChunk("COOKIE_ACK");
                 chunk->setSctpChunkType(chunkType);
                 chunk->setByteLength(cLen);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1805,7 +1807,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                 uint32_t cumtsnack = ntohl(sc->cumulative_tsn_ack);
                 chunk->setCumTsnAck(cumtsnack);
                 chunk->setBitLength(cLen * 8);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1814,7 +1816,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                 SctpShutdownAckChunk *chunk = new SctpShutdownAckChunk("SHUTDOWN_ACK");
                 chunk->setSctpChunkType(chunkType);
                 chunk->setBitLength(cLen * 8);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1825,7 +1827,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                 chunk->setSctpChunkType(chunkType);
                 chunk->setTBit(scc->flags & T_BIT);
                 chunk->setBitLength(cLen * 8);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1845,7 +1847,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                     errParam->setByteLength(err->length);
                     errorchunk->addParameters(errParam);
                 }
-                dest->insertSctpChunks(errorchunk);
+                dest->appendSctpChunks(errorchunk);
                 break;
             }
 
@@ -1868,7 +1870,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                     streamptr += sizeof(struct forward_tsn_streams);
                 }
                 chunk->setByteLength(cLen);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1904,7 +1906,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                     }
                 }
                 chunk->setByteLength(woPadding);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -1990,7 +1992,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                     }
                 }
                 chunk->setByteLength(cLen);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -2040,7 +2042,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                     }
                 }
                 chunk->setByteLength(cLen);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 
@@ -2143,7 +2145,7 @@ const Ptr<Chunk> SctpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                     }
                 }
                 chunk->setByteLength(cLen);
-                dest->insertSctpChunks(chunk);
+                dest->appendSctpChunks(chunk);
                 break;
             }
 

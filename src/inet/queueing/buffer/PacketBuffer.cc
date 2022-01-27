@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -22,7 +24,6 @@
 #include "inet/common/Simsignals.h"
 #include "inet/common/StringFormat.h"
 #include "inet/common/stlutils.h"
-#include "inet/queueing/compat/cpacketqueue.h"
 
 namespace inet {
 namespace queueing {
@@ -106,6 +107,24 @@ void PacketBuffer::removePacket(Packet *packet)
         if (callback != nullptr)
             callback->handlePacketRemoved(packet);
     }
+}
+
+void PacketBuffer::removeAllPackets()
+{
+    Enter_Method("removeAllPacket");
+    EV_INFO << "Removing all packets" << EV_ENDL;
+    while (!isEmpty()) {
+        auto packet = getPacket(0);
+        emit(packetRemovedSignal, packet);
+        packets.erase(packets.begin());
+        auto queue = dynamic_cast<cPacketQueue *>(packet->getOwner());
+        if (queue != nullptr) {
+            ICallback *callback = dynamic_cast<ICallback *>(queue->getOwner());
+            if (callback != nullptr)
+                callback->handlePacketRemoved(packet);
+        }
+    }
+    updateDisplayString();
 }
 
 Packet *PacketBuffer::getPacket(int index) const

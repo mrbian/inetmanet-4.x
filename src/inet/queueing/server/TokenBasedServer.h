@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -19,17 +21,13 @@
 #define __INET_TOKENBASEDSERVER_H
 
 #include "inet/queueing/base/PacketServerBase.h"
+#include "inet/queueing/contract/ITokenStorage.h"
 
 namespace inet {
 namespace queueing {
 
-class INET_API TokenBasedServer : public PacketServerBase
+class INET_API TokenBasedServer : public PacketServerBase, public ITokenStorage
 {
-  public:
-    static simsignal_t tokensAddedSignal;
-    static simsignal_t tokensRemovedSignal;
-    static simsignal_t tokensDepletedSignal;
-
   protected:
     cPar *tokenConsumptionPerPacketParameter = nullptr;
     cPar *tokenConsumptionPerBitParameter = nullptr;
@@ -43,8 +41,11 @@ class INET_API TokenBasedServer : public PacketServerBase
     virtual void processPackets();
 
   public:
-    virtual int getNumTokens() const { return numTokens; }
-    virtual void addTokens(double tokens);
+    virtual double getNumTokens() const override { return numTokens; }
+    virtual void addTokens(double tokens) override;
+    virtual void removeTokens(double tokens) override { throw cRuntimeError("TODO"); }
+    virtual void addTokenProductionRate(double tokenRate) override { throw cRuntimeError("TODO"); }
+    virtual void removeTokenProductionRate(double tokenRate) override { throw cRuntimeError("TODO"); }
 
     virtual void handleCanPushPacketChanged(cGate *gate) override;
     virtual void handleCanPullPacketChanged(cGate *gate) override;

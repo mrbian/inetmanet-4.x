@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -26,9 +28,12 @@
 namespace inet {
 namespace queueing {
 
-class INET_API PacketMultiplexer : public PacketProcessorBase, public virtual IPassivePacketSink, public virtual IActivePacketSource, public DefaultProtocolRegistrationListener
+class INET_API PacketMultiplexer : public PacketProcessorBase, public virtual IPassivePacketSink, public virtual IActivePacketSource, public TransparentProtocolRegistrationListener
 {
   protected:
+    bool forwardServiceRegistration;
+    bool forwardProtocolRegistration;
+
     std::vector<cGate *> inputGates;
     std::vector<IActivePacketSource *> producers;
 
@@ -40,6 +45,8 @@ class INET_API PacketMultiplexer : public PacketProcessorBase, public virtual IP
   protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *message) override;
+
+    virtual void mapRegistrationForwardingGates(cGate *gate, std::function<void(cGate *)> f) override;
 
     virtual bool isStreamingPacket() const { return inProgressStreamId != -1; }
     virtual void startPacketStreaming(Packet *packet);
@@ -65,8 +72,8 @@ class INET_API PacketMultiplexer : public PacketProcessorBase, public virtual IP
     virtual void handleCanPushPacketChanged(cGate *gate) override;
     virtual void handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful) override;
 
-    virtual void handleRegisterService(const Protocol& protocol, cGate *gate, ServicePrimitive servicePrimitive) override;
-    virtual void handleRegisterProtocol(const Protocol& protocol, cGate *gate, ServicePrimitive servicePrimitive) override;
+    virtual bool isForwardingService(cGate *gate, ServicePrimitive servicePrimitive) const override { return forwardServiceRegistration; }
+    virtual bool isForwardingProtocol(cGate *gate, ServicePrimitive servicePrimitive) const override { return forwardProtocolRegistration; }
 };
 
 } // namespace queueing

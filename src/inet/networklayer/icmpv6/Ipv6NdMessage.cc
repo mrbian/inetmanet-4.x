@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2019 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -41,7 +43,7 @@ void Ipv6NdOptions::insertUniqueOption(size_t k, Ipv6NdOption *option)
 {
     if (findOption(option->getType()))
         throw cRuntimeError("Option %i already exists", (int)option->getType());
-    insertOption(option);
+    appendOption(option);
 }
 
 } // namespace inet

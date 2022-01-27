@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -28,6 +30,8 @@ namespace queueing {
 class INET_API PacketFilterBase : public PacketProcessorBase, public virtual IPacketFilter
 {
   protected:
+    bool backpressure = false;
+
     cGate *inputGate = nullptr;
     ModuleRef<IActivePacketSource> producer;
     ModuleRef<IPassivePacketSource> provider;
@@ -78,7 +82,7 @@ class INET_API PacketFilterBase : public PacketProcessorBase, public virtual IPa
     virtual void handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful) override;
 
     virtual bool canPullSomePacket(cGate *gate) const override;
-    virtual Packet *canPullPacket(cGate *gate) const override { throw cRuntimeError("Invalid operation"); }
+    virtual Packet *canPullPacket(cGate *gate) const override;
 
     virtual Packet *pullPacket(cGate *gate) override;
 

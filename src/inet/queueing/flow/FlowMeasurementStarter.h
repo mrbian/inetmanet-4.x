@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -53,8 +55,9 @@ class INET_API FlowMeasurementStarter : public PacketFlowBase
         EV_INFO << EV_FIELD(class, typeid(T).name()) << EV_ENDL;
         packet->addRegionTagsWhereAbsent<T>(offset, length);
         packet->mapAllRegionTagsForUpdate<T>(offset, length, [&] (b o, b l, const Ptr<T>& timeTag) {
-            timeTag->insertFlowNames(flowName);
-            timeTag->insertTotalTimes(value);
+            timeTag->appendFlowNames(flowName);
+            timeTag->appendBitTotalTimes(value);
+            timeTag->appendPacketTotalTimes(value);
         });
     }
 

@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -28,7 +30,12 @@ simple PacketTransmitterBase extends PacketProcessorBase
         @display("i=block/wtx");
         @signal[transmissionStarted](type=inet::physicallayer::Signal);
         @signal[transmissionEnded](type=inet::physicallayer::Signal);
-        @statistic[transmitting](title="transmitting"; type=int; source=count(transmissionStarted) - count(transmissionEnded); record=vector; interpolationmode=sample-hold);
+        @statistic[transmitting](title="transmitting state"; type=int; source=count(transmissionStarted) - count(transmissionEnded); record=vector; interpolationmode=sample-hold);
+        @statistic[throughput](title="throughput"; source=throughput(transmissionEnded); record=vector,histogram; interpolationmode=linear);
+        @statistic[utilization](title="utilization"; source=utilization(count(transmissionStarted) - count(transmissionEnded)); record=vector,histogram; interpolationmode=linear);
+        @statistic[propagationTime](title="propagation time"; unit=s);
+        @statistic[transmissionTime](title="transmission time"; unit=s; source=packetDuration(transmissionEnded); record=vector,histogram; interpolationmode=none);
+        @statistic[flowTransmissionTime](title="flow transmission time"; unit=s; source=packetDuration(demuxFlow(transmissionEnded)); record=vector,histogram; interpolationmode=none);
     gates:
         input in;
         output out;

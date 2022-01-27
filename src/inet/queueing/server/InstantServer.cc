@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -40,10 +42,11 @@ void InstantServer::processPacket()
 {
     auto packet = provider->pullPacket(inputGate->getPathStartGate());
     take(packet);
+    emit(packetPulledSignal, packet);
     std::string packetName = packet->getName();
     auto packetLength = packet->getDataLength();
     EV_INFO << "Processing packet started" << EV_FIELD(packet) << EV_ENDL;
-    emit(packetServedSignal, packet);
+    emit(packetPushedSignal, packet);
     pushOrSendPacket(packet, outputGate, consumer);
     processedTotalLength += packetLength;
     numProcessedPackets++;
@@ -53,17 +56,24 @@ void InstantServer::processPacket()
 void InstantServer::handleCanPushPacketChanged(cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
-    while (canProcessPacket())
-        processPacket();
-    updateDisplayString();
+    processPackets();
 }
 
 void InstantServer::handleCanPullPacketChanged(cGate *gate)
 {
     Enter_Method("handleCanPullPacketChanged");
-    while (canProcessPacket())
-        processPacket();
-    updateDisplayString();
+    processPackets();
+}
+
+void InstantServer::processPackets()
+{
+    if (!isProcessing) {
+        isProcessing = true;
+        while (canProcessPacket())
+            processPacket();
+        isProcessing = false;
+        updateDisplayString();
+    }
 }
 
 } // namespace queueing

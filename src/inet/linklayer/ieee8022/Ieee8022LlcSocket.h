@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2018 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -35,6 +37,7 @@ class INET_API Ieee8022LlcSocket : public SocketBase
   protected:
     int interfaceId = -1;
     int localSap = -1;
+    int remoteSap = -1;
     ICallback *callback = nullptr;
 
   protected:
@@ -63,11 +66,16 @@ class INET_API Ieee8022LlcSocket : public SocketBase
     virtual int getInterfaceId() const { return interfaceId; }
 
     /**
-     * Returns the local Sap Id.
+     * Returns the local SAP.
      */
     virtual int getLocalSap() const { return localSap; }
 
-    virtual void open(int interfaceId, int localSap);
+    /**
+     * Returns the remote SAP.
+     */
+    virtual int getRemoteSap() const { return remoteSap; }
+
+    virtual void open(int interfaceId, int localSap, int remoteSap);
     virtual void processMessage(cMessage *msg) override;
 };
 

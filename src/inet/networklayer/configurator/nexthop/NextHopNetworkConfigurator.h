@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2012 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -18,7 +20,7 @@
 #ifndef __INET_NEXTHOPNETWORKCONFIGURATOR_H
 #define __INET_NEXTHOPNETWORKCONFIGURATOR_H
 
-#include "inet/networklayer/configurator/base/NetworkConfiguratorBase.h"
+#include "inet/networklayer/configurator/base/L3NetworkConfiguratorBase.h"
 
 namespace inet {
 
@@ -29,7 +31,7 @@ class PatternMatcher;
  *
  * For more info please see the NED file.
  */
-class INET_API NextHopNetworkConfigurator : public NetworkConfiguratorBase
+class INET_API NextHopNetworkConfigurator : public L3NetworkConfiguratorBase
 {
   protected:
     // parameters

@@ -4,9 +4,11 @@
 // Copyright (C) 2005 OpenSim Ltd.
 // Copyright (C) 2001-2004 CTIE, Monash University
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2.1
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -137,5 +139,10 @@ cplusplus(Ipv6Header) {{
     virtual const Protocol *getProtocol() const override { return ProtocolGroup::ipprotocol.findProtocol(getProtocolId()); }
     virtual void setProtocol(const Protocol *protocol) override { setProtocolId(static_cast<IpProtocolId>(ProtocolGroup::ipprotocol.getProtocolNumber(protocol))); }
     virtual bool isFragment() const override { return findExtensionHeaderByType(IP_PROT_IPv6EXT_FRAGMENT) != nullptr; }
+
+#if (OMNETPP_BUILDNUM < 1530)
+    Ipv6ExtensionHeader * removeExtensionHeader(size_t k) { return dropExtensionHeader(k); }
+    void appendExtensionHeader(Ipv6ExtensionHeader * extensionHeader) { insertExtensionHeader(extensionHeader); }
+#endif
 }}
 

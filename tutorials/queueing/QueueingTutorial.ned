@@ -22,13 +22,13 @@ import inet.queueing.contract.IPassivePacketSink;
 import inet.queueing.contract.IPassivePacketSource;
 import inet.queueing.filter.ContentBasedFilter;
 import inet.queueing.filter.OrdinalBasedDropper;
-import inet.queueing.filter.RateLimiter;
+import inet.queueing.filter.StatisticalRateLimiter;
 import inet.queueing.filter.RedDropper;
 import inet.queueing.gate.PacketGate;
 import inet.queueing.marker.ContentBasedLabeler;
 import inet.queueing.marker.ContentBasedTagger;
 import inet.queueing.marker.PacketTagger;
-import inet.queueing.meter.RateMeter;
+import inet.queueing.meter.ExponentialRateMeter;
 import inet.queueing.queue.CompoundPacketQueueBase;
 import inet.queueing.queue.DropTailQueue;
 import inet.queueing.queue.PacketQueue;
@@ -704,7 +704,7 @@ network TimeBasedTokenGeneratorTutorialStep
         }
         tokenGenerator: TimeBasedTokenGenerator {
             @display("p=100,250");
-            serverModule = "^.server";
+            storageModule = "^.server";
         }
     connections allowunconnected:
         provider.out --> server.in;
@@ -731,7 +731,7 @@ network PacketBasedTokenGeneratorTutorialStep
         }
         tokenGenerator: PacketBasedTokenGenerator {
             @display("p=300,125");
-            serverModule = "^.server";
+            storageModule = "^.server";
         }
     connections allowunconnected:
         producer.out --> tokenGenerator.in;
@@ -759,7 +759,7 @@ network QueueBasedTokenGeneratorTutorialStep
         }
         tokenGenerator: QueueBasedTokenGenerator {
             @display("p=100,250");
-            serverModule = "^.server";
+            storageModule = "^.server";
             queueModule = "^.queue";
         }
     connections allowunconnected:
@@ -787,7 +787,7 @@ network SignalBasedTokenGeneratorTutorialStep
             @display("p=100,250");
             signals = "packetDropped";
             subscriptionModule = "^.consumer";
-            serverModule = "^.server";
+            storageModule = "^.server";
         }
     connections allowunconnected:
         provider.out --> server.in;
@@ -803,10 +803,10 @@ network MeterTutorialStep
         producer: ActivePacketSource {
             @display("p=100,100");
         }
-        meter: RateMeter {
+        meter: ExponentialRateMeter {
             @display("p=325,100");
         }
-        limiter: RateLimiter {
+        limiter: StatisticalRateLimiter {
             @display("p=550,100");
         }
         consumer: PassivePacketSink {
@@ -922,7 +922,7 @@ network TokenBucketTutorialStep
         }
         tokenGenerator: TimeBasedTokenGenerator {
             @display("p=100,200");
-            serverModule = "^.bucket.server";
+            storageModule = "^.bucket.server";
         }
     connections allowunconnected:
         producer.out --> bucket.in;
@@ -1142,7 +1142,7 @@ network RequestResponseTutorialStep
         }
         responseProducer: ResponseProducer {
             @display("p=300,200");
-            tokenGenerator.serverModule = "^.^.requestConsumer.server";
+            tokenGenerator.storageModule = "^.^.requestConsumer.server";
         }
     connections allowunconnected:
         requestProducer.out --> requestConsumer.in;
@@ -1252,7 +1252,7 @@ module TelnetServerTraffic
         }
         enterTokenGenerator: PacketBasedTokenGenerator {
             parameters:
-                serverModule = default("^.responseServer");
+                storageModule = default("^.responseServer");
                 @display("p=600,350");
         }
     connections:

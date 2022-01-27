@@ -4,9 +4,11 @@
 // Copyright (C) 2009 Thomas Dreibholz
 // Copyright (C) 2011 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 2
+// as published by the Free Software Foundation; either version 3
 // of the License, or (at your option) any later version.
 //
 // This program is distributed in the hope that it will be useful,
@@ -53,8 +55,7 @@ simple PcapRecorder
         string sendingSignalNames = default("packetSentToLower"); // space-separated list of outbound packet signals to subscribe to
         string receivingSignalNames = default("packetReceivedFromLower"); // space-separated list of inbound packet signals to subscribe to
         string dumpProtocols = default("ethernetmac ppp ieee80211mac"); // space-separated list of protocol names as defined in the Protocol class
-        string packetFilter = default("*"); // which packets are considered, matches all packets by default
-        string packetDataFilter = default("*"); // which packets are considered based on the data they contain, matches all packets by default
+        object packetFilter = default("*"); // which packets are considered, matches all packets by default
         string helpers = default("");    // usable PcapRecorder::IHelper helpers for accept packettype and store/convert packet as specified linktype
                                          // currently available: "inet::AckingMacToEthernetPcapRecorderHelper"
         bool alwaysFlush = default(false); // flush the pcapFile after each write to ensure that all packets are captured in case of a crash

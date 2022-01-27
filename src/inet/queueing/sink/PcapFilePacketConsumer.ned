@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -17,14 +19,14 @@
 
 package inet.queueing.sink;
 
-import inet.queueing.base.PacketSinkBase;
+import inet.queueing.base.PassivePacketSinkBase;
 import inet.queueing.contract.IPassivePacketSink;
 
 //
 // This module is a passive packet sink which is pushed with packets by the
 // connected packet producer. All pushed packets are written to a PCAP file.
 //
-simple PcapFilePacketConsumer extends PacketSinkBase like IPassivePacketSink
+simple PcapFilePacketConsumer extends PassivePacketSinkBase like IPassivePacketSink
 {
     parameters:
         string filename; // the PCAP file to be written
@@ -33,8 +35,6 @@ simple PcapFilePacketConsumer extends PacketSinkBase like IPassivePacketSink
         bool outbound;  // direction flag
         bool alwaysFlush = default(false); // flush the PCAP file after each write to ensure that all packets are captured in case of a crash
         @class(PcapFilePacketConsumer);
-        @signal[packetPushed](type=inet::Packet);
-        @statistic[packetPushed](title="packets pushed"; record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
     gates:
         input in @labels(push);
 }

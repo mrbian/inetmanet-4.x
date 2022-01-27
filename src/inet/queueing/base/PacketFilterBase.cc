@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -27,6 +29,7 @@ void PacketFilterBase::initialize(int stage)
 {
     PacketProcessorBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
+        backpressure = par("backpressure");
         inputGate = gate("in");
         outputGate = gate("out");
         producer.reference(inputGate, false);
@@ -61,7 +64,7 @@ void PacketFilterBase::startPacketStreaming(Packet *packet)
 
 void PacketFilterBase::endPacketStreaming(Packet *packet)
 {
-    emit(packetPushedSignal, packet);
+    emit(packetPushedInSignal, packet);
     handlePacketProcessed(packet);
     inProgressStreamId = -1;
 }
@@ -73,7 +76,10 @@ bool PacketFilterBase::canPushSomePacket(cGate *gate) const
 
 bool PacketFilterBase::canPushPacket(Packet *packet, cGate *gate) const
 {
-    return consumer == nullptr || consumer->canPushPacket(packet, outputGate->getPathEndGate()) || !matchesPacket(packet);
+    if (backpressure)
+        return matchesPacket(packet) && consumer != nullptr && consumer->canPushPacket(packet, outputGate->getPathEndGate());
+    else
+        return !matchesPacket(packet) || consumer == nullptr || consumer->canPushPacket(packet, outputGate->getPathEndGate());
 }
 
 void PacketFilterBase::pushPacket(Packet *packet, cGate *gate)
@@ -81,11 +87,12 @@ void PacketFilterBase::pushPacket(Packet *packet, cGate *gate)
     Enter_Method("pushPacket");
     take(packet);
     checkPacketStreaming(nullptr);
-    emit(packetPushedSignal, packet);
+    emit(packetPushedInSignal, packet);
     if (matchesPacket(packet)) {
         processPacket(packet);
         handlePacketProcessed(packet);
         EV_INFO << "Passing through packet" << EV_FIELD(packet) << EV_ENDL;
+        emit(packetPushedOutSignal, packet);
         pushOrSendPacket(packet, outputGate, consumer);
     }
     else {
@@ -126,6 +133,7 @@ void PacketFilterBase::pushPacketEnd(Packet *packet, cGate *gate)
         processPacket(packet);
         EV_INFO << "Passing through packet" << EV_FIELD(packet) << EV_ENDL;
         endPacketStreaming(packet);
+        emit(packetPushedOutSignal, packet);
         pushOrSendPacketEnd(packet, outputGate, consumer, packet->getTransmissionId());
     }
     else {
@@ -174,17 +182,26 @@ void PacketFilterBase::handlePushPacketProcessed(Packet *packet, cGate *gate, bo
 bool PacketFilterBase::canPullSomePacket(cGate *gate) const
 {
     Enter_Method("canPullSomePacket");
+    return canPullPacket(gate) != nullptr;
+}
+
+Packet *PacketFilterBase::canPullPacket(cGate *gate) const
+{
+    Enter_Method("canPullPacket");
     auto providerGate = inputGate->getPathStartGate();
     while (true) {
         auto packet = provider->canPullPacket(providerGate);
         if (packet == nullptr)
-            return false;
+            return nullptr;
         else if (matchesPacket(packet))
-            return true;
+            return packet;
+        else if (backpressure)
+            return nullptr;
         else {
             auto nonConstThisPtr = const_cast<PacketFilterBase *>(this);
             packet = provider->pullPacket(providerGate);
             nonConstThisPtr->take(packet);
+            nonConstThisPtr->emit(packetPulledInSignal, packet);
             EV_INFO << "Filtering out packet" << EV_FIELD(packet) << EV_ENDL;
             // KLUDGE
             nonConstThisPtr->handlePacketProcessed(packet);
@@ -201,13 +218,14 @@ Packet *PacketFilterBase::pullPacket(cGate *gate)
     while (true) {
         auto packet = provider->pullPacket(providerGate);
         take(packet);
+        emit(packetPulledInSignal, packet);
         if (matchesPacket(packet)) {
             processPacket(packet);
             handlePacketProcessed(packet);
             EV_INFO << "Passing through packet" << EV_FIELD(packet) << EV_ENDL;
             animatePullPacket(packet, outputGate);
             updateDisplayString();
-            emit(packetPulledSignal, packet);
+            emit(packetPulledOutSignal, packet);
             return packet;
         }
         else {

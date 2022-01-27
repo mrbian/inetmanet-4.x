@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -36,6 +38,11 @@ void PacketProcessorBase::initialize(int stage)
         updateDisplayString();
 }
 
+void PacketProcessorBase::refreshDisplay() const
+{
+    updateDisplayString();
+}
+
 void PacketProcessorBase::handlePacketProcessed(Packet *packet)
 {
     numProcessedPackets++;
@@ -46,6 +53,14 @@ void PacketProcessorBase::checkPacketOperationSupport(cGate *gate) const
 {
     auto startGate = findConnectedGate<IPacketProcessor>(gate, -1);
     auto endGate = findConnectedGate<IPacketProcessor>(gate, 1);
+    if (gate->getPreviousGate() != nullptr)
+        checkPacketOperationSupport(startGate, gate);
+    if (gate->getNextGate() != nullptr)
+        checkPacketOperationSupport(gate, endGate);
+}
+
+void PacketProcessorBase::checkPacketOperationSupport(cGate *startGate, cGate *endGate) const
+{
     auto startElement = startGate == nullptr ? nullptr : check_and_cast<IPacketProcessor *>(startGate->getOwnerModule());
     auto endElement = endGate == nullptr ? nullptr : check_and_cast<IPacketProcessor *>(endGate->getOwnerModule());
     if (startElement != nullptr && endElement != nullptr) {
@@ -89,7 +104,7 @@ void PacketProcessorBase::checkPacketOperationSupport(cGate *gate) const
                     throw cRuntimeError(startGate->getOwnerModule(), "doesn't support packet pulling on gate %s", startGate->getFullPath().c_str());
             }
             else
-                throw cRuntimeError(endGate->getOwnerModule(), "neither supports packet pushing nor packet pulling on gate %s", gate->getFullPath().c_str());
+                throw cRuntimeError(endGate->getOwnerModule(), "neither supports packet pushing nor packet pulling on gates %s - %s", startGate->getFullPath().c_str(), endGate->getFullPath().c_str());
         }
         if (!bothPassing && !bothStreaming) {
             if (eitherPassing) {
@@ -105,7 +120,7 @@ void PacketProcessorBase::checkPacketOperationSupport(cGate *gate) const
                     throw cRuntimeError(startGate->getOwnerModule(), "doesn't support packet streaming on gate %s", startGate->getFullPath().c_str());
             }
             else
-                throw cRuntimeError(endGate->getOwnerModule(), "neither supports packet passing nor packet streaming on gate %s", gate->getFullPath().c_str());
+                throw cRuntimeError(endGate->getOwnerModule(), "neither supports packet passing nor packet streaming on gates %s - %s", startGate->getFullPath().c_str(), endGate->getFullPath().c_str());
         }
     }
     else if (startElement != nullptr && endElement == nullptr) {
@@ -117,14 +132,14 @@ void PacketProcessorBase::checkPacketOperationSupport(cGate *gate) const
             throw cRuntimeError(endGate->getOwnerModule(), "doesn't support packet sending on gate %s", endGate->getFullPath().c_str());
     }
     else
-        throw cRuntimeError("Cannot check packet operation support on gate %s", gate->getFullPath().c_str());
+        throw cRuntimeError("Cannot check packet operation support on gates %s - %s", startGate->getFullPath().c_str(), endGate->getFullPath().c_str());
 }
 
 void PacketProcessorBase::pushOrSendPacket(Packet *packet, cGate *gate, IPassivePacketSink *consumer)
 {
     if (consumer != nullptr) {
         animatePushPacket(packet, gate);
-        consumer->pushPacket(packet, gate->getPathEndGate());
+        consumer->pushPacket(packet, findConnectedGate<IPacketProcessor>(gate));
     }
     else
         send(packet, gate);
@@ -138,7 +153,7 @@ void PacketProcessorBase::pushOrSendPacketStart(Packet *packet, cGate *gate, IPa
     sendOptions.updateTx(transmissionId, duration);
     if (consumer != nullptr) {
         animatePushPacketStart(packet, gate, datarate, sendOptions);
-        consumer->pushPacketStart(packet, gate->getPathEndGate(), datarate);
+        consumer->pushPacketStart(packet, findConnectedGate<IPacketProcessor>(gate), datarate);
     }
     else {
         auto progressTag = packet->addTagIfAbsent<ProgressTag>();
@@ -155,7 +170,7 @@ void PacketProcessorBase::pushOrSendPacketEnd(Packet *packet, cGate *gate, IPass
     sendOptions.updateTx(transmissionId, 0);
     if (consumer != nullptr) {
         animatePushPacketEnd(packet, gate, sendOptions);
-        consumer->pushPacketEnd(packet, gate->getPathEndGate());
+        consumer->pushPacketEnd(packet, findConnectedGate<IPacketProcessor>(gate));
     }
     else {
         auto progressTag = packet->addTagIfAbsent<ProgressTag>();
@@ -196,8 +211,13 @@ void PacketProcessorBase::pushOrSendPacketProgress(Packet *packet, cGate *gate, 
 
 void PacketProcessorBase::animate(Packet *packet, cGate *gate, const SendOptions& sendOptions, Action action) const
 {
-    auto endGate = gate->getPathEndGate();
+    packet->setIsUpdate(sendOptions.isUpdate);
     packet->setTransmissionId(sendOptions.transmissionId_);
+    if (sendOptions.isUpdate && sendOptions.transmissionId_ == -1)
+        throw cRuntimeError("No transmissionId specified in SendOptions for a transmission update");
+    packet->setDuration(SIMTIME_ZERO);
+    packet->setRemainingDuration(SIMTIME_ZERO);
+    auto endGate = gate->getPathEndGate();
     packet->setArrival(endGate->getOwnerModule()->getId(), endGate->getId(), simTime());
     packet->setSentFrom(gate->getOwnerModule(), gate->getId(), simTime());
 
@@ -238,7 +258,7 @@ void PacketProcessorBase::animate(Packet *packet, cGate *gate, const SendOptions
 #endif // INET_WITH_SELFDOC
 
     auto envir = getEnvir();
-    if (envir->isGUI() && gate->getNextGate() != nullptr) {
+    if (gate->getNextGate() != nullptr) {
         envir->beginSend(packet, sendOptions);
         while (gate->getNextGate() != nullptr) {
             ChannelResult result;
@@ -249,6 +269,7 @@ void PacketProcessorBase::animate(Packet *packet, cGate *gate, const SendOptions
         }
         envir->endSend(packet);
     }
+    envir->pausePoint();
 }
 
 void PacketProcessorBase::animatePacket(Packet *packet, cGate *gate, Action action) const

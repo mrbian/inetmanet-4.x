@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -26,7 +28,7 @@ void ContentBasedTagger::initialize(int stage)
 {
     PacketTaggerBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL)
-        filter.setPattern(par("packetFilter"), par("packetDataFilter"));
+        filter.setExpression(par("packetFilter").objectValue());
 }
 
 void ContentBasedTagger::markPacket(Packet *packet)

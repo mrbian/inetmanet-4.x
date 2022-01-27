@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -26,7 +28,6 @@ import inet.queueing.contract.IPacketMarker;
 simple ContentBasedTagger extends PacketTaggerBase like IPacketMarker
 {
     parameters:
-        string packetFilter = default("*"); // packet filter expressions (e.g. ping-*), matches all packets by default
-        string packetDataFilter = default("*"); // packet data filter expression (e.g. inet::Ipv4Header and srcAddress = "10.0.0.1"), matches all packets by default
+        object packetFilter = default("*"); // packet filter expressions, matches all packets by default
         @class(ContentBasedTagger);
 }

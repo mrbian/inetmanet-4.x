@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2013 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -18,89 +20,100 @@
 #ifndef __INET_TSNCONFIGURATOR_H
 #define __INET_TSNCONFIGURATOR_H
 
-#include <algorithm>
-#include <vector>
-
-#include "inet/common/PatternMatcher.h"
-#include "inet/common/Topology.h"
-#include "inet/linklayer/configurator/Ieee8021dInterfaceData.h"
-#include "inet/networklayer/contract/IInterfaceTable.h"
+#include "inet/networklayer/configurator/base/NetworkConfiguratorBase.h"
 
 namespace inet {
 
-class INET_API TsnConfigurator : public cSimpleModule
+class INET_API TsnConfigurator : public NetworkConfiguratorBase
 {
-  protected:
-    class InterfaceInfo;
+  public:
+    class Path
+    {
+      public:
+        std::vector<const Interface *> interfaces;
+
+      public:
+        Path(const std::vector<const Interface *>& interfaces) : interfaces(interfaces) { }
+
+        friend std::ostream& operator<<(std::ostream& os, const TsnConfigurator::Path& path)
+        {
+            os << "[";
+            for (int i = 0; i < path.interfaces.size(); i++) {
+                auto interface = path.interfaces[i];
+                if (i != 0)
+                    os << ", ";
+                os << interface->node->module->getFullName();
+                if (TsnConfigurator::countParalellLinks(interface) > 1)
+                    os << "." << interface->networkInterface->getInterfaceName();
+            }
+            os << "]";
+            return os;
+        }
+    };
+
+    class Tree
+    {
+      public:
+        std::vector<Path> paths;
+
+      public:
+        Tree(const std::vector<Path>& paths) : paths(paths) { }
+
+        friend std::ostream& operator<<(std::ostream& os, const TsnConfigurator::Tree& tree)
+        {
+            os << "{";
+            for (int i = 0; i < tree.paths.size(); i++) {
+                auto path = tree.paths[i];
+                if (i != 0)
+                    os << ", ";
+                os << path;
+            }
+            os << "}";
+            return os;
+        }
+    };
 
     class StreamConfiguration
     {
       public:
         std::string name;
-        std::string packetFilter;
+        int priority = -1;
+        cValue packetFilter;
         std::string source;
-        std::string destination;
-        std::vector<std::vector<std::string>> paths;
-    };
-
-    /**
-     * Represents a node in the network.
-     */
-    class Node : public Topology::Node {
-      public:
-        cModule *module;
-        IInterfaceTable *interfaceTable;
-        std::vector<InterfaceInfo *> interfaceInfos;
-
-      public:
-        Node(cModule *module) : Topology::Node(module->getId()) { this->module = module; interfaceTable = nullptr; }
-        ~Node() { for (size_t i = 0; i < interfaceInfos.size(); i++) delete interfaceInfos[i]; }
-    };
-
-    /**
-     * Represents an interface in the network.
-     */
-    class InterfaceInfo : public cObject {
-      public:
-        NetworkInterface *networkInterface;
-
-      public:
-        InterfaceInfo(NetworkInterface *networkInterface) : networkInterface(networkInterface) {}
-        virtual std::string getFullPath() const override { return networkInterface->getInterfaceFullPath(); }
-    };
-
-    class Link : public Topology::Link {
-      public:
-        InterfaceInfo *sourceInterfaceInfo;
-        InterfaceInfo *destinationInterfaceInfo;
-
-      public:
-        Link() { sourceInterfaceInfo = nullptr; destinationInterfaceInfo = nullptr; }
-    };
-
-    class Topology : public inet::Topology {
-      protected:
-        virtual Node *createNode(cModule *module) override { return new TsnConfigurator::Node(module); }
-        virtual Link *createLink() override { return new TsnConfigurator::Link(); }
+        std::string destinationAddress;
+        std::vector<std::string> destinations;
+        std::vector<Tree> trees;
     };
 
   protected:
     cValueArray *configuration;
 
-    Topology topology;
     std::vector<StreamConfiguration> streamConfigurations;
+
+  public:
+    const std::vector<StreamConfiguration>& getStreams() const { return streamConfigurations; }
+
+    static Node *findConnectedNode(const Interface *interface) {
+        auto node = interface->node;
+        for (int i = 0; i < node->getNumOutLinks(); i++) {
+            auto link = (Link *)node->getLinkOut(i);
+            if (link->sourceInterface == interface)
+                return link->destinationInterface->node;
+        }
+        return nullptr;
+    }
+
+    static int countParalellLinks(const Interface *interface) {
+        int count = 0;
+        auto node = interface->node;
+        for (auto otherInterface : node->interfaces)
+            if (findConnectedNode(interface) == findConnectedNode(otherInterface))
+                count++;
+        return count;
+    }
 
   protected:
     virtual void initialize(int stage) override;
-    virtual int numInitStages() const override { return NUM_INIT_STAGES; }
-    virtual void handleMessage(cMessage *msg) override { throw cRuntimeError("this module doesn't handle messages, it runs only in initialize()"); }
-
-    /**
-     * Extracts network topology by walking through the module hierarchy.
-     * Creates vertices from modules having @networkNode property.
-     * Creates edges from connections (wired and wireless) between network interfaces.
-     */
-    virtual void extractTopology(Topology& topology);
 
     /**
      * Computes the network configuration for all nodes in the network.
@@ -111,23 +124,27 @@ class INET_API TsnConfigurator : public cSimpleModule
     virtual void computeStreams();
     virtual void computeStream(cValueMap *streamConfiguration);
 
-    virtual std::vector<std::vector<std::string>> selectBestPathsSubset(cValueMap *configuration, const std::vector<std::vector<std::string>>& paths);
-    virtual bool checkNodeFailureProtection(cValueArray *configuration, const std::vector<std::vector<std::string>>& paths);
-    virtual bool checkLinkFailureProtection(cValueArray *configuration, const std::vector<std::vector<std::string>>& paths);
+    virtual std::vector<Tree> selectBestTreeSubset(cValueMap *configuration, const Node *sourceNode, const std::vector<const Node *>& destinationNodes, const std::vector<Tree>& trees) const;
+    virtual double computeTreeCost(const Node *sourceNode, const std::vector<const Node *>& destinationNodes, const Tree& tree) const;
+    virtual Tree computeCanonicalTree(const Tree& tree) const;
+    virtual bool checkNodeFailureProtection(cValueArray *configuration, const Node *sourceNode, const std::vector<const Node *>& destinationNodes, const std::vector<Tree>& trees) const;
+    virtual bool checkLinkFailureProtection(cValueArray *configuration, const Node *sourceNode, const std::vector<const Node *>& destinationNodes, const std::vector<Tree>& trees) const;
 
-    virtual void configureStreams();
+    virtual void configureStreams() const;
 
-    virtual void collectAllPaths(Node *source, Node *destination, std::vector<std::vector<std::string>>& paths);
-    virtual void collectAllPaths(Node *source, Node *destination, Node *node, std::vector<std::vector<std::string>>& paths, std::vector<std::string>& current);
+    virtual std::vector<Tree> collectAllTrees(Node *sourceNode, const std::vector<const Node *>& destinationNodes) const;
+    virtual void collectAllTrees(const std::vector<const Node *>& stopNodes, const std::vector<const Node *>& destinationNodes, int destinationNodeIndex, std::vector<Path>& currentTree, std::vector<Tree>& allTrees) const;
 
-    virtual std::vector<std::string> collectNetworkNodes(std::string filter);
-    virtual std::vector<std::string> collectNetworkLinks(std::string filter);
+    virtual std::vector<Path> collectAllPaths(const std::vector<const Node *>& stopNodes, const Node *destinationNode) const;
+    virtual void collectAllPaths(const std::vector<const Node *>& stopNodes, const Node *currentNode, std::vector<const Interface *>& currentPath, std::vector<Path>& allPaths) const;
 
-    virtual bool matchesFilter(std::string name, std::string filter);
-    virtual bool intersects(std::vector<std::string> list1, std::vector<std::string> list2);
+    virtual std::vector<const Node *> collectNetworkNodes(const std::string& filter) const;
+    virtual std::vector<const Link *> collectNetworkLinks(const std::string& filter) const;
 
-    virtual Topology::LinkOut *findLinkOut(Node *node, int gateId);
-    virtual InterfaceInfo *findInterfaceInfo(Node *node, NetworkInterface *networkInterface);
+    virtual void collectReachedNodes(const Node *sourceNode, const std::vector<const Node *>& destinationNodes, const Tree& tree, const std::vector<const Node *>& failedNodes, std::vector<bool>& reachedDestinationNodes) const;
+    virtual void collectReachedNodes(const Node *sourceNode, const std::vector<const Node *>& destinationNodes, const Tree& tree, const std::vector<const Link *>& failedLinks, std::vector<bool>& reachedDestinationNodes) const;
+
+    virtual bool matchesFilter(const std::string& name, const std::string& filter) const;
 };
 
 } // namespace inet

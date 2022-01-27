@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -72,7 +74,7 @@ void LinkVisualizerBase::initialize(int stage)
             throw cRuntimeError("Unknown activity level: %s", activityLevelString);
         nodeFilter.setPattern(par("nodeFilter"));
         interfaceFilter.setPattern(par("interfaceFilter"));
-        packetFilter.setPattern(par("packetFilter"), par("packetDataFilter"));
+        packetFilter.setExpression(par("packetFilter").objectValue());
         lineColor = cFigure::Color(par("lineColor"));
         lineStyle = cFigure::parseLineStyle(par("lineStyle"));
         lineWidth = par("lineWidth");
@@ -100,8 +102,8 @@ void LinkVisualizerBase::handleParameterChange(const char *name)
             nodeFilter.setPattern(par("nodeFilter"));
         else if (!strcmp(name, "interfaceFilter"))
             interfaceFilter.setPattern(par("interfaceFilter"));
-        else if (!strcmp(name, "packetFilter") || !strcmp(name, "packetDataFilter"))
-            packetFilter.setPattern(par("packetFilter"), par("packetDataFilter"));
+        else if (!strcmp(name, "packetFilter"))
+            packetFilter.setExpression(par("packetFilter").objectValue());
         removeAllLinkVisualizations();
     }
 }

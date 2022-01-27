@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2004 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -21,7 +23,9 @@ import inet.applications.contract.IApp;
 
 //
 // This module periodically synchronizes the slave clock to the master clock with
-// the specified accuracy.
+// the specified accuracy. The synchronization happens directly using C++ methods
+// calls and without any packet exchange. This is primarily useful when the overhead
+// of the time synchronization protocol messages can be safely ignored.
 //
 simple SimpleClockSynchronizer like IApp
 {

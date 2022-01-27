@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -45,6 +47,7 @@ void PcapFilePacketProducer::handleMessage(cMessage *message)
     if (message->isPacket()) {
         auto packet = check_and_cast<Packet *>(message);
         if (consumer == nullptr || consumer->canPushPacket(packet, outputGate->getPathEndGate())) {
+            emit(packetPushedSignal, packet);
             pushOrSendPacket(packet, outputGate, consumer);
             schedulePacket();
         }

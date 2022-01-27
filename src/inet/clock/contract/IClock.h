@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -58,7 +60,8 @@ class INET_API IClock
      * function with respect to the simulation time argument. It's allowed to
      * return a different value for the same argument value if the clock is set
      * between calls. The time argument must be greater than or equal to the current
-     * simulation time, otherwise an error is raised.
+     * simulation time, otherwise an error is raised. See SIMTIME_AS_CLOCKTIME
+     * macro for simple type conversion.
      */
     virtual clocktime_t computeClockTimeFromSimTime(simtime_t time) const = 0;
 
@@ -68,7 +71,8 @@ class INET_API IClock
      * a monotonic function with respect to the clock time argument. It's allowed
      * to return a different value for the same argument value if the clock is
      * set between calls. The time argument must be greater or than equal to the
-     * current clock time, otherwise an error is raised.
+     * current clock time, otherwise an error is raised. See CLOCKTIME_AS_SIMTIME
+     * macro for simple type conversion.
      */
     virtual simtime_t computeSimTimeFromClockTime(clocktime_t time) const = 0;
 

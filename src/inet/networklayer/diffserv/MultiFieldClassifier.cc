@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2012 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -141,7 +143,7 @@ simsignal_t MultiFieldClassifier::pkClassSignal = registerSignal("pkClass");
 
 void MultiFieldClassifier::initialize(int stage)
 {
-    cSimpleModule::initialize(stage);
+    PacketClassifierBase::initialize(stage);
 
     if (stage == INITSTAGE_LOCAL) {
         numOutGates = gateSize("out");
@@ -284,6 +286,15 @@ void MultiFieldClassifier::configureFilters(cXMLElement *config)
             throw cRuntimeError("Error in XML <filter> element at %s: %s", filterElement->getSourceLocation(), e.what());
         }
     }
+}
+
+void MultiFieldClassifier::mapRegistrationForwardingGates(cGate *g, std::function<void(cGate *)> f)
+{
+    if (g == gate("defaultOut")) {
+        f(inputGate);
+    }
+    else
+        PacketClassifierBase::mapRegistrationForwardingGates(g, f);
 }
 
 } // namespace inet

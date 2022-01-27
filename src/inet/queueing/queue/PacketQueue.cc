@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -92,23 +94,24 @@ void PacketQueue::pushPacket(Packet *packet, cGate *gate)
 {
     Enter_Method("pushPacket");
     take(packet);
+    emit(packetPushStartedSignal, packet);
+    auto packetClone = packet->dup(); // TODO delete this code if the original packet can be emitted in packetPushEndedSignal
     EV_INFO << "Pushing packet" << EV_FIELD(packet) << EV_ENDL;
     queue.insert(packet);
-    emit(packetPushedSignal, packet);
     if (buffer != nullptr)
         buffer->addPacket(packet);
-    else if (isOverloaded()) {
-        if (packetDropperFunction != nullptr) {
-            while (!isEmpty() && isOverloaded()) {
-                auto packet = packetDropperFunction->selectPacket(this);
-                EV_INFO << "Dropping packet" << EV_FIELD(packet) << EV_ENDL;
-                queue.remove(packet);
-                dropPacket(packet, QUEUE_OVERFLOW);
-            }
+    else if (packetDropperFunction != nullptr) {
+        while (isOverloaded()) {
+            auto packet = packetDropperFunction->selectPacket(this);
+            EV_INFO << "Dropping packet" << EV_FIELD(packet) << EV_ENDL;
+            queue.remove(packet);
+            dropPacket(packet, QUEUE_OVERFLOW);
         }
-        else
-            throw cRuntimeError("Queue is overloaded but packet dropper function is not specified");
     }
+    ASSERT(!isOverloaded());
+    // TODO pass packet instead of packetClone if not deleted when weak ptrs are available
+    emit(packetPushEndedSignal, packetClone);
+    delete packetClone;
     updateDisplayString();
     if (collector != nullptr && getNumPackets() != 0)
         collector->handleCanPullPacketChanged(outputGate->getPathEndGate());
@@ -130,7 +133,7 @@ Packet *PacketQueue::pullPacket(cGate *gate)
     packetEvent->setQueuePacketLength(getNumPackets());
     packetEvent->setQueueDataLength(getTotalLength());
     insertPacketEvent(this, packet, PEK_QUEUED, queueingTime, packetEvent);
-    increaseTimeTag<QueueingTimeTag>(packet, queueingTime);
+    increaseTimeTag<QueueingTimeTag>(packet, queueingTime, queueingTime);
     emit(packetPulledSignal, packet);
     animatePullPacket(packet, outputGate);
     updateDisplayString();
@@ -141,13 +144,26 @@ void PacketQueue::removePacket(Packet *packet)
 {
     Enter_Method("removePacket");
     EV_INFO << "Removing packet" << EV_FIELD(packet) << EV_ENDL;
-    if (buffer != nullptr) {
-        queue.remove(packet);
+    queue.remove(packet);
+    if (buffer != nullptr)
         buffer->removePacket(packet);
-    }
-    else
-        queue.remove(packet);
     emit(packetRemovedSignal, packet);
+    updateDisplayString();
+}
+
+void PacketQueue::removeAllPackets()
+{
+    Enter_Method("removeAllPackets");
+    EV_INFO << "Removing all packets" << EV_ENDL;
+    std::vector<Packet *> packets;
+    for (int i = 0; i < getNumPackets(); i++)
+        packets.push_back(check_and_cast<Packet *>(queue.pop()));
+    if (buffer != nullptr)
+        buffer->removeAllPackets();
+    for (auto packet : packets) {
+        emit(packetRemovedSignal, packet);
+        delete packet;
+    }
     updateDisplayString();
 }
 

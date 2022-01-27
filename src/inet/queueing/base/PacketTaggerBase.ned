@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -32,6 +34,7 @@ simple PacketTaggerBase extends PacketMarkerBase
         string interfaceName = default(""); // specifies outgoing interface, unused by default
         int hopLimit = default(-1); // specifies network layer TTL, unused by default
         int vlanId = default(-1); // specifies VLAN, unused by default
+        int pcp = default(-1); // specifies PCP, unused by default
         int userPriority = default(-1); // specifies user priority, unused by default
         double transmissionPower @unit(W) = default(nan W); // specifies signal transmission power, unused by default
         displayStringTextFormat = default("tagged %p pk (%l)");

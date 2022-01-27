@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -33,9 +35,7 @@ void CompoundPacketQueueBase::initialize(int stage)
         consumer = check_and_cast<IPassivePacketSink *>(inputGate->getPathEndGate()->getOwnerModule());
         provider = check_and_cast<IPassivePacketSource *>(outputGate->getPathStartGate()->getOwnerModule());
         collection = check_and_cast<IPacketCollection *>(provider);
-        subscribe(packetPushedSignal, this);
-        subscribe(packetPulledSignal, this);
-        subscribe(packetRemovedSignal, this);
+        packetDropperFunction = createDropperFunction(par("dropperClass"));
         subscribe(packetDroppedSignal, this);
         subscribe(packetCreatedSignal, this);
         WATCH(numCreatedPackets);
@@ -48,19 +48,40 @@ void CompoundPacketQueueBase::initialize(int stage)
         updateDisplayString();
 }
 
+IPacketDropperFunction *CompoundPacketQueueBase::createDropperFunction(const char *dropperClass) const
+{
+    if (strlen(dropperClass) == 0)
+        return nullptr;
+    else
+        return check_and_cast<IPacketDropperFunction *>(createOne(dropperClass));
+}
+
+bool CompoundPacketQueueBase::isOverloaded() const
+{
+    return (packetCapacity != -1 && getNumPackets() > packetCapacity) ||
+           (dataCapacity != b(-1) && getTotalLength() > dataCapacity);
+}
+
 void CompoundPacketQueueBase::pushPacket(Packet *packet, cGate *gate)
 {
     Enter_Method("pushPacket");
     take(packet);
-    emit(packetPushedSignal, packet);
-    if ((packetCapacity != -1 && getNumPackets() >= packetCapacity) ||
-        (dataCapacity != b(-1) && getTotalLength() + packet->getTotalLength() > dataCapacity))
-    {
-        EV_INFO << "Dropping packet because the queue is full" << EV_FIELD(packet) << EV_ENDL;
-        dropPacket(packet, QUEUE_OVERFLOW, packetCapacity);
+    emit(packetPushStartedSignal, packet);
+    auto packetClone = packet->dup(); // TODO delete this code if the original packet can be emitted in packetPushEndedSignal
+    EV_INFO << "Pushing packet" << EV_FIELD(packet) << EV_ENDL;
+    consumer->pushPacket(packet, inputGate->getPathEndGate());
+    if (packetDropperFunction != nullptr) {
+        while (isOverloaded()) {
+            auto packet = packetDropperFunction->selectPacket(this);
+            EV_INFO << "Dropping packet" << EV_FIELD(packet) << EV_ENDL;
+            removePacket(packet);
+            dropPacket(packet, QUEUE_OVERFLOW);
+        }
     }
-    else
-        consumer->pushPacket(packet, inputGate->getPathEndGate());
+    ASSERT(!isOverloaded());
+    // TODO pass packet instead of packetClone if not deleted when weak ptrs are available
+    emit(packetPushEndedSignal, packetClone);
+    delete packetClone;
     updateDisplayString();
 }
 
@@ -82,22 +103,42 @@ void CompoundPacketQueueBase::removePacket(Packet *packet)
     updateDisplayString();
 }
 
+void CompoundPacketQueueBase::removeAllPackets()
+{
+    Enter_Method("removeAllPacket");
+    collection->removeAllPackets();
+    updateDisplayString();
+}
+
+bool CompoundPacketQueueBase::canPushSomePacket(cGate *gate) const
+{
+    if (packetDropperFunction)
+        return true;
+    if (getMaxNumPackets() != -1 && getNumPackets() >= getMaxNumPackets())
+        return false;
+    if (getMaxTotalLength() != b(-1) && getTotalLength() >= getMaxTotalLength())
+        return false;
+    return true;
+}
+
+bool CompoundPacketQueueBase::canPushPacket(Packet *packet, cGate *gate) const
+{
+    if (packetDropperFunction)
+        return true;
+    if (getMaxNumPackets() != -1 && getNumPackets() >= getMaxNumPackets())
+        return false;
+    if (getMaxTotalLength() != b(-1) && getMaxTotalLength() - getTotalLength() < packet->getDataLength())
+        return false;
+    return true;
+}
+
 void CompoundPacketQueueBase::receiveSignal(cComponent *source, simsignal_t signal, cObject *object, cObject *details)
 {
     Enter_Method("%s", cComponent::getSignalName(signal));
-
-    if (signal == packetPushedSignal) {
-    }
-    else if (signal == packetPulledSignal) {
-    }
-    else if (signal == packetRemovedSignal) {
-    }
-    else if (signal == packetDroppedSignal) {
+    if (signal == packetDroppedSignal)
         numDroppedPackets++;
-    }
-    else if (signal == packetCreatedSignal) {
+    else if (signal == packetCreatedSignal)
         numCreatedPackets++;
-    }
     else
         throw cRuntimeError("Unknown signal");
     updateDisplayString();

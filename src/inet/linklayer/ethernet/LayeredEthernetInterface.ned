@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +24,7 @@ import inet.linklayer.ethernet.contract.IEthernetMacLayer;
 import inet.networklayer.common.NetworkInterface;
 import inet.physicallayer.wired.ethernet.IEthernetPhyLayer;
 import inet.protocolelement.measurement.IMeasurementLayer;
+import inet.protocolelement.processing.IProcessingDelayLayer;
 import inet.protocolelement.trafficconditioner.ITrafficConditionerLayer;
 
 //
@@ -44,25 +47,30 @@ module LayeredEthernetInterface extends NetworkInterface like IEthernetInterface
         output cutthroughOut @loose;
         inout phys @labels(EthernetSignal);
     submodules:
-        trafficConditionerLayer: <default("OmittedTrafficConditionerLayer")> like ITrafficConditionerLayer {
+        processingDelayLayer: <default("")> like IProcessingDelayLayer {
             parameters:
                 @display("p=400,100");
         }
-        measurementLayer: <default("OmittedMeasurementLayer")> like IMeasurementLayer {
+        trafficConditionerLayer: <default("")> like ITrafficConditionerLayer {
             parameters:
                 @display("p=400,200");
         }
-        macLayer: <default("EthernetMacLayer")> like IEthernetMacLayer {
+        measurementLayer: <default("")> like IMeasurementLayer {
             parameters:
                 @display("p=400,300");
+        }
+        macLayer: <default("EthernetMacLayer")> like IEthernetMacLayer {
+            parameters:
+                @display("p=400,400");
         }
         phyLayer: <default("EthernetPhyLayer")> like IEthernetPhyLayer {
             parameters:
                 transmitter.clockModule = default("");
-                @display("p=400,400");
+                @display("p=400,500");
         }
-    connections:
-        upperLayerIn --> { @display("m=n"); } --> trafficConditionerLayer.upperLayerIn;
+    connections allowunconnected:
+        upperLayerIn --> { @display("m=n"); } --> processingDelayLayer.upperLayerIn;
+        processingDelayLayer.lowerLayerOut --> trafficConditionerLayer.upperLayerIn;
         trafficConditionerLayer.lowerLayerOut --> measurementLayer.upperLayerIn;
         measurementLayer.lowerLayerOut --> macLayer.upperLayerIn;
         macLayer.lowerLayerOut --> phyLayer.upperLayerIn;
@@ -72,6 +80,7 @@ module LayeredEthernetInterface extends NetworkInterface like IEthernetInterface
         phyLayer.upperLayerOut --> macLayer.lowerLayerIn;
         macLayer.upperLayerOut --> measurementLayer.lowerLayerIn;
         measurementLayer.upperLayerOut --> trafficConditionerLayer.lowerLayerIn;
-        trafficConditionerLayer.upperLayerOut --> { @display("m=n"); } --> upperLayerOut;
+        trafficConditionerLayer.upperLayerOut --> processingDelayLayer.lowerLayerIn;
+        processingDelayLayer.upperLayerOut --> { @display("m=n"); } --> upperLayerOut;
 }
 

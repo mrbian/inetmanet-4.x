@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -32,6 +34,7 @@ void PacketFlowBase::initialize(int stage)
         consumer.reference(outputGate, false);
         provider.reference(inputGate, false);
         collector.reference(outputGate, false);
+        collection.reference(inputGate, false);
     }
     else if (stage == INITSTAGE_QUEUEING) {
         checkPacketOperationSupport(inputGate);
@@ -77,8 +80,10 @@ void PacketFlowBase::pushPacket(Packet *packet, cGate *gate)
     Enter_Method("pushPacket");
     take(packet);
     checkPacketStreaming(nullptr);
+    emit(packetPushedInSignal, packet);
     processPacket(packet);
     handlePacketProcessed(packet);
+    emit(packetPushedOutSignal, packet);
     pushOrSendPacket(packet, outputGate, consumer);
     updateDisplayString();
 }
@@ -88,6 +93,7 @@ void PacketFlowBase::pushPacketStart(Packet *packet, cGate *gate, bps datarate)
     Enter_Method("pushPacketStart");
     take(packet);
     checkPacketStreaming(packet);
+    emit(packetPushedInSignal, packet);
     startPacketStreaming(packet);
     processPacket(packet);
     pushOrSendPacketStart(packet, outputGate, consumer, datarate, packet->getTransmissionId());
@@ -103,7 +109,7 @@ void PacketFlowBase::pushPacketEnd(Packet *packet, cGate *gate)
     else
         checkPacketStreaming(packet);
     processPacket(packet);
-    emit(packetPushedSignal, packet);
+    emit(packetPushedOutSignal, packet);
     endPacketStreaming(packet);
     pushOrSendPacketEnd(packet, outputGate, consumer, packet->getTransmissionId());
     updateDisplayString();
@@ -120,7 +126,7 @@ void PacketFlowBase::pushPacketProgress(Packet *packet, cGate *gate, bps datarat
     bool isPacketEnd = packet->getTotalLength() == position + extraProcessableLength;
     processPacket(packet);
     if (isPacketEnd) {
-        emit(packetPushedSignal, packet);
+        emit(packetPushedOutSignal, packet);
         endPacketStreaming(packet);
         pushOrSendPacketEnd(packet, outputGate, consumer, packet->getTransmissionId());
     }
@@ -160,8 +166,10 @@ Packet *PacketFlowBase::pullPacket(cGate *gate)
     checkPacketStreaming(nullptr);
     auto packet = provider->pullPacket(inputGate->getPathStartGate());
     take(packet);
+    emit(packetPulledInSignal, packet);
     processPacket(packet);
     handlePacketProcessed(packet);
+    emit(packetPulledOutSignal, packet);
     animatePullPacket(packet, outputGate);
     updateDisplayString();
     return packet;
@@ -173,8 +181,10 @@ Packet *PacketFlowBase::pullPacketStart(cGate *gate, bps datarate)
     checkPacketStreaming(nullptr);
     auto packet = provider->pullPacketStart(inputGate->getPathStartGate(), datarate);
     take(packet);
+    emit(packetPulledInSignal, packet);
     inProgressStreamId = packet->getTreeId();
     processPacket(packet);
+    emit(packetPulledOutSignal, packet);
     animatePullPacketStart(packet, outputGate, datarate, packet->getTransmissionId());
     updateDisplayString();
     return packet;
@@ -186,9 +196,10 @@ Packet *PacketFlowBase::pullPacketEnd(cGate *gate)
     auto packet = provider->pullPacketEnd(inputGate->getPathStartGate());
     take(packet);
     checkPacketStreaming(packet);
+    emit(packetPulledInSignal, packet);
     processPacket(packet);
     inProgressStreamId = packet->getTreeId();
-    emit(packetPulledSignal, packet);
+    emit(packetPulledOutSignal, packet);
     endPacketStreaming(packet);
     animatePullPacketEnd(packet, outputGate, packet->getTransmissionId());
     updateDisplayString();
@@ -205,7 +216,7 @@ Packet *PacketFlowBase::pullPacketProgress(cGate *gate, bps datarate, b position
     bool isPacketEnd = packet->getTotalLength() == position + extraProcessableLength;
     processPacket(packet);
     if (isPacketEnd) {
-        emit(packetPulledSignal, packet);
+        emit(packetPulledOutSignal, packet);
         endPacketStreaming(packet);
     }
     animatePullPacketProgress(packet, outputGate, datarate, position, extraProcessableLength, packet->getTransmissionId());

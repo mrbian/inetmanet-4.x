@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2005 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -37,6 +39,11 @@ cplusplus(Ipv6ExtHeaderTagBase) {{
      * Remove the first extension header and return it.
      */
     Ipv6ExtensionHeader *removeFirstExtensionHeader();
+
+#if (OMNETPP_BUILDNUM < 1530)
+    void appendExtensionHeader(Ipv6ExtensionHeader *extensionHeader) { insertExtensionHeader(extensionHeader); }
+    Ipv6ExtensionHeader * removeExtensionHeader(size_t k) { return dropExtensionHeader(k); }
+#endif
 }}
 
 class Ipv6ExtHeaderReq extends Ipv6ExtHeaderTagBase

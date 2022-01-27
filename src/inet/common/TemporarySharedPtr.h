@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -61,7 +63,7 @@ class TemporarySharedPtrClassDescriptor : public cClassDescriptor
     virtual const char *getFieldStructName(int field) const override { return classDescriptor->getFieldStructName(field); }
     virtual any_ptr getFieldStructValuePointer(any_ptr object, int field, int i) const override { return classDescriptor->getFieldStructValuePointer(getObjectPointer(object), field, i); }
     virtual void setFieldStructValuePointer(any_ptr object, int field, int i, any_ptr ptr) const override { classDescriptor->setFieldStructValuePointer(getObjectPointer(object), field, i, ptr); }
-#if OMNETPP_BUILDNUM >= 1526
+#if OMNETPP_BUILDNUM >= 1525
     virtual cValue getFieldValue(any_ptr object, int field, int i) const override { return classDescriptor->getFieldValue(object, field, i); }
     virtual void setFieldValue(any_ptr object, int field, int i, const cValue& value) const override { classDescriptor->setFieldValue(object, field, i, value); }
 #endif

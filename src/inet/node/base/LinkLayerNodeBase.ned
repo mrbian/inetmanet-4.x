@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -28,9 +30,12 @@ import inet.linklayer.contract.IWirelessInterface;
 import inet.linklayer.ethernet.contract.IEthernetLayer;
 import inet.linklayer.ieee8021q.IIeee8021qLayer;
 import inet.linklayer.ieee8021r.IIeee8021rLayer;
+import inet.linklayer.ieee8022.IIeee8022Llc;
 import inet.networklayer.common.InterfaceTable;
+import inet.node.contract.IEthernetNetworkNode;
+import inet.protocolelement.contract.IProtocolLayer;
 
-module LinkLayerNodeBase extends NodeBase
+module LinkLayerNodeBase extends NodeBase like IEthernetNetworkNode
 {
     parameters:
         bool recordPcap = default(false);
@@ -45,68 +50,89 @@ module LinkLayerNodeBase extends NodeBase
         mobility.typename = default(numWlanInterfaces > 0 ? "StationaryMobility" : "");
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         wlan[*].radio.antenna.mobilityModule = default("^.^.^.mobility");
-        @figure[linkLayer](type=rectangle; pos=250,456; size=1000,130; fillColor=#0000ff; lineColor=#808080; cornerRadius=5; fillOpacity=0.1);
-        @figure[linkLayer.title](type=text; pos=1245,461; anchor=ne; text="link layer");
-        @figure[interfaceLayer](type=rectangle; pos=250,606; size=1000,210; fillColor=#00ffff; lineColor=#808080; cornerRadius=5; fillOpacity=0.1);
-        @figure[interfaceLayer.title](type=text; pos=1245,611; anchor=ne; text="interface layer");
-
+        @figure[linkLayer](type=rectangle; pos=250,458; size=1000,284; fillColor=#0000ff; lineColor=#808080; cornerRadius=5; fillOpacity=0.1);
+        @figure[linkLayer.title](type=text; pos=1245,463; anchor=ne; text="link layer");
+        @figure[interfaceLayer](type=rectangle; pos=250,758; size=1000,360; fillColor=#00ffff; lineColor=#808080; cornerRadius=5; fillOpacity=0.1);
+        @figure[interfaceLayer.title](type=text; pos=1245,763; anchor=ne; text="interface layer");
     gates:
         input radioIn[numWlanInterfaces] @directIn;
         inout pppg[numPppInterfaces] @labels(PppFrame-conn) @allowUnconnected;
         inout ethg[numEthInterfaces] @labels(EtherFrame-conn) @allowUnconnected;
-
     submodules:
         pcapRecorder[numPcapRecorders]: PcapRecorder {
-            parameters:
-                @display("p=125,640;is=s");
+            @display("p=125,640;is=s");
         }
         interfaceTable: InterfaceTable {
-            parameters:
-                @display("p=125,240;is=s");
+            @display("p=125,240;is=s");
         }
-        li: MessageDispatcher {
-            parameters:
-                @display("p=750,596;b=1000,5,,,,1");
+        llc: <default("")> like IIeee8022Llc if typename != "" {
+            @display("p=375,525");
+        }
+        cb: MessageDispatcher {
+            @display("p=750,600;b=1000,5");
+        }
+        bridging: <default("")> like IProtocolLayer if typename != "" {
+            @display("p=750,675");
+        }
+        bl: MessageDispatcher {
+            @display("p=750,750;b=1000,5");
         }
         ethernet: <default("")> like IEthernetLayer if typename != "" {
-            parameters:
-                @display("p=375,526");
+            @display("p=375,825");
         }
         ieee8021q: <default("")> like IIeee8021qLayer if typename != "" {
-            parameters:
-                @display("p=525,526");
+            @display("p=525,825");
         }
         ieee8021r: <default("")> like IIeee8021rLayer if typename != "" {
-            parameters:
-                @display("p=675,526");
+            @display("p=675,825");
+        }
+        li: MessageDispatcher {
+            @display("p=750,900;b=1000,5,,,,1");
         }
         lo[numLoInterfaces]: <default("LoopbackInterface")> like ILoopbackInterface {
-            parameters:
-                @display("p=750,676,row,150");
+            @display("p=750,975,row,150");
         }
         // TODO move wlan interfaces after eth interfaces, but it changes IP address assignment and breaks examples/inet/configurator/complex.ini
         wlan[numWlanInterfaces]: <default("Ieee80211Interface")> like IWirelessInterface {
-            parameters:
-                @display("p=375,766,row,150;q=queue");
+            @display("p=375,1000,row,150;q=queue");
         }
         ppp[sizeof(pppg)]: <default("PppInterface")> like IPppInterface {
-            parameters:
-                @display("p=300,676,row,150;q=txQueue");
+            @display("p=300,975,row,150;q=txQueue");
         }
         eth[sizeof(ethg)]: <default("EthernetInterface")> like IEthernetInterface {
-            parameters:
-                @display("p=900,676,row,150;q=txQueue");
+            @display("p=900,975,row,150;q=txQueue");
         }
         tun[numTunInterfaces]: <default("TunInterface")> like ITunnelInterface {
-            parameters:
-                @display("p=975,766,row,150;q=txQueue");
+            @display("p=975,1000,row,150;q=txQueue");
         }
         virt[numVirtInterfaces]: <default("VirtualInterface")> like IVirtualInterface {
-            parameters:
-                @display("p=975,766,row,150;q=txQueue");
+            @display("p=975,1000,row,150;q=txQueue");
         }
-
     connections allowunconnected:
+        llc.lowerLayerOut --> cb.in++ if exists(llc);
+        llc.lowerLayerIn <-- cb.out++ if exists(llc);
+
+        cb.out++ --> bridging.upperLayerIn if exists(bridging);
+        bridging.upperLayerOut --> cb.in++ if exists(bridging);
+
+        bridging.lowerLayerOut --> bl.in++ if exists(bridging);
+        bl.out++ --> bridging.lowerLayerIn if exists(bridging);
+
+        cb.out++ --> bl.in++ if !exists(bridging);
+        bl.out++ --> cb.in++ if !exists(bridging);
+
+        bl.out++ --> li.in++;
+        li.out++ --> bl.in++;
+
+        bl.out++ --> ieee8021q.upperLayerIn if exists(ieee8021q);
+        ieee8021q.upperLayerOut --> bl.in++ if exists(ieee8021q);
+
+        bl.out++ --> ieee8021r.upperLayerIn if exists(ieee8021r);
+        ieee8021r.upperLayerOut --> bl.in++ if exists(ieee8021r);
+
+        bl.out++ --> ethernet.upperLayerIn if exists(ethernet);
+        ethernet.upperLayerOut --> bl.in++ if exists(ethernet);
+
         ieee8021q.lowerLayerOut --> li.in++ if exists(ieee8021q);
         li.out++ --> ieee8021q.lowerLayerIn if exists(ieee8021q);
 

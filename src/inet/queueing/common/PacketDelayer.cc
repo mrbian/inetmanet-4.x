@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -34,7 +36,7 @@ void PacketDelayer::handleMessage(cMessage *message)
             delete message;
         simtime_t delay = simTime() - message->getSendingTime();
         insertPacketEvent(this, packet, PEK_DELAYED, delay / packet->getBitLength());
-        increaseTimeTag<DelayingTimeTag>(packet, delay / packet->getBitLength());
+        increaseTimeTag<DelayingTimeTag>(packet, delay / packet->getBitLength(), delay);
         pushOrSendPacket(packet, outputGate, consumer);
     }
     else

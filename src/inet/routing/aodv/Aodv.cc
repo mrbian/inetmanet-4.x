@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2014 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -116,7 +118,7 @@ void Aodv::handleMessageWhenUp(cMessage *msg)
             handleBlackListTimer();
         else if (msg->getKind() == KIND_DELAYEDSEND) {
             auto timer = check_and_cast<PacketHolderMessage *>(msg);
-            socket.send(timer->dropOwnedPacket());
+            socket.send(timer->removeOwnedPacket());
             delete timer;
         }
         else

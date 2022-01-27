@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -31,37 +33,43 @@ import inet.queueing.contract.IPassivePacketSink;
 module TcpServerConnection like IApp
 {
     parameters:
+        @application;
         @display("i=block/cogwheel");
     gates:
         input socketIn;
         output socketOut;
     submodules:
-        source: <default("ActivePacketSource")> like IActivePacketSource {
+        source: <default("ActivePacketSource")> like IActivePacketSource if typename != "" {
             parameters:
-                @display("p=100,100");
+                @display("p=200,150");
         }
-        outbound: <default("OmittedPacketFlow")> like IPacketFlow {
+        tagger: <default("")> like IPacketFlow {
             parameters:
-                @display("p=100,200");
+                @display("p=200,300");
         }
-        sink: <default("PassivePacketSink")> like IPassivePacketSink {
+        measurementStarter: <default("")> like IPacketFlow {
             parameters:
-                @display("p=200,100");
+                @display("p=200,450");
         }
-        inbound: <default("OmittedPacketFlow")> like IPacketFlow {
+        sink: <default("PassivePacketSink")> like IPassivePacketSink if typename != "" {
             parameters:
-                @display("p=200,200");
+                @display("p=500,150");
+        }
+        measurementRecorder: <default("")> like IPacketFlow {
+            parameters:
+                @display("p=500,450");
         }
         io: TcpServerSocketIo {
             parameters:
                 @display("p=150,300");
         }
-    connections:
-        source.out --> outbound.in;
-        outbound.out --> io.trafficIn;
+    connections allowunconnected:
+        source.out --> tagger.in if exists(source);
+        tagger.out --> measurementStarter.in;
+        measurementStarter.out --> io.trafficIn;
         io.socketOut --> socketOut;
 
         socketIn --> io.socketIn;
-        io.trafficOut --> inbound.in;
-        inbound.out --> sink.in;
+        io.trafficOut --> measurementRecorder.in;
+        measurementRecorder.out --> sink.in if exists(sink);
 }

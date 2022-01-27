@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2004 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -80,6 +82,26 @@ const EthernetMacBase::EtherDescr EthernetMacBase::etherDescrs[NUM_OF_ETHERDESCR
         MIN_ETHERNET_FRAME_BYTES,
         4096 / GIGABIT_ETHERNET_TXRATE,
         250 /*m*/ / SPEED_OF_LIGHT_IN_CABLE
+    },
+    {
+        TWOANDHALFGIGABIT_ETHERNET_TXRATE,
+        0.5 / TWOANDHALFGIGABIT_ETHERNET_TXRATE,
+        0,
+        B(0),
+        B(-1), // half-duplex is not supported
+        B(0),
+        0.0,
+        0.0
+    },
+    {
+        FIVEGIGABIT_ETHERNET_TXRATE,
+        0.5 / FIVEGIGABIT_ETHERNET_TXRATE,
+        0,
+        B(0),
+        B(-1), // half-duplex is not supported
+        B(0),
+        0.0,
+        0.0
     },
     {
         FAST_GIGABIT_ETHERNET_TXRATE,
@@ -351,7 +373,7 @@ void EthernetMacBase::processConnectDisconnect()
         }
 
         // Clear queue
-        while (!txQueue->isEmpty()) {
+        while (canDequeuePacket()) {
             Packet *msg = dequeuePacket();
             EV_DETAIL << "Interface is not connected, dropping packet " << msg << endl;
             numDroppedPkFromHLIfaceDown++;

@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -65,17 +67,19 @@ void PacketServer::startProcessingPacket()
 {
     packet = provider->pullPacket(inputGate->getPathStartGate());
     take(packet);
+    emit(packetPulledSignal, packet);
     EV_INFO << "Processing packet started" << EV_FIELD(packet) << EV_ENDL;
 }
 
 void PacketServer::endProcessingPacket()
 {
     EV_INFO << "Processing packet ended" << EV_FIELD(packet) << EV_ENDL;
-    simtime_t processingTime = (simTime() - processingTimer->getSendingTime()) / packet->getBitLength();
-    insertPacketEvent(this, packet, PEK_PROCESSED, processingTime);
-    increaseTimeTag<ProcessingTimeTag>(packet, processingTime);
+    simtime_t packetProcessingTime = simTime() - processingTimer->getSendingTime();
+    simtime_t bitProcessingTime = packetProcessingTime / packet->getBitLength();
+    insertPacketEvent(this, packet, PEK_PROCESSED, bitProcessingTime);
+    increaseTimeTag<ProcessingTimeTag>(packet, bitProcessingTime, packetProcessingTime);
     processedTotalLength += packet->getDataLength();
-    emit(packetServedSignal, packet);
+    emit(packetPushedSignal, packet);
     pushOrSendPacket(packet, outputGate, consumer);
     numProcessedPackets++;
     packet = nullptr;

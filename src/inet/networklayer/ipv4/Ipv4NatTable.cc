@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -86,8 +88,7 @@ void Ipv4NatTable::parseConfig()
         // filter
         PacketFilter *packetFilter = new PacketFilter();
         const char *packetFilterAttr = xmlEntry->getAttribute("packetFilter");
-        const char *packetDataFilterAttr = xmlEntry->getAttribute("packetDataFilter");
-        packetFilter->setPattern(packetFilterAttr != nullptr ? packetFilterAttr : "*", packetDataFilterAttr != nullptr ? packetDataFilterAttr : "*");
+        packetFilter->setExpression(packetFilterAttr != nullptr ? packetFilterAttr : "*");
         // NAT entry
         Ipv4NatEntry natEntry;
         const char *destAddressAttr = xmlEntry->getAttribute("destAddress");

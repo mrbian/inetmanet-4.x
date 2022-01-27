@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -18,7 +20,9 @@
 #include "inet/queueing/base/PacketTaggerBase.h"
 
 #include "inet/common/ModuleAccess.h"
+#include "inet/common/ProtocolTag_m.h"
 #include "inet/linklayer/common/InterfaceTag_m.h"
+#include "inet/linklayer/common/PcpTag_m.h"
 #include "inet/linklayer/common/UserPriorityTag_m.h"
 #include "inet/linklayer/common/VlanTag_m.h"
 #include "inet/networklayer/common/DscpTag_m.h"
@@ -43,6 +47,7 @@ void PacketTaggerBase::initialize(int stage)
             throw cRuntimeError("parameter error: 'tos' and 'dscp' parameters specified together");
         hopLimit = par("hopLimit");
         vlanId = par("vlanId");
+        pcp = par("pcp");
         userPriority = par("userPriority");
         transmissionPower = W(par("transmissionPower"));
     }
@@ -81,6 +86,12 @@ void PacketTaggerBase::markPacket(Packet *packet)
     if (vlanId != -1) {
         EV_DEBUG << "Attaching VlanReq" << EV_FIELD(packet) << EV_FIELD(vlanId) << EV_ENDL;
         packet->addTagIfAbsent<VlanReq>()->setVlanId(vlanId);
+    }
+    if (pcp != -1) {
+        EV_DEBUG << "Attaching PcpReq" << EV_FIELD(packet) << EV_FIELD(pcp) << EV_ENDL;
+        packet->addTagIfAbsent<PcpReq>()->setPcp(pcp);
+        auto encapsulationReq = packet->addTagIfAbsent<EncapsulationProtocolReq>();
+        encapsulationReq->insertProtocol(0, &Protocol::ieee8021qCTag);
     }
     if (userPriority != -1) {
         EV_DEBUG << "Attaching UserPriorityReq" << EV_FIELD(packet) << EV_FIELD(userPriority) << EV_ENDL;

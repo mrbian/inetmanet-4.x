@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -28,13 +30,22 @@ using namespace inet::queueing;
 class INET_API StreamEncoder : public PacketFlowBase, public TransparentProtocolRegistrationListener
 {
   protected:
-    cValueMap *streamNameToVlanIdMapping = nullptr;
+    class INET_API Mapping
+    {
+      public:
+        int vlanId = -1;
+        int pcp = -1;
+        std::string stream;
+    };
+
+    std::vector<Mapping> mappings;
 
   protected:
     virtual void initialize(int stage) override;
     virtual void handleParameterChange(const char *name) override;
     virtual void processPacket(Packet *packet) override;
 
+    virtual void configureMappings();
     virtual cGate *getRegistrationForwardingGate(cGate *gate) override;
 };
 

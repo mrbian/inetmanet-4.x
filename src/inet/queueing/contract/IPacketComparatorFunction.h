@@ -1,6 +1,8 @@
 //
 // Copyright (C) 2020 OpenSim Ltd.
 //
+// SPDX-License-Identifier: LGPL-3.0-or-later
+//
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -19,7 +21,6 @@
 #define __INET_IPACKETCOMPARATORFUNCTION_H
 
 #include "inet/common/packet/Packet.h"
-#include "inet/queueing/compat/cqueue.h"
 
 namespace inet {
 namespace queueing {
