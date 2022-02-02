@@ -4,19 +4,7 @@
 //
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-//
+
 
 #ifndef __INET_TCPLWIPQUEUES_H
 #define __INET_TCPLWIPQUEUES_H
@@ -27,14 +15,13 @@
 #include "inet/transportlayer/tcp_common/TcpHeader.h"
 
 namespace inet {
-
 namespace tcp {
 
 // forward declarations:
 class TcpLwipConnection;
 
 /**
- * TCP_LWIP send queue. In fact a single object
+ * TcpLwip send queue. In fact a single object
  * represents both the send queue and the retransmission queue
  * (no need to separate them). The TcpConnection object knows
  * which data in the queue have already been transmitted ("retransmission
@@ -85,18 +72,10 @@ class TcpLwipConnection;
  *
  * @see TcpLwipReceiveQueue
  */
-
 class INET_API TcpLwipSendQueue : public cObject
 {
   public:
-    /**
-     * Ctor.
-     */
     TcpLwipSendQueue();
-
-    /**
-     * Virtual dtor.
-     */
     virtual ~TcpLwipSendQueue();
 
     /**
@@ -152,22 +131,16 @@ class INET_API TcpLwipSendQueue : public cObject
     ChunkQueue dataBuffer; // dataBuffer
 };
 
+/**
+ * TcpLwip receive queue.
+ */
 class INET_API TcpLwipReceiveQueue : public cObject
 {
   public:
-    /**
-     * Ctor.
-     */
     TcpLwipReceiveQueue();
-
-    /**
-     * Virtual dtor.
-     */
     virtual ~TcpLwipReceiveQueue();
 
-    /**
-     * Add a connection queue.
-     */
+    /** Add a connection queue. */
     virtual void setConnection(TcpLwipConnection *connP);
 
     /**
@@ -228,7 +201,6 @@ class INET_API TcpLwipReceiveQueue : public cObject
 };
 
 } // namespace tcp
-
 } // namespace inet
 
 #endif

@@ -3,20 +3,6 @@
 //
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public License
-// as published by the Free Software Foundation; either version 3
-// of the License, or (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-//
 
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
@@ -43,7 +29,7 @@ namespace inet;
 class Ieee8021aeTagTpidHeader extends FieldsChunk
 {
     chunkLength = B(8); // Length without SCI. Set it to B(16) when hasSci is true.
-    uint16_t tpid;      // Tag Protocol Identifier (TPID): 16-bit field specifying an EtherType value that is used to identify the frame as a tagged frame and to select the correct tag decoding functions. 
+    uint16_t tpid;      // Tag Protocol Identifier (TPID): 16-bit field specifying an EtherType value that is used to identify the frame as a tagged frame and to select the correct tag decoding functions.
     uint8_t tciAn;
     uint8_t sl;
     uint32_t pn;
@@ -85,5 +71,5 @@ class Ieee8021aeTagEpdHeader extends FieldsChunk
                            //        Type field indicates the number of MAC client data octets contained in the subsequent MAC Client
                            //        Data field of the basic frame (Length interpretation).
                            //     b) If the value of this field is greater than or equal to 1536 decimal (0600 hexadecimal), then the
-                           //        Length/Type field indicates the Ethertype of the MAC client protocol (Type interpretation).    
+                           //        Length/Type field indicates the Ethertype of the MAC client protocol (Type interpretation).
 }

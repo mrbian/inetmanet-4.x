@@ -3,27 +3,14 @@
 // 
 // SPDX-License-Identifier: GPL-2.0-or-later
 //
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// as published by the Free Software Foundation; either version 2
-// of the License, or (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-// 
-// You should have received a copy of the GNU General Public License
-// along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-// 
+//
 //
 // This implementation is heavily based on the implementation of Linux HTB qdisc by Martin Devera (https://github.com/torvalds/linux/blob/master/net/sched/sch_htb.c)
 // Code base taken from the "PriorityScheduler"
 //
 
-#ifndef __INET_HtbScheduler_H
-#define __INET_HtbScheduler_H
+#ifndef __INET_HTBSCHEDULER_H
+#define __INET_HTBSCHEDULER_H
 
 #include <string>
 #include <set>
@@ -208,5 +195,5 @@ class INET_API HtbScheduler : public PacketSchedulerBase, public IPacketCollecti
 } // namespace queueing
 } // namespace inet
 
-#endif // ifndef __INET_HtbScheduler_H
+#endif
 

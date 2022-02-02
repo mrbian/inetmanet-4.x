@@ -3,19 +3,7 @@
 //
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-//
+
 
 package inet.queueing.gate;
 
@@ -47,7 +35,7 @@ simple CreditBasedGate extends PacketGateBase like IPacketGate
         double idleCreditGainRate; // rate of credit increase while the packets that passed through this gate don't use the physical channel
         double transmitCreditSpendRate; // rate of credit decrease while the packets that passed through this gate use the physical channel
         double initialCredit = default(0); // initial number of credits
-        double transmitCreditLimit = default(0); // credit limit above which the gate is open 
+        double transmitCreditLimit = default(0); // credit limit above which the gate is open
         double minCredit = default(-inf); // minimum number of credits
         double maxCredit = default(inf); // maximum number of credits
         displayStringTextFormat = default("contains %n cr\nserved %p pk (%l)"); // determines display string text above the submodule
