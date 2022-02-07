@@ -5,18 +5,18 @@
 //
 
 
-#include "inet/visualizer/canvas/configurator/TsnConfigurationCanvasVisualizer.h"
+#include "inet/visualizer/canvas/configurator/FailureProtectionConfigurationCanvasVisualizer.h"
 
 #include "inet/common/ModuleAccess.h"
-#include "inet/linklayer/configurator/TsnConfigurator.h"
+#include "inet/linklayer/configurator/FailureProtectionConfigurator.h"
 
 namespace inet {
 
 namespace visualizer {
 
-Define_Module(TsnConfigurationCanvasVisualizer);
+Define_Module(FailureProtectionConfigurationCanvasVisualizer);
 
-void TsnConfigurationCanvasVisualizer::initialize(int stage) {
+void FailureProtectionConfigurationCanvasVisualizer::initialize(int stage) {
     TreeCanvasVisualizerBase::initialize(stage);
     if (!hasGUI()) return;
     if (stage == INITSTAGE_LOCAL) {
@@ -24,8 +24,8 @@ void TsnConfigurationCanvasVisualizer::initialize(int stage) {
     }
     else if (stage == INITSTAGE_LAST) {
         if (displayTrees) {
-            auto tsnConfigurator = getModuleFromPar<TsnConfigurator>(par("tsnConfiguratorModule"), this);
-            for (auto& stream : tsnConfigurator->getStreams()) {
+            auto failureProtectionConfigurator = getModuleFromPar<FailureProtectionConfigurator>(par("failureProtectionConfiguratorModule"), this);
+            for (auto& stream : failureProtectionConfigurator->getStreams()) {
                 cMatchableString matchableString(stream.name.c_str());
                 if (streamFilter.matches(&matchableString)) {
                     for (auto& tree : stream.trees) {
@@ -44,7 +44,7 @@ void TsnConfigurationCanvasVisualizer::initialize(int stage) {
     }
 }
 
-const TreeCanvasVisualizerBase::TreeVisualization *TsnConfigurationCanvasVisualizer::createTreeVisualization(const std::vector<std::vector<int>>& tree) const
+const TreeCanvasVisualizerBase::TreeVisualization *FailureProtectionConfigurationCanvasVisualizer::createTreeVisualization(const std::vector<std::vector<int>>& tree) const
 {
     auto treeCanvasVisualization = static_cast<const TreeCanvasVisualization *>(TreeCanvasVisualizerBase::createTreeVisualization(tree));
     for (auto figure : treeCanvasVisualization->figures) {

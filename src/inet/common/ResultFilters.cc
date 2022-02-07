@@ -242,62 +242,91 @@ bool DifferenceToMeanFilter::process(simtime_t& t, double& value, cObject *detai
 
 Register_ResultFilter("utilization", UtilizationFilter);
 
+void UtilizationFilter::init(Context *ctx)
+{
+    cNumericResultFilter::init(ctx);
+    std::string fullPath = ctx->component->getFullPath() + "." + ctx->attrsProperty->getIndex() + ".throughput";
+    auto intervalValue = getEnvir()->getConfig()->getPerObjectConfigValue(fullPath.c_str(), "interval");
+    interval = cConfiguration::parseDouble(intervalValue, "s", nullptr, 0.1);
+    auto numValueLimitValue = getEnvir()->getConfig()->getPerObjectConfigValue(fullPath.c_str(), "numValueLimit");
+    numValueLimit = cConfiguration::parseLong(numValueLimitValue, nullptr, 100);
+    lastSignalTime = totalValueTime = simTime();
+    numValueLimit = numValueLimit * 2;
+}
+
+UtilizationFilter *UtilizationFilter::clone() const
+{
+    auto clone = new UtilizationFilter();
+    clone->interval = interval;
+    clone->numValueLimit = numValueLimit;
+    return clone;
+}
+
 bool UtilizationFilter::process(simtime_t& t, double& value, cObject *details)
 {
     ASSERT(value == 0 || value == 1);
     const simtime_t now = simTime();
     numValues++;
-    if (numValues >= numValueLimit) {
-        totalValue += value * (now - lastValue).dbl();
+    ASSERT(numValues <= numValueLimit);
+    if (numValueLimit > 0 && numValues == numValueLimit) {
+        updateTotalValue(now);
         emitUtilization(now, details);
     }
-    else if (lastSignal + interval <= now) {
-        emitUtilization(lastSignal + interval, details);
-        if (emitIntermediateZeros) {
-            while (lastSignal + interval <= now)
-                emitUtilization(lastSignal + interval, details);
+    else if (lastSignalTime + interval <= now) {
+        updateTotalValue(lastSignalTime + interval);
+        emitUtilization(lastSignalTime + interval, details);
+        if (emitIntermediateValues) {
+            while (lastSignalTime + interval <= now) {
+                updateTotalValue(lastSignalTime + interval);
+                emitUtilization(lastSignalTime + interval, details);
+            }
         }
         else {
-            if (lastSignal + interval <= now) { // no packets arrived for a long period
-                // zero should have been signaled at the beginning of this packet (approximation)
+            if (lastSignalTime + interval <= now) { // no value arrived for a long period
+                updateTotalValue(now - interval);
                 emitUtilization(now - interval, details);
             }
         }
-        totalValue += value * (now - lastValue).dbl();
+        updateTotalValue(now);
     }
     else
-        totalValue += value * (now - lastValue).dbl();
-    lastValue = now;
+        updateTotalValue(now);
+    lastValue = value;
     return false;
 }
 
-void UtilizationFilter::emitUtilization(simtime_t endInterval, cObject *details)
+void UtilizationFilter::emitUtilization(simtime_t time, cObject *details)
 {
-    if (totalValue == 0) {
-        fire(this, endInterval, 0.0, details);
-        lastSignal = endInterval;
-    }
-    else {
-        double utilization = totalValue / (endInterval - lastSignal).dbl();
-        fire(this, endInterval, utilization, details);
-        lastSignal = endInterval;
-        totalValue = 0;
-        numValues = 0;
-    }
+    double utilization = time == lastSignalTime ? 0 : totalValue / (time - lastSignalTime).dbl();
+    ASSERT(0 <= utilization && utilization <= 1);
+    fire(this, time, utilization, details);
+    lastSignalTime = time;
+    totalValue = 0;
+    numValues = 0;
+}
+
+void UtilizationFilter::updateTotalValue(simtime_t time)
+{
+    totalValue += lastValue * (time - totalValueTime).dbl();
+    totalValueTime = time;
 }
 
 void UtilizationFilter::finish(cComponent *component, simsignal_t signal)
 {
     const simtime_t now = simTime();
-    if (lastSignal < now) {
+    if (lastSignalTime < now) {
         cObject *details = nullptr;
-        if (lastSignal + interval < now) {
-            emitUtilization(lastSignal + interval, details);
-            if (emitIntermediateZeros) {
-                while (lastSignal + interval < now)
-                    emitUtilization(lastSignal + interval, details);
+        if (lastSignalTime + interval < now) {
+            updateTotalValue(lastSignalTime + interval);
+            emitUtilization(lastSignalTime + interval, details);
+            if (emitIntermediateValues) {
+                while (lastSignalTime + interval < now) {
+                    updateTotalValue(lastSignalTime + interval);
+                    emitUtilization(lastSignalTime + interval, details);
+                }
             }
         }
+        updateTotalValue(now);
         emitUtilization(now, details);
     }
 }
@@ -612,6 +641,7 @@ void ThroughputFilter::init(Context *ctx)
     interval = cConfiguration::parseDouble(intervalValue, "s", nullptr, 0.1);
     auto numLengthLimitValue = getEnvir()->getConfig()->getPerObjectConfigValue(fullPath.c_str(), "numLengthLimit");
     numLengthLimit = cConfiguration::parseLong(numLengthLimitValue, nullptr, 100);
+    lastSignalTime = simTime();
 }
 
 ThroughputFilter *ThroughputFilter::clone() const
@@ -624,35 +654,30 @@ ThroughputFilter *ThroughputFilter::clone() const
 
 void ThroughputFilter::emitThroughput(simtime_t endInterval, cObject *details)
 {
-    if (totalLength == 0) {
-        fire(this, endInterval, 0.0, details);
-        lastSignal = endInterval;
-    }
-    else {
-        double throughput = totalLength / (endInterval - lastSignal).dbl();
-        fire(this, endInterval, throughput, details);
-        lastSignal = endInterval;
-        totalLength = 0;
-        numLengths = 0;
-    }
+    double throughput = endInterval == lastSignalTime ? 0 : totalLength / (endInterval - lastSignalTime).dbl();
+    fire(this, endInterval, throughput, details);
+    lastSignalTime = endInterval;
+    totalLength = 0;
+    numLengths = 0;
 }
 
 void ThroughputFilter::receiveSignal(cResultFilter *prev, simtime_t_cref t, intval_t length, cObject *details)
 {
     const simtime_t now = simTime();
     numLengths++;
-    if (numLengthLimit != 0 && numLengths >= numLengthLimit) {
+    ASSERT(numLengths <= numLengthLimit);
+    if (numLengthLimit > 0 && numLengths == numLengthLimit) {
         totalLength += length;
         emitThroughput(now, details);
     }
-    else if (lastSignal + interval <= now) {
-        emitThroughput(lastSignal + interval, details);
+    else if (lastSignalTime + interval <= now) {
+        emitThroughput(lastSignalTime + interval, details);
         if (emitIntermediateZeros) {
-            while (lastSignal + interval <= now)
-                emitThroughput(lastSignal + interval, details);
+            while (lastSignalTime + interval <= now)
+                emitThroughput(lastSignalTime + interval, details);
         }
         else {
-            if (lastSignal + interval <= now) { // no packets arrived for a long period
+            if (lastSignalTime + interval <= now) { // no packets arrived for a long period
                 // zero should have been signaled at the beginning of this packet (approximation)
                 emitThroughput(now - interval, details);
             }
@@ -672,13 +697,13 @@ void ThroughputFilter::receiveSignal(cResultFilter *prev, simtime_t_cref t, cObj
 void ThroughputFilter::finish(cComponent *component, simsignal_t signalID)
 {
     const simtime_t now = simTime();
-    if (lastSignal < now) {
+    if (lastSignalTime < now) {
         cObject *details = nullptr;
-        if (lastSignal + interval < now) {
-            emitThroughput(lastSignal + interval, details);
+        if (lastSignalTime + interval < now) {
+            emitThroughput(lastSignalTime + interval, details);
             if (emitIntermediateZeros) {
-                while (lastSignal + interval < now)
-                    emitThroughput(lastSignal + interval, details);
+                while (lastSignalTime + interval < now)
+                    emitThroughput(lastSignalTime + interval, details);
             }
         }
         emitThroughput(now, details);
