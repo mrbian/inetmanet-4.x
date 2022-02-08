@@ -11,7 +11,7 @@ package inet.icancloud.Architecture.Node.NodeVL;
 
 import inet.common.lifecycle.NodeStatus;
 import inet.mobility.contract.IMobility;
-import inet.node.inet.INetworkNode;
+import inet.node.contract.INetworkNode;
 import inet.power.contract.IEnergyGenerator;
 import inet.power.contract.IEnergyManagement;
 import inet.power.contract.IEnergyStorage;

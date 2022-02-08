@@ -481,7 +481,7 @@ class icancloud_Message: public icancloud_Message_Base{
 		*/
     	virtual TraceComponent& getTrace(size_t k) const override;
 
-        virtual void insertTrace(const TraceComponent& trace) override;
+        virtual void appendTrace(const TraceComponent& trace) override;
         virtual void insertTrace(size_t k, const TraceComponent& trace) override;
         virtual void eraseTrace(size_t k) override;
 

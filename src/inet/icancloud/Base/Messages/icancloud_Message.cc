@@ -151,20 +151,21 @@ TraceComponent& icancloud_Message::getTrace(size_t k) const{
 //    TraceComponent* trace;
 //    trace = nullptr;
 //    return *trace;
-
     return const_cast<TraceComponent&>(trace[k].second.front());
 }
 
 
 void icancloud_Message::setTrace(size_t k, const TraceComponent& trace_var){
+    throw cRuntimeError("icancloud_Message::setTrace not implemented");
 }
 
 
-void icancloud_Message::insertTrace(const TraceComponent& trace) {
+void icancloud_Message::appendTrace(const TraceComponent& trace) {
+    throw cRuntimeError("icancloud_Message::appendTrace not implemented");
 }
 
 void icancloud_Message::insertTrace(size_t k, const TraceComponent& trace) {
-
+    throw cRuntimeError("icancloud_Message::insertTrace not implemented");
 }
 
 void icancloud_Message::eraseTrace(size_t k) {

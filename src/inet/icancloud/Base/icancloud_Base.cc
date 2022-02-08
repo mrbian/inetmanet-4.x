@@ -63,7 +63,7 @@ void icancloud_Base::initialize(int stage) {
     ApplicationBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         char module_path[NAME_SIZE];
-        char currentHostName[NAME_SIZE];
+
         string currentRunPath;
 
         // Init common attributes
@@ -85,6 +85,7 @@ void icancloud_Base::initialize(int stage) {
 
             // Creates current module folder!
 #ifdef WITH_PARSIM
+            char currentHostName[NAME_SIZE];
             memset(currentHostName, 0, NAME_SIZE);
             gethostname (currentHostName, NAME_SIZE);
             sprintf (module_path, "%s/%s-%d", currentRunPath.c_str(), currentHostName, getId());
@@ -238,8 +239,6 @@ void icancloud_Base::sendResponseMessage (Packet * pkt)
 
 
 void icancloud_Base::showStartedModule(const char *args, ...) {
-
-    char currentHostName[NAME_SIZE];
     va_list ap;
     bool isEnd;
     char aux[2 * NAME_SIZE];
@@ -266,6 +265,7 @@ void icancloud_Base::showStartedModule(const char *args, ...) {
         msgLine.str("");
 
 #ifdef WITH_PARSIM
+        char currentHostName[NAME_SIZE];
         memset (currentHostName, 0, NAME_SIZE);
         gethostname (currentHostName, NAME_SIZE);
         msgLine << "ModuleID:" << currentHostName << "-" << getId() << " -> " << getFullPath() << endl;
