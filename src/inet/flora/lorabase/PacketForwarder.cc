@@ -84,7 +84,7 @@ void PacketForwarder::handleMessage(cMessage *msg)
             processLoraMACPacket(pkt);
         //send(msg, "upperLayerOut");
         //sendPacket();
-    } else if (msg->arrivedOn("udpIn")) {
+    } else if (msg->arrivedOn("socketIn")) {
         // FIXME : debug for now to see if LoRaMAC frame received correctly from network server
         EV << "Received UDP packet" << endl;
         auto pkt = check_and_cast<Packet*>(msg);
@@ -103,6 +103,13 @@ void PacketForwarder::handleMessage(cMessage *msg)
 
         send(pkt, "lowerLayerOut");
         //
+    }
+    else
+    {
+        if (msg->isSelfMessage())
+            throw cRuntimeError("Self Message not processed Name : %s", msg->getClassAndFullName().c_str());
+        else
+            throw cRuntimeError("Message not processed Gate : %s Name : %s", msg->getArrivalGate()->getFullName(), msg->getClassAndFullName().c_str());
     }
 }
 
