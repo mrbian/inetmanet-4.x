@@ -43,6 +43,7 @@ namespace inet::inetmanet;
 class OlsrPkt extends FieldsChunk
 {
     @omitGetVerb(true);
+    @fieldNameSuffix("_var");
     bool reduceFuncionality=false;
     short pkt_seq_num;          ///< Packet sequence number.
     long sn;                    /// CapProbe packet sequence number
