@@ -42,12 +42,12 @@ class INET_API MacRelayUnitBase : public LayeredProtocolBase, public StringForma
     virtual void handleStartOperation(LifecycleOperation *operation) override {}
     virtual void handleStopOperation(LifecycleOperation *operation) override {}
     virtual void handleCrashOperation(LifecycleOperation *operation) override {}
-    virtual bool isUpperMessage(cMessage *message) override { return message->arrivedOn("upperLayerIn"); }
-    virtual bool isLowerMessage(cMessage *message) override { return message->arrivedOn("lowerLayerIn"); }
+    virtual bool isUpperMessage(cMessage *message) const override { return message->arrivedOn("upperLayerIn"); }
+    virtual bool isLowerMessage(cMessage *message) const override { return message->arrivedOn("lowerLayerIn"); }
 
-    virtual bool isInitializeStage(int stage) override { return stage == INITSTAGE_LINK_LAYER; }
-    virtual bool isModuleStartStage(int stage) override { return stage == ModuleStartOperation::STAGE_LINK_LAYER; }
-    virtual bool isModuleStopStage(int stage) override { return stage == ModuleStopOperation::STAGE_LINK_LAYER; }
+    virtual bool isInitializeStage(int stage) const override { return stage == INITSTAGE_LINK_LAYER; }
+    virtual bool isModuleStartStage(int stage) const override { return stage == ModuleStartOperation::STAGE_LINK_LAYER; }
+    virtual bool isModuleStopStage(int stage) const override { return stage == ModuleStopOperation::STAGE_LINK_LAYER; }
     //@}
 };
 
