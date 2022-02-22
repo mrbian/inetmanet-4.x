@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 
-
 import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 import inet.networklayer.common.L3Address;
@@ -38,6 +37,7 @@ class DymoSequenceNumber
 
 class AddressBlock extends cObject
 {
+    @packetData;
     L3Address address;
     int prefixLength;
     bool hasValidityTime;
@@ -70,7 +70,7 @@ message RreqHolddownTimer extends RreqTimer {
 }
 
 message PacketJitterTimer{
-    cPacket *jitteredPacket = nullptr @owned;
+    cPacket *jitteredPacket @owned;
 }
 
 cplusplus(PacketJitterTimer) {{

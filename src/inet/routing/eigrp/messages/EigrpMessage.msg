@@ -9,7 +9,6 @@
 // @author Vladimir Vesely (ivesely@fit.vutbr.cz)
 // @copyright Brno University of Technology (www.fit.vutbr.cz) under GPLv3
 
-
 import inet.networklayer.contract.ipv4.Ipv4Address;
 import inet.networklayer.contract.ipv6.Ipv6Address;
 import inet.common.packet.chunk.Chunk;
@@ -42,6 +41,7 @@ enum EigrpTlvTypeLow
 // Struct for K-values
 struct EigrpKValues
 {
+    @packetData;
     uint16_t K1 = 1;
     uint16_t K2 = 0;
     uint16_t K3 = 1;
@@ -53,6 +53,7 @@ struct EigrpKValues
 // 8 bit flags field, only three flags specified
 struct EigrpRouteFlags
 {
+    @packetData;
     bool SW;        // Source Withdraw
     bool CD;        // Candidate Default
     bool active;    // Active path
@@ -61,6 +62,7 @@ struct EigrpRouteFlags
 // Struct for wide metric paramaters
 struct EigrpWideMetricPar
 {
+    @packetData;
     uint8_t offset = 0;
     uint8_t priority = 0;
     uint8_t reliability = 0;    // Min rel. on path
@@ -74,6 +76,7 @@ struct EigrpWideMetricPar
 // Struct for EIGRP stub
 struct EigrpStub
 {
+    @packetData;
     bool connectedRt = false;
     bool staticRt = false;
     bool summaryRt = false;
@@ -85,6 +88,7 @@ struct EigrpStub
 // TLV Stub for Hello message
 struct EigrpTlvStub
 {
+    @packetData;
     char typeHigh = 0;
     char typeLow = EIGRP_TLV_STUB;
     EigrpStub stub;
@@ -93,6 +97,7 @@ struct EigrpTlvStub
 // TLV Parameter Type for Hello message
 struct EigrpTlvParameter
 {
+    @packetData;
     // type
     char typeHigh = 0;
     char typeLow = EIGRP_TLV_PARAM;
@@ -121,6 +126,7 @@ struct EigrpTlvParameter
 // Multiprotocol Ipv4 (IPv4Address used) Internal TLV route
 struct EigrpMpIpv4Internal
 {
+    @packetData;
     // type
     char typeHigh = 6;
     char typeLow = EIGRP_TLV_ROUTE;
@@ -137,10 +143,10 @@ struct EigrpMpIpv4Internal
     Ipv4Address destAddress;
 };
 
-
 // Multiprotocol Ipv6 (IPv6Address used) Internal TLV route
 struct EigrpMpIpv6Internal
 {
+    @packetData;
     // type
     char typeHigh = 6;
     char typeLow = EIGRP_TLV_ROUTE;
@@ -156,7 +162,6 @@ struct EigrpMpIpv6Internal
     Ipv6Address destMask;
     Ipv6Address destAddress;
 };
-
 
 // General structure of EIGRP message with header
 class EigrpMessage extends FieldsChunk
@@ -274,4 +279,3 @@ message EigrpMsgReq
     int numOfAck;               // Number of acknowledges
     EigrpMsgRoute routes[];
 };
-

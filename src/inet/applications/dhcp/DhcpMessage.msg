@@ -70,6 +70,7 @@ enum DhcpTimerType
 //
 class DhcpOptions extends cObject
 {
+    @packetData;
     DhcpMessageType messageType; // to convey the type of the DHCP message
     string hostName; // name of the client
     DhcpOptionCode parameterRequestList[]; // used by a DHCP client to request values for specified configuration parameters
@@ -109,4 +110,3 @@ class DhcpMessage extends FieldsChunk
     string file; // boot file name (unused in the simulation)
     DhcpOptions options; // holds DHCP options
 }
-

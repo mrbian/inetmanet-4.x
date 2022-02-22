@@ -8,7 +8,6 @@
 // Authors: Veronika Rybova, Vladimir Vesely (ivesely@fit.vutbr.cz),
 //          Tamas Borbely (tomi@omnetpp.org)
 
-
 import inet.common.INETDefs;
 import inet.common.Units;
 import inet.common.packet.chunk.Chunk;
@@ -50,11 +49,13 @@ enum PimHelloOptionType
 
 struct EncodedUnicastAddress
 {
+    @packetData;
     L3Address unicastAddress;
 }
 
 struct EncodedGroupAddress
 {
+    @packetData;
     bool        B;
     short       reserved = 0;
     bool        Z;
@@ -64,6 +65,7 @@ struct EncodedGroupAddress
 
 struct EncodedSourceAddress
 {
+    @packetData;
     short       reserved = 0;
     bool        S;
     bool        W;                //WC bit
@@ -74,6 +76,7 @@ struct EncodedSourceAddress
 
 class HelloOption extends cObject
 {
+    @packetData;
     PimHelloOptionType type;
 }
 
@@ -146,6 +149,7 @@ class PimHello extends PimPacket
 // in structure it is not possible to use dynamic arrays, it is needed to use class
 class JoinPruneGroup extends cObject
 {
+    @packetData;
     EncodedGroupAddress   groupAddress;
     EncodedSourceAddress  joinedSourceAddress[];
     EncodedSourceAddress  prunedSourceAddress[];
@@ -223,4 +227,3 @@ class PimRegisterStop extends PimPacket
     EncodedGroupAddress    groupAddress;
     EncodedUnicastAddress  sourceAddress;
 }
-

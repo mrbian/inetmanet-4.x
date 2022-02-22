@@ -4,7 +4,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 
-
 import inet.common.INETDefs;
 import inet.common.Protocol;
 import inet.common.TagBase;
@@ -28,7 +27,7 @@ class ChunkPtr
 //
 class ProtocolTagBase extends TagBase
 {
-    const Protocol *protocol @toString("->str()") = nullptr; // specifies a protocol (internal class with an artificial identifier)
+    const Protocol *protocol; // specifies a protocol (internal class with an artificial identifier)
 }
 
 //
@@ -36,7 +35,7 @@ class ProtocolTagBase extends TagBase
 //
 class ProtocolListTagBase extends TagBase
 {
-    const Protocol *protocol[] @toString("->str()") = nullptr; // specifies a list of protocols (internal class with an artificial identifier)
+    const Protocol *protocol[]; // specifies a list of protocols (internal class with an artificial identifier)
 }
 
 cplusplus(ProtocolListTagBase) {{
@@ -177,7 +176,7 @@ class TransportProtocolReq extends ProtocolTagBase
 //
 class TransportProtocolInd extends ProtocolTagBase
 {
-    ChunkPtr transportProtocolHeader = nullptr;
+    ChunkPtr transportProtocolHeader;
 }
 
 //
@@ -195,7 +194,7 @@ class NetworkProtocolReq extends ProtocolTagBase
 //
 class NetworkProtocolInd extends ProtocolTagBase
 {
-    ChunkPtr networkProtocolHeader = nullptr;
+    ChunkPtr networkProtocolHeader;
 }
 
 //
@@ -213,5 +212,5 @@ class MacProtocolReq extends ProtocolTagBase
 //
 class MacProtocolInd extends ProtocolTagBase
 {
-    ChunkPtr macProtocolHeader = nullptr;
+    ChunkPtr macProtocolHeader;
 }

@@ -5,7 +5,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 
-
 import inet.common.INETDefs;
 import inet.networklayer.common.L3Address;
 import inet.transportlayer.contract.TransportHeaderBase;
@@ -30,9 +29,9 @@ class SctpHeader extends TransportHeaderBase
     abstract SctpChunk *sctpChunks[];
 }
 
-
 class SctpChunk extends cPacket
 {
+    @packetData;
     // Chunk Type
     uint8_t sctpChunkType;
     uint32_t flags;
@@ -82,7 +81,7 @@ class SctpInitAckChunk extends SctpChunk
     L3Address addresses[];
     char cookie[];
     uint8_t unrecognizedParameters[];
-    SctpCookie *stateCookie = nullptr;
+    SctpCookie *stateCookie;
     uint32_t msg_rwnd;
     uint8_t random[]; //Random Number
     uint16_t sctpChunkTypes[];
@@ -90,12 +89,10 @@ class SctpInitAckChunk extends SctpChunk
     uint16_t hmacTypes[];
 }
 
-
-
 class SctpCookieEchoChunk extends SctpChunk
 {
     char cookie[];
-    SctpCookie *stateCookie = nullptr;
+    SctpCookie *stateCookie;
     uint8_t unrecognizedParameters[]; //for the serializer to send an Error chunk bundled with a Cookie-Echo
 }
 
@@ -229,6 +226,7 @@ class SctpErrorChunk extends SctpChunk
 
 class SctpParameter extends cPacket
 {
+    @packetData;
     uint16_t parameterType;
 }
 

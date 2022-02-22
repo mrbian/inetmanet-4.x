@@ -11,6 +11,5 @@ namespace inet;
 
 message ScenarioTimer
 {
-    cXMLElement *xmlNode = nullptr;
+    cXMLElement *xmlNode;
 }
-

@@ -4,8 +4,6 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 
-
-
 import inet.common.INETDefs;
 import inet.common.Units;
 import inet.common.packet.chunk.Chunk;
@@ -42,6 +40,7 @@ enum RipAf {
 //
 struct RipEntry
 {
+    @packetData;
     RipAf addressFamilyId; // usually AF_INET (2), but NONE (0) for whole table requests
     unsigned short routeTag;        // 0 for RIPv1
     L3Address address;                // destination address

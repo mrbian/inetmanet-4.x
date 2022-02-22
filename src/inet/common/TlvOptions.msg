@@ -4,14 +4,13 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 
-
-
 import inet.common.INETDefs;
 
 namespace inet;
 
 class TlvOptionBase extends cObject
 {
+    @packetData;
     short type = -1;
     short length = 0;   // total length of option
 }
@@ -23,6 +22,7 @@ class TlvOptionRaw extends TlvOptionBase
 
 class TlvOptions extends cObject
 {
+    @packetData;
     TlvOptionBase *tlvOption[] @owned;
 }
 
@@ -54,4 +54,3 @@ cplusplus(TlvOptions) {{
     TlvOptionBase * removeTlvOption(size_t k) { return dropTlvOption(k); }
 #endif
 }}
-
