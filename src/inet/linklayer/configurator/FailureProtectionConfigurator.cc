@@ -48,8 +48,10 @@ void FailureProtectionConfigurator::computeStream(cValueMap *configuration)
     auto streamName = configuration->get("name").stringValue();
     StreamConfiguration streamConfiguration;
     streamConfiguration.name = streamName;
-    if (configuration->containsKey("priority"))
-        streamConfiguration.priority = configuration->get("priority").intValue();
+    if (configuration->containsKey("pcp"))
+        streamConfiguration.pcp = configuration->get("pcp").intValue();
+    if (configuration->containsKey("gateIndex"))
+        streamConfiguration.gateIndex = configuration->get("gateIndex").intValue();
     streamConfiguration.packetFilter = configuration->get("packetFilter");
     auto sourceNetworkNodeName = configuration->get("source").stringValue();
     streamConfiguration.source = sourceNetworkNodeName;
@@ -304,7 +306,7 @@ void FailureProtectionConfigurator::configureStreams() const
             cValueMap *streamParameterValue = new cValueMap();
             cValueArray *treesParameterValue = new cValueArray();
             streamParameterValue->set("name", streamConfiguration.name.c_str());
-            streamParameterValue->set("priority", streamConfiguration.priority);
+            streamParameterValue->set("pcp", streamConfiguration.pcp);
             streamParameterValue->set("packetFilter", streamConfiguration.packetFilter);
             streamParameterValue->set("source", streamConfiguration.source.c_str());
             // TODO KLUDGE
@@ -330,9 +332,9 @@ void FailureProtectionConfigurator::configureStreams() const
         }
         EV_INFO << "Configuring stream configurator" << EV_FIELD(streamRedundancyConfigurator) << EV_FIELD(streamsParameterValue) << EV_ENDL;
         streamRedundancyConfigurator->par("configuration") = streamsParameterValue;
-        const char *gateSchedulingConfiguratorModulePath = par("gateSchedulingConfiguratorModule");
-        if (strlen(gateSchedulingConfiguratorModulePath) != 0) {
-            auto gateSchedulingConfigurator = getModuleByPath(gateSchedulingConfiguratorModulePath);
+        const char *gateScheduleConfiguratorModulePath = par("gateScheduleConfiguratorModule");
+        if (strlen(gateScheduleConfiguratorModulePath) != 0) {
+            auto gateScheduleConfigurator = getModuleByPath(gateScheduleConfiguratorModulePath);
             cValueArray *parameterValue = new cValueArray();
             for (int i = 0; i < configuration->size(); i++) {
                 cValueMap *streamConfiguration = check_and_cast<cValueMap *>(configuration->get(i).objectValue());
@@ -352,15 +354,17 @@ void FailureProtectionConfigurator::configureStreams() const
                 streamParameterValue->set("application", streamConfiguration->get("application"));
                 streamParameterValue->set("source", source);
                 streamParameterValue->set("destination", destination);
-                if (streamConfiguration->containsKey("priority"))
-                    streamParameterValue->set("priority", streamConfiguration->get("priority").intValue());
+                if (streamConfiguration->containsKey("pcp"))
+                    streamParameterValue->set("pcp", streamConfiguration->get("pcp").intValue());
+                if (streamConfiguration->containsKey("gateIndex"))
+                    streamParameterValue->set("gateIndex", streamConfiguration->get("gateIndex").intValue());
                 streamParameterValue->set("packetLength", cValue(streamConfiguration->get("packetLength").doubleValueInUnit("B"), "B"));
                 streamParameterValue->set("packetInterval", cValue(streamConfiguration->get("packetInterval").doubleValueInUnit("s"), "s"));
                 if (streamConfiguration->containsKey("maxLatency"))
                     streamParameterValue->set("maxLatency", cValue(streamConfiguration->get("maxLatency").doubleValueInUnit("s"), "s"));
                 parameterValue->add(streamParameterValue);
             }
-            gateSchedulingConfigurator->par("configuration") = parameterValue;
+            gateScheduleConfigurator->par("configuration") = parameterValue;
         }
     }
 }
