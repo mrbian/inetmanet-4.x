@@ -35,6 +35,7 @@ void GateScheduleCanvasVisualizer::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         zIndex = par("zIndex");
         networkNodeVisualizer.reference(this, "networkNodeVisualizerModule", true);
+        stringFormat.parseFormat(par("labelFormat"));
     }
 }
 
@@ -48,9 +49,7 @@ GateScheduleVisualizerBase::GateVisualization *GateScheduleCanvasVisualizer::cre
     figure->setSpacing(spacing);
     figure->setBounds(cFigure::Rectangle(0, 0, width, height));
     figure->setPosition(currentTimePosition);
-    auto networkInterface = getContainingNicModule(module);
-    auto label = std::string(networkInterface->getInterfaceName()) + "." + module->getFullName();
-    figure->setLabel(label.c_str());
+    figure->setLabel(getGateScheduleVisualizationText(module));
     auto networkNode = getContainingNode(module);
     auto networkNodeVisualization = networkNodeVisualizer->getNetworkNodeVisualization(networkNode);
     return new GateCanvasVisualization(networkNodeVisualization, figure, gate);

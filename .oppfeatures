@@ -282,7 +282,7 @@
                        Includes a switch model with various relay unit implementations,
                        and also Ethernet-level traffic generators."
         initiallyEnabled = "true"
-        requires = "Ieee8021q Ieee8022 PhysicalLayerWiredCommon ProtocolSupport Queueing VirtualInterface"
+        requires = "Ieee8021q Ieee8022 PhysicalLayerWiredCommon ProtocolElement Queueing VirtualInterface"
         labels = "protocols"
         nedPackages = "
                        inet.applications.ethernet
@@ -320,6 +320,21 @@
                       "
         extraSourceFolders = ""
         compileFlags = "-DINET_WITH_FLOODING"
+        linkerFlags = ""
+        />
+    <feature
+        id = "GateScheduling"
+        name = "Gate scheduling configurators"
+        description = "Gate scheduling configurators for Time-Sensitive Networking (TSN)."
+        initiallyEnabled = "true"
+        requires = "Queueing"
+        labels = ""
+        nedPackages = "
+                       inet.linklayer.configurator.gatescheduling.base
+                       inet.linklayer.configurator.gatescheduling.common
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DINET_WITH_GATESCHEDULING"
         linkerFlags = ""
         />
     <feature
@@ -477,7 +492,7 @@
         name = "IEEE 802.1q"
         description = "IEEE 802.1q support."
         initiallyEnabled = "true"
-        requires = "Ieee8022 PhysicalLayerWiredCommon ProtocolSupport Queueing"
+        requires = "Ieee8022 PhysicalLayerWiredCommon ProtocolElement Queueing"
         labels = "protocols"
         nedPackages = "
                        inet.linklayer.ieee8021q
@@ -509,6 +524,7 @@
         requires = "Queueing"
         labels = ""
         nedPackages = "
+                       inet.applications.ieee8022
                        inet.linklayer.ieee8022
                       "
         extraSourceFolders = ""
@@ -989,17 +1005,34 @@
         linkerFlags = ""
         />
     <feature
-        id = "ProtocolSupport"
+        id = "ProtocolElement"
         name = "Protocol support"
         description = "Aggregation, fragmentation, etc."
         initiallyEnabled = "true"
         requires = "PhysicalLayerCommon Queueing"
         labels = ""
         nedPackages = "
-                       inet.protocolelement
+                       inet.protocolelement.acknowledgement
+                       inet.protocolelement.aggregation
+                       inet.protocolelement.checksum
+                       inet.protocolelement.common
+                       inet.protocolelement.dispatching
+                       inet.protocolelement.forwarding
+                       inet.protocolelement.fragmentation
+                       inet.protocolelement.lifetime
+                       inet.protocolelement.measurement
+                       inet.protocolelement.ordering
+                       inet.protocolelement.processing
+                       inet.protocolelement.redundancy
+                       inet.protocolelement.selectivity
+                       inet.protocolelement.service
+                       inet.protocolelement.shaper
+                       inet.protocolelement.socket
+                       inet.protocolelement.trafficconditioner
+                       inet.protocolelement.transceiver
                       "
         extraSourceFolders = ""
-        compileFlags = "-DINET_WITH_PROTOCOLSUPPORT"
+        compileFlags = "-DINET_WITH_PROTOCOLELEMENT"
         linkerFlags = ""
         />
     <feature
@@ -1024,16 +1057,14 @@
         requires = ""
         labels = ""
         nedPackages = "
-                       inet.queueing.base
                        inet.queueing.buffer
                        inet.queueing.classifier
-                       inet.queueing.common
                        inet.queueing.filter
                        inet.queueing.flow
-                       inet.queueing.function
                        inet.queueing.gate
                        inet.queueing.marker
                        inet.queueing.meter
+                       inet.queueing.policing
                        inet.queueing.queue
                        inet.queueing.scheduler
                        inet.queueing.server
@@ -1267,6 +1298,35 @@
         linkerFlags = ""
         />
     <feature
+        id = "TSN"
+        name = "Time-Sensitive Networking (TSN)"
+        description = "Provides Time-Sensitive Networking features such as time synchronization, per-stream filtering, traffic shaping, gate scheduling, stream redundancy, failure protection, etc."
+        initiallyEnabled = "true"
+        requires = "Clock Ethernet Ieee8021as Ieee8021q Ieee8021r ProtocolElement Queueing"
+        labels = ""
+        nedPackages = "
+                       inet.networks.tsn
+                       inet.node.tsn
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DINET_WITH_TSN"
+        linkerFlags = ""
+        />
+    <feature
+        id = "TSNShowcases"
+        name = "TSN Showcases"
+        description = "Showcases that demonstrate Time-Sensitive Networking (TSN)."
+        initiallyEnabled = "true"
+        requires = "TSN"
+        labels = ""
+        nedPackages = "
+                       inet.showcases.tsn
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
         id = "Tun"
         name = "TUN/TAP virtual network interface"
         description = "TUN/TAP virtual network interface."
@@ -1315,7 +1375,7 @@
         name = "Virtual interface"
         description = "Virtual network interface."
         initiallyEnabled = "true"
-        requires = "Ieee8022 PhysicalLayerWiredCommon ProtocolSupport Queueing"
+        requires = "Ieee8022 PhysicalLayerWiredCommon ProtocolElement Queueing"
         labels = "nic"
         nedPackages = "
                        inet.linklayer.virtual
@@ -1625,7 +1685,7 @@
         name = "Z3 Gate Scheduling Configurator"
         description = "Z3 SAT solver based TSN gate scheduling configurator (requires external libz3-dev or z3-devel installed.)"
         initiallyEnabled = "false"
-        requires = "Ethernet"
+        requires = "Ethernet GateScheduling"
         labels = ""
         nedPackages = "
                        inet.linklayer.configurator.gatescheduling.z3

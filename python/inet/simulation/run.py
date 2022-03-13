@@ -47,7 +47,7 @@ class SimulationRun:
             args = [executable, "-s", "-u", "Cmdenv", "-f", simulation_config.ini_file, "-c", simulation_config.config, "-r", "0", "--sim-time-limit", "0s"]
             env = os.environ.copy()
             env["INET_ROOT"] = simulation_project.get_full_path(".")
-            subprocess_result = subprocess.run(args, cwd=simulation_config.working_directory, capture_output=True, env=env)
+            subprocess_result = subprocess.run(args, cwd=simulation_project.get_full_path(simulation_config.working_directory), capture_output=True, env=env)
             stderr = subprocess_result.stderr.decode("utf-8")
             match = re.search(r"The simulation wanted to ask a question|The simulation attempted to prompt for user input", stderr)
             self.interactive = match is not None
@@ -258,12 +258,12 @@ def clean_simulations_results(simulation_configs=None, **kwargs):
 
 def get_simulations(simulation_project=None, simulation_configs=None, run=None, sim_time_limit=None, cpu_time_limit=None, concurrent=True, run_simulation_function=_run_simulation, **kwargs):
     if simulation_project is None:
-        simulation_project = inet_project
+        simulation_project = default_project
     if simulation_configs is None:
         simulation_configs = get_simulation_configs(simulation_project, concurrent=concurrent, **kwargs)
     simulation_runs = []
     for simulation_config in simulation_configs:
-        if run:
+        if run is not None:
             simulation_runs.append(SimulationRun(simulation_config, run, sim_time_limit=sim_time_limit, cpu_time_limit=cpu_time_limit, **kwargs))
         else:
             for generated_run in range(0, simulation_config.num_runs):
