@@ -73,6 +73,7 @@ ProtocolGroup ProtocolGroup::ethertype("ethertype", {
     { ETHERTYPE_INET_FLOODING, &Protocol::flooding },          // INET specific non-standard protocol
     { ETHERTYPE_8021Q_TAG, &Protocol::ieee8021qCTag },
     { ETHERTYPE_IPv6, &Protocol::ipv6 },
+    { ETHERTYPE_SIXLOWPAN, &Protocol::sixlowpan },   // RFC 7973
     { ETHERTYPE_INET_PROBABILISTIC, &Protocol::probabilistic },     // INET specific non-standard protocol
     { ETHERTYPE_UNKNOWN, &Protocol::unknown }, // INET specific non-standard protocol
     { ETHERTYPE_INET_WISEROUTE, &Protocol::wiseRoute },         // INET specific non-standard protocol
