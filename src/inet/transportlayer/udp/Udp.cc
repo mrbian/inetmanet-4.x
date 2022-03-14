@@ -5,6 +5,8 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 
+#include "inet/transportlayer/udp/Udp.h"
+
 #include <algorithm>
 #include <string>
 
@@ -13,31 +15,26 @@
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/ProtocolTag_m.h"
 #include "inet/common/checksum/TcpIpChecksum.h"
-#include "inet/common/lifecycle/ModuleOperations.h"
 #include "inet/common/lifecycle/NodeStatus.h"
-#include "inet/common/packet/Packet.h"
 #include "inet/common/socket/SocketTag_m.h"
 #include "inet/common/stlutils.h"
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/networklayer/common/DscpTag_m.h"
 #include "inet/networklayer/common/HopLimitTag_m.h"
+#include "inet/networklayer/common/IpProtocolId_m.h"
 #include "inet/networklayer/common/L3AddressTag_m.h"
 #include "inet/networklayer/common/L3Tools.h"
 #include "inet/networklayer/common/MulticastTag_m.h"
-#include "inet/networklayer/common/NetworkInterface.h"
 #include "inet/networklayer/common/TosTag_m.h"
-#include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/networklayer/contract/IL3AddressType.h"
 
 #ifdef INET_WITH_IPv4
-#include "inet/networklayer/ipv4/Icmp.h"
 #include "inet/networklayer/ipv4/IcmpHeader.h"
 #include "inet/networklayer/ipv4/Ipv4Header_m.h"
 #include "inet/networklayer/ipv4/Ipv4InterfaceData.h"
 #endif // ifdef INET_WITH_IPv4
 
 #ifdef INET_WITH_IPv6
-#include "inet/networklayer/icmpv6/Icmpv6.h"
 #include "inet/networklayer/icmpv6/Icmpv6Header_m.h"
 #include "inet/networklayer/ipv6/Ipv6ExtensionHeaders_m.h"
 #include "inet/networklayer/ipv6/Ipv6Header.h"
@@ -46,8 +43,6 @@
 
 #include "inet/transportlayer/common/L4PortTag_m.h"
 #include "inet/transportlayer/common/L4Tools.h"
-#include "inet/transportlayer/udp/Udp.h"
-#include "inet/transportlayer/udp/UdpHeader_m.h"
 
 namespace inet {
 
@@ -73,8 +68,12 @@ void Udp::initialize(int stage)
 
         lastEphemeralPort = EPHEMERAL_PORTRANGE_START;
         ift.reference(this, "interfaceTableModule", true);
+#ifdef INET_WITH_IPv4
         icmp = nullptr;
+#endif
+#ifdef INET_WITH_IPv6
         icmpv6 = nullptr;
+#endif
 
         numSent = 0;
         numPassedUp = 0;
@@ -1291,22 +1290,34 @@ void Udp::sendUpErrorIndication(SockDesc *sd, const L3Address& localAddr, ushort
 
 void Udp::handleStartOperation(LifecycleOperation *operation)
 {
+#ifdef INET_WITH_IPv4
     icmp = nullptr;
+#endif
+#ifdef INET_WITH_IPv6
     icmpv6 = nullptr;
+#endif
 }
 
 void Udp::handleStopOperation(LifecycleOperation *operation)
 {
     clearAllSockets();
+#ifdef INET_WITH_IPv4
     icmp = nullptr;
+#endif
+#ifdef INET_WITH_IPv6
     icmpv6 = nullptr;
+#endif
 }
 
 void Udp::handleCrashOperation(LifecycleOperation *operation)
 {
     clearAllSockets();
+#ifdef INET_WITH_IPv4
     icmp = nullptr;
+#endif
+#ifdef INET_WITH_IPv6
     icmpv6 = nullptr;
+#endif
 }
 
 void Udp::clearAllSockets()

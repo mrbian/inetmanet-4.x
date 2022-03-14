@@ -5,8 +5,8 @@
 //
 
 
-#ifndef __INET_LEGACYSEQUENCENUMBERASSIGMENT_H
-#define __INET_LEGACYSEQUENCENUMBERASSIGMENT_H
+#ifndef __INET_LEGACYSEQUENCENUMBERASSIGNMENT_H
+#define __INET_LEGACYSEQUENCENUMBERASSIGNMENT_H
 
 #include "inet/linklayer/ieee80211/mac/common/SequenceControlField.h"
 #include "inet/linklayer/ieee80211/mac/contract/ISequenceNumberAssignment.h"
@@ -14,7 +14,7 @@
 namespace inet {
 namespace ieee80211 {
 
-class INET_API LegacySequenceNumberAssigment : public ISequenceNumberAssignment
+class INET_API LegacySequenceNumberAssignment : public ISequenceNumberAssignment
 {
   protected:
     SequenceNumberCyclic lastSeqNum = SequenceNumberCyclic(0);
