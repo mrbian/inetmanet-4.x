@@ -28,6 +28,11 @@
  * Author: Alfonso Ariza aarizaq@uma.es
  */
 
+// TODO: Read the prefix list from the configuration
+// TODO: Check the fragmentation.
+// TODO: Include filter processing and only accept 6lowpan packets from 6 low pan interfaces
+// TODO: Enable/disable the ip6 fragmentation with the 6lowpan interfaces.
+
 #include "Ipv6SixLowPan.h"
 
 #include "SixLowPanHeader_m.h"
