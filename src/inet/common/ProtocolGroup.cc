@@ -91,6 +91,7 @@ ProtocolGroup ProtocolGroup::ethertype("ethertype", {
 // excerpt from http://www.iana.org/assignments/ppp-numbers/ppp-numbers.xhtml
 ProtocolGroup ProtocolGroup::pppprotocol("pppprotocol", {
     { 0x0021, &Protocol::ipv4 },
+    { 0x004f, &Protocol::sixlowpan }, // IPv6 compression header, we use this with sixlowpan to allow sixlowpan to use ppp connections
     { 0x0057, &Protocol::ipv6 },
     { 0x0281, &Protocol::mpls },
     { 0x39FB, &Protocol::unknown },           // INET specific non-standard protocol
@@ -111,6 +112,7 @@ ProtocolGroup ProtocolGroup::ipprotocol("ipprotocol", {
     { IP_PROT_UDP, &Protocol::udp },
     { IP_PROT_XTP, &Protocol::xtp },
     { IP_PROT_IPv6, &Protocol::ipv6 },
+    { IP_PROT_IPv6, &Protocol::sixlowpan },
     { IP_PROT_RSVP, &Protocol::rsvpTe },
     { IP_PROT_DSR, &Protocol::dsr },
     { IP_PROT_IPv6_ICMP, &Protocol::icmpv6 },
@@ -120,7 +122,6 @@ ProtocolGroup ProtocolGroup::ipprotocol("ipprotocol", {
     { IP_PROT_SCTP, &Protocol::sctp },
     { IP_PROT_IPv6EXT_MOB, &Protocol::mobileipv6 },
     { IP_PROT_MANET, &Protocol::manet },
-
     { IP_PROT_LINK_STATE_ROUTING, &Protocol::linkStateRouting },
     { IP_PROT_FLOODING, &Protocol::flooding },          // INET specific non-standard protocol
     { IP_PROT_PROBABILISTIC, &Protocol::probabilistic },     // INET specific non-standard protocol

@@ -623,6 +623,34 @@
         linkerFlags = ""
         />
     <feature
+        id = "SixLowPan"
+        name = "Six Low Pan compression protocol"
+        description = "Basic 6-Lowpan support."
+        initiallyEnabled = "false"
+        requires = "Ipv6"
+        labels = ""
+        nedPackages = "
+                       inet.networklayer.sixlowpan
+                      "
+        extraSourceFolders = ""
+        compileFlags = "-DINET_WITH_SIXLOWPAN"
+        linkerFlags = ""
+        />
+    <feature
+        id = "SixLowPanExamples"
+        name = "SixLowPan examples"
+        description = "Examples for 6-Lowpan  support (SixLowPan)."
+        initiallyEnabled = "false"
+        requires = "Ethernet Ipv6 SixLowPan Ppp TcpInet Udp"
+        labels = "protocols examples"
+        nedPackages = "
+                       inet.examples.sixlowpan
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />        
+    <feature
         id = "LMac"
         name = "L-MAC"
         description = "L-MAC, a lightweight MAC protocol for wireless sensor networks."
