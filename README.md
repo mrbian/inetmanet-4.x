@@ -58,6 +58,7 @@ using 'make makefiles'.
 INETMANET differences
 =================================
 Inetmanet is compatible with inet framework but it has several differences.
+
        Additional routing protocols:
               Batman.
               Olsr (Universidad de Murcia).
@@ -65,6 +66,7 @@ Inetmanet is compatible with inet framework but it has several differences.
               Aodv (Uppsala university).
               Dsr (Uppsala university).
               (Except Dsr, the rest of protocols are implemented like Udp applications).
+
        Basic support for SixLowPan
        
        Lora model:
