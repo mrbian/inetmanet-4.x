@@ -114,8 +114,6 @@ void Ipv6SixLowPan::initialize(int stage)
         m_meshUnderJitter = &par("MeshUnderJitter");
 
         aceptAllInterfaces = par("aceptAllInterfaces"); // accept all sixlowpan messages even if the interface is not sixlowpan
-        useipv6framentation = par("useipv6framentation"); //
-
 
         // list of sixlowpan interfaces.
         const char *auxChar = par("sixlowpanInterfaces").stringValue();
@@ -204,74 +202,6 @@ void Ipv6SixLowPan::handleMessage(cMessage *msg)
     Ipv6::handleMessage(msg);
 }
 
-void Ipv6SixLowPan::fragmentAndSend(Packet *packet, const NetworkInterface *ie, const MacAddress& nextHopAddr, bool fromHL)
-{
-
-    if (listSixLowPanInterfaces.empty() || !checkSixLowPanInterface(ie)) {
-        Ipv6::fragmentAndSend(packet, ie, nextHopAddr, fromHL);
-        return;
-    }
-
-    if (useipv6framentation) {
-        Ipv6::fragmentAndSend(packet, ie, nextHopAddr, fromHL);
-        return;
-    }
-
-    // ensure source address is filled
-    auto ipv6Header = packet->peekAtFront<Ipv6Header>();
-    if (fromHL && ipv6Header->getSrcAddress().isUnspecified() &&
-        !ipv6Header->getDestAddress().isSolicitedNodeMulticastAddress())
-    {
-        // source address can be unspecified during DAD
-        const Ipv6Address& srcAddr = ie->getProtocolData<Ipv6InterfaceData>()->getPreferredAddress();
-        ASSERT(!srcAddr.isUnspecified()); // FIXME what if we don't have an address yet?
-
-        // TODO factor out
-        packet->eraseAtFront(ipv6Header->getChunkLength());
-        auto ipv6HeaderCopy = staticPtrCast<Ipv6Header>(ipv6Header->dupShared());
-        // TODO dup or mark ipv4Header->markMutableIfExclusivelyOwned();
-        ipv6HeaderCopy->setSrcAddress(srcAddr);
-        packet->insertAtFront(ipv6HeaderCopy);
-        ipv6Header = ipv6HeaderCopy;
-
-    #ifdef INET_WITH_xMIPv6
-        // if the datagram has a tentative address as source we have to reschedule it
-        // as it can not be sent before the address' tentative status is cleared - CB
-        if (ie->getProtocolData<Ipv6InterfaceData>()->isTentativeAddress(srcAddr)) {
-            EV_INFO << "Source address is tentative - enqueueing datagram for later resubmission." << endl;
-            ScheduledDatagram *sDgram = new ScheduledDatagram(packet, ipv6Header.get(), ie, nextHopAddr, fromHL);
-//            queue.insert(sDgram);
-            scheduleAfter(1.0, sDgram); // KLUDGE wait 1s for tentative->permanent. MISSING: timeout for drop or send back icmpv6 error, processing signals from IE, need another msg queue for waiting (similar to Ipv4 ARP)
-            return;
-        }
-    #endif /* INET_WITH_xMIPv6 */
-    }
-
-    packet->addTagIfAbsent<MacAddressReq>()->setDestAddress(nextHopAddr);
-    packet->addTagIfAbsent<InterfaceReq>()->setInterfaceId(ie->getInterfaceId());
-    packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::sixlowpan);
-    packet->addTagIfAbsent<DispatchProtocolInd>()->setProtocol(&Protocol::sixlowpan);
-    auto protocol = ie->getProtocol();
-    if (protocol != nullptr)
-        packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(protocol);
-    else
-        packet->removeTagIfPresent<DispatchProtocolReq>();
-
-    L3Address dest(nextHopAddr);
-    L3Address src(MacAddress::UNSPECIFIED_ADDRESS);
-    auto macAddInd = packet->addTagIfAbsent<MacAddressInd>();
-    bool doSend = false;
-    if (macAddInd)
-        src = L3Address(macAddInd->getSrcAddress());
-    if (!src.isUnspecified())
-        doSend = true;
-
-    // processing and sending
-    auto header = packet->peekAtFront<Ipv6Header>();
-    EV_DEBUG << "compressing packet src:" << header->getSrcAddress().str() <<" dest:"<< header->getDestinationAddress().str() << endl;
-    if (!processAndSend (packet, src, dest, doSend, ie->getInterfaceId()))
-        delete packet;
-}
 
 
 void Ipv6SixLowPan::sendDatagramToOutput(Packet *packet, const NetworkInterface *destIE, const MacAddress& macAddr)
@@ -281,8 +211,6 @@ void Ipv6SixLowPan::sendDatagramToOutput(Packet *packet, const NetworkInterface 
         return;
     }
 
-    // if arrive here, the conditions are useipv6framentation = true and (listSixLowPanInterfaces.empty() || !checkSixLowPanInterface(destIE))
-    ASSERT2(useipv6framentation, "useipv6framentation == false, sixlow pan interface and Ipv6SixLowPan::fragmentAndSend has not sent the packet " );
     packet->addTagIfAbsent<MacAddressReq>()->setDestAddress(macAddr);
     packet->addTagIfAbsent<InterfaceReq>()->setInterfaceId(destIE->getInterfaceId());
     packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::sixlowpan);
