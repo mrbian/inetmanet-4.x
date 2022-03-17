@@ -84,8 +84,10 @@ simple Ipv6SixLowPan extends Ipv6
         int MeshCacheLength = default(10);
         volatile double MeshUnderJitter @unit(s) = default(uniform(10ms));
         string sixlowpanInterfaces = default("wlan0");
-        string prefixCompresionList = default(""); // pending
-        @class(inet::sixlowpan::Ipv6SixLowPan);
+        string ContexCompresionList = default(""); // Format index?addrerss/prefix Length|allowed|valid time   example "0?fe80::8aa:ff:fe00/120|true|100 1?fa80::8aa:ff:fe00/110|true|200"
+        bool aceptAllInterfaces = default(true); // accept all sixlowpan messages even if the interface is not sixlowpan
+        bool useipv6framentation = default(false); // use the ipv6 framentation before the ipv6 compresion, if false, the fragmentation for sixlowpan is done for the sixlopan module instead of ipv6 module 
+        @class(sixlowpan::Ipv6SixLowPan);
         @display("i=block/network2");
         @signal[packetDropped](type=inet::Packet);
         @signal[packetSentToUpper](type=inet::Packet);

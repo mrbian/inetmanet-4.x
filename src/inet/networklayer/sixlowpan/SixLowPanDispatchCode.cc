@@ -18,7 +18,7 @@
 // Author: Alfonso Ariza aarizaq@uma.es
 //
 
-#include "SixLowPanDispatchCode.h"
+#include "inet/networklayer/sixlowpan/SixLowPanDispatchCode.h"
 namespace inet {
 
 namespace sixlowpan {

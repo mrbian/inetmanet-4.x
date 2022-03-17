@@ -58,14 +58,14 @@ class Ipv6SixLowPan : public Ipv6 {
 public:
     Ipv6SixLowPan() {}
     virtual ~Ipv6SixLowPan();
+    struct ContextEntry {
+        Ipv6Address contextPrefix;    //!< context prefix to be used in compression/decompression
+        int prefixLength = 0;
+        bool compressionAllowed;     //!< compression and decompression allowed (true), decompression only (false)
+        simtime_t validLifetime;          //!< validity period
+        std::string str() const;
+    };
 private:
-    struct ContextEntry
-     {
-       Ipv6Address contextPrefix;    //!< context prefix to be used in compression/decompression
-       int prefixLength = 0;
-       bool compressionAllowed;     //!< compression and decompression allowed (true), decompression only (false)
-       simtime_t validLifetime;          //!< validity period
-     };
 
      std::map<uint8_t, ContextEntry> m_contextTable; //!< Table of the contexts used in compression/decompression
 
@@ -104,16 +104,18 @@ protected:
 
     //virtual bool handleOperationStage(LifecycleOperation *operation, IDoneCallback *doneCallback) override {return false;}
 
-    virtual bool checkSixLowPanInterface(const NetworkInterface *ie) const;
+      virtual bool checkSixLowPanInterfaceById(const int &id) const;
+      virtual bool checkSixLowPanInterface(const NetworkInterface *ie) const;
 
-    // Overloaded methods from Ipv6
-    //virtual int numInitStages() const override { return NUM_INIT_STAGES; }
-    virtual void initialize(int) override;
-    virtual void handleMessage(cMessage *msg) override;
-    virtual void fragmentAndSend(Packet *packet, const NetworkInterface *ie, const MacAddress& nextHopAddr, bool fromHL) override;
 
-    // Handle incoming sixLowPan packets
-    virtual bool handleMessageFromNetwork(Packet *packet);
+      // Overloaded methods from Ipv6
+      //virtual int numInitStages() const override { return NUM_INIT_STAGES; }
+      virtual void initialize(int) override;
+      virtual void handleMessage(cMessage *msg) override;
+      virtual void fragmentAndSend(Packet *packet, const NetworkInterface *ie, const MacAddress& nextHopAddr, bool fromHL) override;
+      virtual void sendDatagramToOutput(Packet *packet, const NetworkInterface *destIE, const MacAddress& macAddr) override;
+      // Handle incoming sixLowPan packets
+      virtual bool handleMessageFromNetwork(Packet *packet);
 
 protected:
     // Compress/decompress methods
@@ -189,7 +191,7 @@ protected:
 
 
     // process method
-    virtual bool DoSend(Packet *packet, const L3Address &src, const L3Address &dest, const bool &doSendFrom, const int &ifaceId);
+    virtual bool processAndSend(Packet *packet, const L3Address &src, const L3Address &dest, const bool &doSendFrom, const int &ifaceId);
 
 
     // methods to transform the address
@@ -382,8 +384,10 @@ protected:
    bool m_omitUdpChecksum;
    B m_compressionThreshold;
    cPar *m_meshUnderJitter;
-};
+   bool aceptAllInterfaces; // accept all sixlowpan messages even if the interface is not sixlowpan
+   bool useipv6framentation; //
 
+};
 
 }
 }

@@ -33,10 +33,6 @@
 // TODO: Include filter processing and only accept 6lowpan packets from 6 low pan interfaces
 // TODO: Enable/disable the ip6 fragmentation with the 6lowpan interfaces.
 
-#include "Ipv6SixLowPan.h"
-
-#include "SixLowPanHeader_m.h"
-#include "SixLowPanDispatchCode.h"
 #include "inet/common/INETDefs.h"
 #include "inet/networklayer/ipv6/Ipv6InterfaceData.h"
 #include "inet/networklayer/ipv6/Ipv6Header.h"
@@ -46,11 +42,34 @@
 #include "inet/linklayer/common/MacAddressTag_m.h"
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/common/packet/ReassemblyBuffer.h"
+#include "inet/networklayer/sixlowpan/Ipv6SixLowPan.h"
+#include "inet/networklayer/sixlowpan/SixLowPanHeader_m.h"
+#include "inet/networklayer/sixlowpan/SixLowPanDispatchCode.h"
 
 
 #ifdef INET_WITH_IPv6
 namespace inet {
 namespace sixlowpan {
+
+
+std::string Ipv6SixLowPan::ContextEntry::str() const
+{
+    std::string base = contextPrefix.str();
+    base += "/"+std::to_string(prefixLength);
+    base +=" Compression allowed: ";
+    if (compressionAllowed)
+        base +="true";
+    else
+        base +="false";
+    base +=" Valid lifetime: "+validLifetime.str();
+    return base;
+}
+
+std::ostream& operator<<(std::ostream& os, const Ipv6SixLowPan::ContextEntry& ip)
+{
+    auto str = ip.str();
+    return os << str;
+}
 
 Define_Module(Ipv6SixLowPan);
 Ipv6SixLowPan::~Ipv6SixLowPan() {
@@ -63,16 +82,21 @@ Ipv6SixLowPan::~Ipv6SixLowPan() {
     m_fragments.clear();
 }
 
-bool Ipv6SixLowPan::checkSixLowPanInterface(const NetworkInterface *ie) const
+bool Ipv6SixLowPan::checkSixLowPanInterfaceById(const int &id) const
 {
-    if (ie == nullptr)
-        throw cRuntimeError("Invalid interface");
-    auto it = listSixLowPanInterfaces.find(ie->getInterfaceId());
+    auto it = listSixLowPanInterfaces.find(id);
     if (it == listSixLowPanInterfaces.end())
         return false;
     return true;
 }
 
+
+bool Ipv6SixLowPan::checkSixLowPanInterface(const NetworkInterface *ie) const
+{
+    if (ie == nullptr)
+        throw cRuntimeError("Invalid interface");
+    return checkSixLowPanInterfaceById(ie->getInterfaceId());
+}
 
 void Ipv6SixLowPan::initialize(int stage)
 {
@@ -88,6 +112,11 @@ void Ipv6SixLowPan::initialize(int stage)
         m_meshUnderHopsLeft = par("MeshUnderRadius");
         m_meshCacheLength = par("MeshCacheLength");
         m_meshUnderJitter = &par("MeshUnderJitter");
+
+        aceptAllInterfaces = par("aceptAllInterfaces"); // accept all sixlowpan messages even if the interface is not sixlowpan
+        useipv6framentation = par("useipv6framentation"); //
+
+
         // list of sixlowpan interfaces.
         const char *auxChar = par("sixlowpanInterfaces").stringValue();
         std::vector<std::string> interfaceList = cStringTokenizer(auxChar).asVector();
@@ -98,7 +127,37 @@ void Ipv6SixLowPan::initialize(int stage)
                 listSixLowPanInterfacesNames.push_back(std::string(ie->getInterfaceName()));
             }
         }
+        const char *prefixChar = par("ContexCompresionList").stringValue();
+        std::vector<std::string> prefixList = cStringTokenizer(prefixChar).asVector();
+
+        for (int i = 0; i < prefixList.size(); i++) {
+            std::string process = prefixList[i];
+            auto posIndex = process.find("?");
+            if (posIndex == std::string::npos)
+                throw cRuntimeError("Context index not found");
+            int index = std::stoi(prefixList[i].substr(0, posIndex));
+            process = process.substr(posIndex+1, std::string::npos);
+            auto pos = process.find("/");
+            if (pos != std::string::npos) {
+                std::string strPrefix = process.substr(0, pos);
+                Ipv6Address addr(strPrefix.c_str());
+                process = process.substr(pos+1, std::string::npos);
+                pos = process.find("|");
+                int pLen = std::stoi(process.substr(0, pos));
+                process = process.substr(pos+1, std::string::npos);
+                pos = process.find("|");
+                bool valid;
+                if (process.substr(0, pos) == "true")
+                    valid = true;
+                else
+                    valid = false;
+                process = process.substr(pos+1, std::string::npos);
+                double time = std::stof(process);
+                addContext (index, addr, pLen, valid, time);
+            }
+        }
         WATCH_VECTOR(listSixLowPanInterfacesNames);
+        WATCH_MAP(m_contextTable);
         registerProtocol(Protocol::sixlowpan, gate("queueOut"), gate("queueIn"));
         // TODO: Prefix processing
     }
@@ -113,14 +172,33 @@ void Ipv6SixLowPan::handleMessage(cMessage *msg)
     }
     auto pkt = dynamic_cast<Packet *>(msg);
     if (pkt) {
+
         auto protocol = findPacketProtocol(pkt);
         auto chunk = pkt->peekAtFront<Chunk>();
         auto sixLowPandDispach = dynamicPtrCast<const SixLowPanDispatch>(chunk);
         if (protocol == &Protocol::sixlowpan || sixLowPandDispach != nullptr){
-            if (handleMessageFromNetwork(pkt))
-                msg = pkt; // The packet can change (fragmentation procedure)
-            else
+            bool process = false;
+            if (aceptAllInterfaces)
+                process = true;
+            else {
+                auto tag = pkt->findTag<InterfaceInd>();
+                if (tag && checkSixLowPanInterfaceById(tag->getInterfaceId()))
+                    process = true;
+            }
+            if (process) {
+                if (handleMessageFromNetwork(pkt)) {
+                    msg = pkt; // The packet can change (fragmentation procedure)
+                    auto header = pkt->peekAtFront<Ipv6Header>();
+                    EV_DEBUG << "Decompressed packet src:" << header->getSrcAddress().str() <<" dest:"<< header->getDestinationAddress().str() << endl;
+                }
+                else
+                    return;
+            }
+            else {
+                delete pkt;
                 return;
+            }
+
         }
     }
     Ipv6::handleMessage(msg);
@@ -132,6 +210,41 @@ void Ipv6SixLowPan::fragmentAndSend(Packet *packet, const NetworkInterface *ie, 
     if (listSixLowPanInterfaces.empty() || !checkSixLowPanInterface(ie)) {
         Ipv6::fragmentAndSend(packet, ie, nextHopAddr, fromHL);
         return;
+    }
+
+    if (useipv6framentation) {
+        Ipv6::fragmentAndSend(packet, ie, nextHopAddr, fromHL);
+        return;
+    }
+
+    // ensure source address is filled
+    auto ipv6Header = packet->peekAtFront<Ipv6Header>();
+    if (fromHL && ipv6Header->getSrcAddress().isUnspecified() &&
+        !ipv6Header->getDestAddress().isSolicitedNodeMulticastAddress())
+    {
+        // source address can be unspecified during DAD
+        const Ipv6Address& srcAddr = ie->getProtocolData<Ipv6InterfaceData>()->getPreferredAddress();
+        ASSERT(!srcAddr.isUnspecified()); // FIXME what if we don't have an address yet?
+
+        // TODO factor out
+        packet->eraseAtFront(ipv6Header->getChunkLength());
+        auto ipv6HeaderCopy = staticPtrCast<Ipv6Header>(ipv6Header->dupShared());
+        // TODO dup or mark ipv4Header->markMutableIfExclusivelyOwned();
+        ipv6HeaderCopy->setSrcAddress(srcAddr);
+        packet->insertAtFront(ipv6HeaderCopy);
+        ipv6Header = ipv6HeaderCopy;
+
+    #ifdef INET_WITH_xMIPv6
+        // if the datagram has a tentative address as source we have to reschedule it
+        // as it can not be sent before the address' tentative status is cleared - CB
+        if (ie->getProtocolData<Ipv6InterfaceData>()->isTentativeAddress(srcAddr)) {
+            EV_INFO << "Source address is tentative - enqueueing datagram for later resubmission." << endl;
+            ScheduledDatagram *sDgram = new ScheduledDatagram(packet, ipv6Header.get(), ie, nextHopAddr, fromHL);
+//            queue.insert(sDgram);
+            scheduleAfter(1.0, sDgram); // KLUDGE wait 1s for tentative->permanent. MISSING: timeout for drop or send back icmpv6 error, processing signals from IE, need another msg queue for waiting (similar to Ipv4 ARP)
+            return;
+        }
+    #endif /* INET_WITH_xMIPv6 */
     }
 
     packet->addTagIfAbsent<MacAddressReq>()->setDestAddress(nextHopAddr);
@@ -148,13 +261,46 @@ void Ipv6SixLowPan::fragmentAndSend(Packet *packet, const NetworkInterface *ie, 
     L3Address src(MacAddress::UNSPECIFIED_ADDRESS);
     auto macAddInd = packet->addTagIfAbsent<MacAddressInd>();
     bool doSend = false;
-    if (macAddInd) {
+    if (macAddInd)
         src = L3Address(macAddInd->getSrcAddress());
-        if (!src.isUnspecified())
-            doSend = true;
+    if (!src.isUnspecified())
+        doSend = true;
+
+    // processing and sending
+    auto header = packet->peekAtFront<Ipv6Header>();
+    EV_DEBUG << "compressing packet src:" << header->getSrcAddress().str() <<" dest:"<< header->getDestinationAddress().str() << endl;
+    if (!processAndSend (packet, src, dest, doSend, ie->getInterfaceId()))
+        delete packet;
+}
+
+
+void Ipv6SixLowPan::sendDatagramToOutput(Packet *packet, const NetworkInterface *destIE, const MacAddress& macAddr)
+{
+    if (listSixLowPanInterfaces.empty() || !checkSixLowPanInterface(destIE)) {
+        Ipv6::sendDatagramToOutput(packet, destIE, macAddr);
+        return;
     }
 
-    if (!DoSend (packet, src, dest, doSend, ie->getInterfaceId()))
+    // if arrive here, the conditions are useipv6framentation = true and (listSixLowPanInterfaces.empty() || !checkSixLowPanInterface(destIE))
+    ASSERT2(useipv6framentation, "useipv6framentation == false, sixlow pan interface and Ipv6SixLowPan::fragmentAndSend has not sent the packet " );
+    packet->addTagIfAbsent<MacAddressReq>()->setDestAddress(macAddr);
+    packet->addTagIfAbsent<InterfaceReq>()->setInterfaceId(destIE->getInterfaceId());
+    packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::sixlowpan);
+    packet->addTagIfAbsent<DispatchProtocolInd>()->setProtocol(&Protocol::sixlowpan);
+    auto protocol = destIE->getProtocol();
+    if (protocol != nullptr)
+        packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(protocol);
+    else
+        packet->removeTagIfPresent<DispatchProtocolReq>();
+    L3Address dest(macAddr);
+    L3Address src(MacAddress::UNSPECIFIED_ADDRESS);
+    auto macAddInd = packet->addTagIfAbsent<MacAddressInd>();
+    bool doSend = false;
+    if (macAddInd)
+        src = L3Address(macAddInd->getSrcAddress());
+    if (!src.isUnspecified())
+        doSend = true;
+    if (!processAndSend (packet, src, dest, doSend, destIE->getInterfaceId()))
         delete packet;
 }
 
@@ -422,6 +568,7 @@ Ipv6SixLowPan::compressLowPanHc1 (Packet * packet, L3Address const &src, L3Addre
 
        // hc1Header->setNextHeaderCompression();
         hc1Header->setProtocolId(ipHeader->getProtocolId());
+        hc1Header->setProtocol(ipHeader->getProtocol());
 
         switch (ipHeader->getProtocolId()) {
             case IpProtocolId::IP_PROT_UDP:
@@ -554,6 +701,7 @@ Ipv6SixLowPan::decompressLowPanHc1 (Packet * packet, L3Address const &src, L3Add
 
   //ipHeader->setNextHeader (encoding->getNextHeader ());
   ipHeader->setProtocolId(encoding->getProtocolId());
+  ipHeader->setProtocol(encoding->getProtocol());
   ipHeader->setPayloadLength(B(packet->getByteLength()));
 
 
@@ -580,6 +728,8 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
       auto ipHeader = removeNetworkProtocolHeader<Ipv6Header>(packet);
       auto iphcHeader = makeShared<SixLowPanIphc>();
       size += B(40); // original Ipv6 header.
+
+      iphcHeader->setProtocol(ipHeader->getProtocol());
 
       // Set the TF field
       if ((ipHeader->getFlowLabel() == 0) && (ipHeader->getTrafficClass() == 0)) {
@@ -619,6 +769,8 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
           }
       }
 
+      iphcHeader->setProtocol(ipHeader->getProtocol());
+      iphcHeader->setProtocolId(protocolId);
       //uint8_t nextHeader = ipHeader->getNextHeader ();
       if (canCompressLowPanNhc (protocolId)) {
           if (protocolId == IpProtocolId::IP_PROT_UDP) {
@@ -629,9 +781,6 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
               iphcHeader->setNh (true);
               size += compressLowPanIphc (packet, src, dst);
           }
-      }
-      else {
-          iphcHeader->setProtocolId(protocolId);
       }
 
       // Set the HLIM field
@@ -745,10 +894,10 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
 
       // Set the M field
       if (ipHeader->getDestAddress().isMulticast())  {
-          iphcHeader->setM (true);
+          iphcHeader->setM(true);
       }
       else {
-          iphcHeader->setM (false);
+          iphcHeader->setM(false);
       }
 
       // This is just to limit the scope of some variables.
@@ -765,31 +914,25 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
 
           // dstAddr->serialize (serializedDstAddress);
 
-          if ( !iphcHeader->getM () )
-          {
+          if (!iphcHeader->getM()) {
               // Unicast address
-
               uint8_t dstContextId;
-              if ( findUnicastCompressionContext (dstAddr, dstContextId) )
-              {
+              if (findUnicastCompressionContext(dstAddr, dstContextId)) {
                   // We can do stateful compression.
                   EV_DEBUG <<"Checking stateful destination compression: " << dstAddr << endl;
 
                   iphcHeader->setDac (true);
-                  if (dstContextId != 0)
-                  {
+                  if (dstContextId != 0) {
                       // the default context is zero, no need to explicit it if it's zero
                       iphcHeader->setDstContextId (dstContextId);
                       iphcHeader->setCid (true);
                   }
 
                   // Note that a context might include parts of the EUI-64 (i.e., be as long as 128 bits).
-                  if (makeAutoconfiguredAddress (dst, m_contextTable[dstContextId].contextPrefix,m_contextTable[dstContextId].prefixLength) == dstAddr)
-                  {
+                  if (makeAutoconfiguredAddress (dst, m_contextTable[dstContextId].contextPrefix,m_contextTable[dstContextId].prefixLength) == dstAddr) {
                       iphcHeader->setDam (SixLowPanIphc::HC_COMPR_0);
                   }
-                  else
-                  {
+                  else {
                       Ipv6Address cleanedAddr = cleanPrefix(dstAddr, m_contextTable[dstContextId].prefixLength);
 
                       uint8_t serializedCleanedAddress[16];
@@ -798,20 +941,17 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
 
                       if ( serializedCleanedAddress[8] == 0x00 && serializedCleanedAddress[9] == 0x00 &&
                               serializedCleanedAddress[10] == 0x00 && serializedCleanedAddress[11] == 0xff &&
-                              serializedCleanedAddress[12] == 0xfe && serializedCleanedAddress[13] == 0x00 )
-                      {
+                              serializedCleanedAddress[12] == 0xfe && serializedCleanedAddress[13] == 0x00 ) {
                           iphcHeader->setDam (SixLowPanIphc::HC_COMPR_16);
                           iphcHeader->setDstInlinePart (serializedCleanedAddress+14, 2);
                       }
-                      else
-                      {
+                      else {
                           iphcHeader->setDam (SixLowPanIphc::HC_COMPR_64);
                           iphcHeader->setDstInlinePart (serializedCleanedAddress+8, 8);
                       }
                   }
               }
-              else
-              {
+              else {
                   EV_DEBUG << "Checking stateless destination compression: " << dstAddr << endl;
 
                   if (dstAddr == makeAutoconfiguredLinkLocalAddress (dst).toIpv6()) {
@@ -825,15 +965,13 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
                       iphcHeader->setDstInlinePart (serializedDstAddress+8, 8);
                       iphcHeader->setDam (SixLowPanIphc::HC_COMPR_64);
                   }
-                  else
-                  {
+                  else {
                       iphcHeader->setDstInlinePart (serializedDstAddress, 16);
                       iphcHeader->setDam (SixLowPanIphc::HC_INLINE);
                   }
               }
           }
-          else
-          {
+          else {
               // Multicast address
 
               uint8_t dstContextId;
@@ -851,8 +989,7 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
                   dstInlinePart[5] = serializedDstAddress[15];
 
                   iphcHeader->setDac (true);
-                  if (dstContextId != 0)
-                  {
+                  if (dstContextId != 0) {
                       // the default context is zero, no need to explicit it if it's zero
                       iphcHeader->setDstContextId (dstContextId);
                       iphcHeader->setCid (true);
@@ -860,8 +997,7 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
                   iphcHeader->setDstInlinePart (dstInlinePart, 6);
                   iphcHeader->setDam (SixLowPanIphc::HC_INLINE);
               }
-              else
-              {
+              else {
                   // Stateless compression
 
                   uint8_t multicastAddrCheckerBuf[16];
@@ -877,8 +1013,7 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
                   // The address takes the form ffXX::00XX:XXXX.
                   //                            ffXX:0000:0000:0000:0000:0000:00XX:XXXX.
                   else if ( (addressBuf[0] == multicastAddrCheckerBuf[0])
-                          && (memcmp (addressBuf + 2, multicastAddrCheckerBuf + 2, 11) == 0) )
-                  {
+                          && (memcmp (addressBuf + 2, multicastAddrCheckerBuf + 2, 11) == 0) ) {
                       uint8_t dstInlinePart[4] = {};
                       memcpy (dstInlinePart, serializedDstAddress+1, 1);
                       memcpy (dstInlinePart+1, serializedDstAddress+13, 3);
@@ -888,16 +1023,14 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
                   // The address takes the form ffXX::00XX:XXXX:XXXX.
                   //                            ffXX:0000:0000:0000:0000:00XX:XXXX:XXXX.
                   else if ( (addressBuf[0] == multicastAddrCheckerBuf[0])
-                          && (memcmp (addressBuf + 2, multicastAddrCheckerBuf + 2, 9) == 0) )
-                  {
+                          && (memcmp (addressBuf + 2, multicastAddrCheckerBuf + 2, 9) == 0)) {
                       uint8_t dstInlinePart[6] = {};
                       memcpy (dstInlinePart, serializedDstAddress+1, 1);
                       memcpy (dstInlinePart+1, serializedDstAddress+11, 5);
                       iphcHeader->setDstInlinePart (dstInlinePart, 6);
                       iphcHeader->setDam (SixLowPanIphc::HC_COMPR_64);
                   }
-                  else
-                  {
+                  else {
                       iphcHeader->setDstInlinePart (serializedDstAddress, 16);
                       iphcHeader->setDam (SixLowPanIphc::HC_INLINE);
                   }
@@ -952,7 +1085,23 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
     //NS_UNUSED (ret);
 
     // Hop Limit
-    ipHeader->setHopLimit (encoding->getHopLimit ());
+
+
+    // Set Hop limit using the HLIM field
+    if (encoding->getHlim() == SixLowPanIphc::HLIM_COMPR_1)
+        ipHeader->setHopLimit(1);
+    else if (encoding->getHlim() == SixLowPanIphc::HLIM_COMPR_64)
+        ipHeader->setHopLimit(0x40);
+    else if (encoding->getHlim() == SixLowPanIphc::HLIM_COMPR_255)
+        ipHeader->setHopLimit(255);
+    else if (encoding->getHlim() == SixLowPanIphc::HLIM_INLINE)
+        ipHeader->setHopLimit(encoding->getHopLimit());
+    else
+        throw cRuntimeError("Incorrect Hlim code");
+
+
+    ipHeader->setProtocolId(encoding->getProtocolId());
+    ipHeader->setProtocol(encoding->getProtocol());
 
     // Source address
     if (encoding->getSac()) {
@@ -1009,7 +1158,6 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
     }
     else {
         // Source address compression uses stateless compression.
-
         if (encoding->getSam () == SixLowPanIphc::HC_INLINE) {
             uint8_t srcAddress[16] = { };
             memcpy (srcAddress, encoding->getSrcInlinePart (), 16);
@@ -1216,7 +1364,7 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
         ipHeader->setTrafficClass (0);
         break;
     }
-    if ( encoding->getNh()) {
+    if (encoding->getNh()) {
         // Compressed headers, first decompress EXT headers
         for (int i = 0; i < encoding->getExtensionHeaderArraySize(); i++) {
             if (decompressLowPanNhc(ipHeader, encoding->getExtensionHeaderForUpdate(i))==B(0)) {
@@ -1227,7 +1375,9 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
         // check next protocol
         auto prot = encoding->getProtocolId();
         if (prot == IpProtocolId::IP_PROT_IPv6) {
-            decompressLowPanIphc (packet,src, dst);
+            auto chunk = packet->peekAtFront<Chunk>();
+            if (dynamicPtrCast<const SixLowPanIphc>(chunk))
+                decompressLowPanIphc (packet,src, dst);
         }
         else if (prot == IpProtocolId::IP_PROT_UDP) {
             auto chunk = packet->peekAtFront<Chunk>();
@@ -1398,7 +1548,7 @@ Ipv6SixLowPan::decompressLowPanUdpNhc (Packet * packet, Ipv6Address saddr, Ipv6A
 
 
 
-bool Ipv6SixLowPan::DoSend(Packet *packet, const L3Address &src,
+bool Ipv6SixLowPan::processAndSend(Packet *packet, const L3Address &src,
         const L3Address &dest, const bool & doSendFrom, const int &ifaceId )
 {
     EV_INFO << packet << "src : " << src << "dest : " << dest <<  doSendFrom << endl;
