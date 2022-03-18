@@ -193,6 +193,7 @@ protected:
     virtual bool processAndSend(Packet *packet, const L3Address &src, const L3Address &dest, const bool &doSendFrom, const int &ifaceId);
 
 
+public:
     // methods to transform the address
 
     // Transform internal ipv6 address representation to an array of uint8_t changing the byte order
@@ -213,7 +214,7 @@ protected:
     //Set to '0' the bits until prefixLength
     static Ipv6Address cleanPrefix (Ipv6Address address, int prefixLength);
 
-
+protected:
     // Fragmentation structures and methods
 
     typedef std::pair< std::pair<L3Address, L3Address>, std::pair<uint16_t, uint16_t> > FragmentKey_t;
