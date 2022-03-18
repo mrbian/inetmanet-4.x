@@ -28,11 +28,7 @@
  * Author: Alfonso Ariza aarizaq@uma.es
  */
 
-// TODO: Read the prefix list from the configuration
 // TODO: Check the fragmentation.
-// TODO: Include filter processing and only accept 6lowpan packets from 6 low pan interfaces
-// TODO: Enable/disable the ip6 fragmentation with the 6lowpan interfaces.
-
 #include "inet/common/INETDefs.h"
 #include "inet/networklayer/ipv6/Ipv6InterfaceData.h"
 #include "inet/networklayer/ipv6/Ipv6Header.h"
@@ -45,6 +41,7 @@
 #include "inet/networklayer/sixlowpan/Ipv6SixLowPan.h"
 #include "inet/networklayer/sixlowpan/SixLowPanHeader_m.h"
 #include "inet/networklayer/sixlowpan/SixLowPanDispatchCode.h"
+#include "inet/networklayer/ipv6/Ipv6ExtensionHeaders_m.h"
 
 #ifdef INET_WITH_IPv6
 namespace inet {
@@ -193,6 +190,8 @@ void Ipv6SixLowPan::initialize(int stage)
 
         aceptAllInterfaces = par("aceptAllInterfaces"); // accept all sixlowpan messages even if the interface is not sixlowpan
 
+        ipv6FragemtationMtu = B(par("ipv6FragemtationMtu").intValue());
+
         // list of sixlowpan interfaces.
         const char *auxChar = par("sixlowpanInterfaces").stringValue();
         std::vector<std::string> interfaceList = cStringTokenizer(auxChar).asVector();
@@ -281,7 +280,107 @@ void Ipv6SixLowPan::handleMessage(cMessage *msg)
     Ipv6::handleMessage(msg);
 }
 
+void Ipv6SixLowPan::fragmentAndSend(Packet *packet, const NetworkInterface *ie, const MacAddress& nextHopAddr, bool fromHL)
+{
 
+    if (listSixLowPanInterfaces.empty() || !checkSixLowPanInterface(ie)) {
+        Ipv6::fragmentAndSend(packet, ie, nextHopAddr, fromHL);
+        return;
+    }
+
+    auto ipv6Header = packet->peekAtFront<Ipv6Header>();
+    // hop counter check
+    if (ipv6Header->getHopLimit() <= 0) {
+        // drop datagram, destruction responsibility in ICMP
+        EV_INFO << "datagram hopLimit reached zero, sending ICMPv6_TIME_EXCEEDED\n";
+        sendIcmpError(packet, ICMPv6_TIME_EXCEEDED, 0); // FIXME check icmp 'code'
+        return;
+    }
+
+    // ensure source address is filled
+    if (fromHL && ipv6Header->getSrcAddress().isUnspecified() &&
+        !ipv6Header->getDestAddress().isSolicitedNodeMulticastAddress())
+    {
+        // source address can be unspecified during DAD
+        const Ipv6Address& srcAddr = ie->getProtocolData<Ipv6InterfaceData>()->getPreferredAddress();
+        ASSERT(!srcAddr.isUnspecified()); // FIXME what if we don't have an address yet?
+
+        // TODO factor out
+        packet->eraseAtFront(ipv6Header->getChunkLength());
+        auto ipv6HeaderCopy = staticPtrCast<Ipv6Header>(ipv6Header->dupShared());
+        // TODO dup or mark ipv4Header->markMutableIfExclusivelyOwned();
+        ipv6HeaderCopy->setSrcAddress(srcAddr);
+        packet->insertAtFront(ipv6HeaderCopy);
+        ipv6Header = ipv6HeaderCopy;
+
+    #ifdef INET_WITH_xMIPv6
+        // if the datagram has a tentative address as source we have to reschedule it
+        // as it can not be sent before the address' tentative status is cleared - CB
+        if (ie->getProtocolData<Ipv6InterfaceData>()->isTentativeAddress(srcAddr)) {
+            EV_INFO << "Source address is tentative - enqueueing datagram for later resubmission." << endl;
+            ScheduledDatagram *sDgram = new ScheduledDatagram(packet, ipv6Header.get(), ie, nextHopAddr, fromHL);
+//            queue.insert(sDgram);
+            scheduleAfter(1.0, sDgram); // KLUDGE wait 1s for tentative->permanent. MISSING: timeout for drop or send back icmpv6 error, processing signals from IE, need another msg queue for waiting (similar to Ipv4 ARP)
+            return;
+        }
+    #endif /* INET_WITH_xMIPv6 */
+    }
+
+
+    int mtu = (ie->getMtu() < ipv6FragemtationMtu.get()) ? ipv6FragemtationMtu.get() : ie->getMtu();
+    // check if datagram does not require fragmentation
+    if (packet->getTotalLength() <= B(mtu)) {
+        sendDatagramToOutput(packet, ie, nextHopAddr);
+        return;
+    }
+
+    // routed datagrams are not fragmented
+    if (!fromHL) {
+        // FIXME check for multicast datagrams, how many ICMP error should be sent
+        sendIcmpError(packet, ICMPv6_PACKET_TOO_BIG, 0); // TODO set MTU
+        return;
+    }
+
+    // create and send fragments
+    ipv6Header = packet->popAtFront<Ipv6Header>();
+    B headerLength = ipv6Header->calculateUnfragmentableHeaderByteLength();
+    B payloadLength = packet->getDataLength();
+    B fragmentLength = ((B(mtu) - headerLength - IPv6_FRAGMENT_HEADER_LENGTH) / 8) * 8;
+    ASSERT(fragmentLength > B(0));
+
+    int noOfFragments = B(payloadLength + fragmentLength - B(1)).get() / B(fragmentLength).get();
+    EV_INFO << "Breaking datagram into " << noOfFragments << " fragments\n";
+    std::string fragMsgName = packet->getName();
+    fragMsgName += "-frag-";
+
+    // FIXME is need to remove unfragmentable header extensions? see calculateUnfragmentableHeaderByteLength()
+
+    unsigned int identification = curFragmentId++;
+    for (B offset = B(0); offset < payloadLength; offset += fragmentLength) {
+        bool lastFragment = (offset + fragmentLength >= payloadLength);
+        B thisFragmentLength = lastFragment ? payloadLength - offset : fragmentLength;
+
+        std::string curFragName = fragMsgName + std::to_string(offset.get());
+        if (lastFragment)
+            curFragName += "-last";
+        Packet *fragPk = new Packet(curFragName.c_str());
+        const auto& fragHdr = staticPtrCast<Ipv6Header>(ipv6Header->dupShared());
+        auto *fh = new Ipv6FragmentHeader();
+        fh->setIdentification(identification);
+        fh->setFragmentOffset(offset.get());
+        fh->setMoreFragments(!lastFragment);
+        fragHdr->addExtensionHeader(fh);
+        fragHdr->setChunkLength(headerLength + fh->getByteLength()); // KLUDGE
+        fragPk->insertAtFront(fragHdr);
+        fragPk->insertAtBack(packet->peekDataAt(offset, thisFragmentLength));
+
+        ASSERT(fragPk->getDataLength() == headerLength + fh->getByteLength() + thisFragmentLength);
+
+        sendDatagramToOutput(fragPk, ie, nextHopAddr);
+    }
+
+    delete packet;
+}
 
 void Ipv6SixLowPan::sendDatagramToOutput(Packet *packet, const NetworkInterface *destIE, const MacAddress& macAddr)
 {
