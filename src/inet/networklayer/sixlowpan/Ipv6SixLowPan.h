@@ -195,6 +195,12 @@ protected:
 
     // methods to transform the address
 
+    // Transform internal ipv6 address representation to an array of uint8_t changing the byte order
+    static void convertFromIpv6AddressToUint8(const Ipv6Address &addr, uint8_t v[16]);
+    // Transform from an array of uint8_t to internal ipv6 address representation changing the byte order
+    static void convertFromUint8ToIpv6Address(const uint8_t v[16], Ipv6Address &addr);
+
+
     // Transform Mac address to Ipv6 address with link local prefix
     static L3Address makeAutoconfiguredLinkLocalAddress(L3Address addr);
 

@@ -46,7 +46,6 @@
 #include "inet/networklayer/sixlowpan/SixLowPanHeader_m.h"
 #include "inet/networklayer/sixlowpan/SixLowPanDispatchCode.h"
 
-
 #ifdef INET_WITH_IPv6
 namespace inet {
 namespace sixlowpan {
@@ -82,6 +81,84 @@ Ipv6SixLowPan::~Ipv6SixLowPan() {
     m_fragments.clear();
 }
 
+// Convenience methods to handle address
+void Ipv6SixLowPan::convertFromIpv6AddressToUint8(const Ipv6Address &addr, uint8_t v[16]) {
+    uint32_t word[4];
+    memcpy(word, addr.words(), sizeof(word));
+    for (int i = 0; i < 4; i++) {
+#if BYTE_ORDER == LITTLE_ENDIAN
+        uint8_t *s = (uint8_t *)&word[i];
+        uint32_t aux = (uint32_t)(s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3]);
+        word[i] = aux;
+#endif
+    }
+    memcpy(v, word, sizeof(uint8_t)*16);
+}
+
+void Ipv6SixLowPan::convertFromUint8ToIpv6Address(const uint8_t v[16], Ipv6Address & addr) {
+
+    uint32_t word[4];
+    for (int i = 0; i < 4; i++) {
+        uint32_t aux;
+        uint8_t *s = (uint8_t *)&aux;
+#if BYTE_ORDER == LITTLE_ENDIAN
+        for (int j = 0; j < 4; j++)
+            s[j] = v[(i*4)+3-j];
+#else
+        for (j = 0; j < 4; j++)
+            s[j] = v[(i*4)+j];
+#endif
+        word[i] = aux;
+    }
+    addr.set(word[0], word[1], word[2], word[3]);
+}
+
+L3Address Ipv6SixLowPan::makeAutoconfiguredLinkLocalAddress(L3Address addr)
+{
+    if (addr.getType() != L3Address::MAC)
+        throw cRuntimeError("AdL3Addresss not of type MAC");
+    Ipv6Address ret = Ipv6Address::formLinkLocalAddress(addr.toMac().formInterfaceIdentifier());
+    return L3Address(ret);
+}
+
+L3Address Ipv6SixLowPan::makeAutoconfiguredAddress (L3Address addrAux, Ipv6Address prefix, int prefixLeng)
+{
+    MacAddress addr = addrAux.toMac();
+    Ipv6Address ipv6PrefixAddr;
+    ipv6PrefixAddr.setPrefix(prefix, prefixLeng);
+    Ipv6Address ret;
+    uint8_t buf[16];
+    uint8_t buf2[16];
+    addr.getAddressBytes(buf);
+
+    Ipv6SixLowPan::convertFromIpv6AddressToUint8(ipv6PrefixAddr, buf2);
+    memcpy (buf2 + 8, buf, 3);
+    buf2[11] = 0xff;
+    buf2[12] = 0xfe;
+    memcpy (buf2 + 13, buf + 3, 3);
+    buf2[8] ^= 0x02;
+//    Ipv6SixLowPan::convertFromUint8ToIpv6Address(buf2, ret);
+    return ret;
+}
+
+Ipv6Address Ipv6SixLowPan::cleanPrefix (Ipv6Address address, int prefixLength)
+{
+
+    uint32_t mask[4];
+    Ipv6Address::constructMask(prefixLength, mask);
+    uint32_t d[4];
+    memcpy(d, address.words(), sizeof(d));
+
+    d[0] = (d[0] & ~mask[0]);
+    d[1] = (d[1] & ~mask[1]);
+    d[2] = (d[2] & ~mask[2]);
+    d[3] = (d[3] & ~mask[3]);
+    Ipv6Address cleanedAddress(d[0], d[1], d[2], d[3]);
+    return cleanedAddress;
+}
+
+
+// Methods to check the interface
 bool Ipv6SixLowPan::checkSixLowPanInterfaceById(const int &id) const
 {
     auto it = listSixLowPanInterfaces.find(id);
@@ -89,6 +166,7 @@ bool Ipv6SixLowPan::checkSixLowPanInterfaceById(const int &id) const
         return false;
     return true;
 }
+
 
 
 bool Ipv6SixLowPan::checkSixLowPanInterface(const NetworkInterface *ie) const
@@ -187,12 +265,13 @@ void Ipv6SixLowPan::handleMessage(cMessage *msg)
                 if (handleMessageFromNetwork(pkt)) {
                     msg = pkt; // The packet can change (fragmentation procedure)
                     auto header = pkt->peekAtFront<Ipv6Header>();
-                    EV_DEBUG << "Decompressed packet src:" << header->getSrcAddress().str() <<" dest:"<< header->getDestinationAddress().str() << endl;
+                    EV_DEBUG << "Decompressing packet src:" << header->getSrcAddress().str() <<" dest:"<< header->getDestinationAddress().str() << endl;
                 }
                 else
                     return;
             }
             else {
+                EV_TRACE << "Packet discarded by the de-compression process " << endl;
                 delete pkt;
                 return;
             }
@@ -228,8 +307,10 @@ void Ipv6SixLowPan::sendDatagramToOutput(Packet *packet, const NetworkInterface 
         src = L3Address(macAddInd->getSrcAddress());
     if (!src.isUnspecified())
         doSend = true;
-    if (!processAndSend (packet, src, dest, doSend, destIE->getInterfaceId()))
+    if (!processAndSend (packet, src, dest, doSend, destIE->getInterfaceId())) {
+        EV_TRACE << "Packet discarded by the compression process " << endl;
         delete packet;
+    }
 }
 
 // This methods can process the packet and change it to a normal ipv6 packet,
@@ -431,56 +512,56 @@ Ipv6SixLowPan::compressLowPanHc1 (Packet * packet, L3Address const &src, L3Addre
         Ipv6Address mySrcAddr = makeAutoconfiguredLinkLocalAddress(src).toIpv6();
         EV_DEBUG << "Checking source compression: " << mySrcAddr << " - " << srcAddr<< endl;
 
-        uint32_t bufOne[4];
-        uint32_t bufTwo[4];
-        memcpy(bufOne,srcAddr.words(),sizeof(bufOne));
-        memcpy(bufTwo,mySrcAddr.words(),sizeof(bufTwo));
-        L3Address aux;
+        uint8_t bufOne[16];
+        uint8_t bufTwo[16];
 
-        bool isSrcSrc =  (bufOne[2] == bufTwo[2] && + bufOne[3] == bufTwo[3]);
+        convertFromIpv6AddressToUint8(srcAddr, bufOne);
+        convertFromIpv6AddressToUint8(mySrcAddr, bufTwo);
+
+        L3Address aux;
+        bool isSrcSrc =  (memcmp (bufOne + 8, bufTwo + 8, 8) == 0);
         if (srcAddr.isLinkLocal () && isSrcSrc )
           hc1Header->setSrcCompression (LowPanHc1Addr_e::HC1_PCIC);
         else if (srcAddr.isLinkLocal () )  {
             hc1Header->setSrcCompression (LowPanHc1Addr_e::HC1_PCII);
             //bufOne[0] = 0;
             //bufOne[1] = 0;
-            hc1Header->setSrcInterface(L3Address(Ipv6Address(0, 0, bufOne[2], bufOne[3])));
+            hc1Header->setSrcInterface(L3Address(Ipv6Address(0, 0, srcAddr.words()[2], srcAddr.words()[3])));
         }
         else if (isSrcSrc)  {
             hc1Header->setSrcCompression (LowPanHc1Addr_e::HC1_PIIC);
-            hc1Header->setSrcPrefix(L3Address(Ipv6Address(bufOne[0], bufOne[1], 0, 0)));
+            hc1Header->setSrcPrefix(L3Address(Ipv6Address(srcAddr.words()[0], srcAddr.words()[1], 0, 0)));
         }
         else {
             hc1Header->setSrcCompression (LowPanHc1Addr_e::HC1_PIII);
-            hc1Header->setSrcInterface(L3Address(Ipv6Address(0, 0, bufOne[2], bufOne[3])));
-            hc1Header->setSrcPrefix(L3Address(Ipv6Address(bufOne[0], bufOne[1], 0, 0)));
+            hc1Header->setSrcInterface(L3Address(Ipv6Address(0, 0, srcAddr.words()[2], srcAddr.words()[3])));
+            hc1Header->setSrcPrefix(L3Address(Ipv6Address(srcAddr.words()[0], srcAddr.words()[1], 0, 0)));
         }
         Ipv6Address dstAddr = ipHeader->getDestAddress();
         Ipv6Address myDstAddr = makeAutoconfiguredLinkLocalAddress(dst).toIpv6();
         EV_DEBUG << "Checking destination compression: " << myDstAddr << " - " << dstAddr<< endl;
 
-        memcpy(bufOne,dstAddr.words(),sizeof(bufOne));
-        memcpy(bufTwo,myDstAddr.words(),sizeof(bufTwo));
-
-      //myDstAddr->getBytes (bufTwo);
-      //bool isDstDst = (memcmp (bufOne + 8, bufTwo + 8, 8) == 0);
-
-        bool isDstDst =  (bufOne[2] == bufTwo[2] && bufOne[3] == bufTwo[3]);
+        //memcpy(bufOne,dstAddr.words(),sizeof(bufOne));
+        //memcpy(bufTwo,myDstAddr.words(),sizeof(bufTwo));
+        convertFromIpv6AddressToUint8(dstAddr, bufOne);
+        convertFromIpv6AddressToUint8(myDstAddr, bufTwo);
+        //myDstAddr->getBytes (bufTwo);
+        bool isDstDst = (memcmp (bufOne + 8, bufTwo + 8, 8) == 0);
 
         if (dstAddr.isLinkLocal () && isDstDst )
             hc1Header->setDstCompression (LowPanHc1Addr_e::HC1_PCIC);
         else if (dstAddr.isLinkLocal ())  {
             hc1Header->setDstCompression (LowPanHc1Addr_e::HC1_PCII);
-            hc1Header->setDstInterface (L3Address(Ipv6Address(0, 0, bufOne[2], bufOne[3])));
+            hc1Header->setDstInterface (L3Address(Ipv6Address(0, 0, dstAddr.words()[2], dstAddr.words()[3])));
         }
         else if ( isDstDst ) {
             hc1Header->setDstCompression (LowPanHc1Addr_e::HC1_PIIC);
-            hc1Header->setDstPrefix (L3Address(Ipv6Address(bufOne[0], bufOne[1], 0, 0)));
+            hc1Header->setDstPrefix (L3Address(Ipv6Address(dstAddr.words()[0], dstAddr.words()[1], 0, 0)));
         }
         else {
             hc1Header->setDstCompression (LowPanHc1Addr_e::HC1_PIII);
-            hc1Header->setDstInterface (L3Address(Ipv6Address(0, 0, bufOne[2], bufOne[3])));
-            hc1Header->setDstPrefix (L3Address(Ipv6Address(bufOne[0], bufOne[1], 0, 0)));
+            hc1Header->setDstInterface (L3Address(Ipv6Address(0, 0, dstAddr.words()[2], dstAddr.words()[3])));
+            hc1Header->setDstPrefix (L3Address(Ipv6Address(dstAddr.words()[0], dstAddr.words()[1], 0, 0)));
         }
 
         if ((ipHeader->getFlowLabel() == 0) && (ipHeader->getTrafficClass() == 0) )
@@ -735,7 +816,8 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
 
       Ipv6Address checker = Ipv6Address ("fe80:0000:0000:0000:0000:00ff:fe00:1");
       uint8_t unicastAddrCheckerBuf[16];
-      memcpy(unicastAddrCheckerBuf, checker.words(), sizeof(unicastAddrCheckerBuf));
+      convertFromIpv6AddressToUint8(checker, unicastAddrCheckerBuf);
+      //memcpy(unicastAddrCheckerBuf, checker.words(), sizeof(unicastAddrCheckerBuf));
       //checker->getBytes (unicastAddrCheckerBuf);
       uint8_t addressBuf[16];
 
@@ -774,7 +856,8 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
               else {
                   Ipv6Address cleanedAddr = cleanPrefix (srcAddr, m_contextTable[srcContextId].prefixLength);
                   uint8_t serializedCleanedAddress[16];
-                  memcpy(serializedCleanedAddress, cleanedAddr.words(), sizeof(serializedCleanedAddress));
+                  convertFromIpv6AddressToUint8(cleanedAddr, serializedCleanedAddress);
+                  //memcpy(serializedCleanedAddress, cleanedAddr.words(), sizeof(serializedCleanedAddress));
                   // cleanedAddr->serialize (serializedCleanedAddress);
                   if ( serializedCleanedAddress[8] == 0x00 && serializedCleanedAddress[9] == 0x00 &&
                           serializedCleanedAddress[10] == 0x00 && serializedCleanedAddress[11] == 0xff &&
@@ -795,12 +878,14 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
               EV << "Checking stateless source compression: " << srcAddr << endl;
 
               //srcAddr->getBytes (addressBuf);
-              memcpy(addressBuf, srcAddr.words(), sizeof(addressBuf));
+              convertFromIpv6AddressToUint8(srcAddr, addressBuf);
+              //memcpy(addressBuf, srcAddr.words(), sizeof(addressBuf));
 
               uint8_t serializedSrcAddress[16];
               // srcAddr->serialize (serializedSrcAddress);
 
-              memcpy(serializedSrcAddress, srcAddr.words(), sizeof(serializedSrcAddress));
+              convertFromIpv6AddressToUint8(srcAddr, serializedSrcAddress);
+              //memcpy(serializedSrcAddress, srcAddr.words(), sizeof(serializedSrcAddress));
 
               if (srcAddr == makeAutoconfiguredLinkLocalAddress (src).toIpv6())  {
                   iphcHeader->setSam (SixLowPanIphc::HC_COMPR_0);
@@ -832,13 +917,15 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
       if (true)
       {
           Ipv6Address dstAddr = ipHeader->getDestAddress();
-          memcpy(addressBuf, dstAddr.words(), sizeof(addressBuf));
+          convertFromIpv6AddressToUint8(dstAddr, addressBuf);
+          //memcpy(addressBuf, dstAddr.words(), sizeof(addressBuf));
           //dstAddr->getBytes (addressBuf);
 
           EV << "Checking destination compression: " << dstAddr << endl;
 
           uint8_t serializedDstAddress[16];
-          memcpy(serializedDstAddress, dstAddr.words(), sizeof(serializedDstAddress));
+          convertFromIpv6AddressToUint8(dstAddr, serializedDstAddress);
+          //memcpy(serializedDstAddress, dstAddr.words(), sizeof(serializedDstAddress));
 
           // dstAddr->serialize (serializedDstAddress);
 
@@ -864,7 +951,8 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
                       Ipv6Address cleanedAddr = cleanPrefix(dstAddr, m_contextTable[dstContextId].prefixLength);
 
                       uint8_t serializedCleanedAddress[16];
-                      memcpy(serializedCleanedAddress, cleanedAddr.words(), sizeof(serializedCleanedAddress));
+                      convertFromIpv6AddressToUint8(cleanedAddr, serializedCleanedAddress);
+                      // memcpy(serializedCleanedAddress, cleanedAddr.words(), sizeof(serializedCleanedAddress));
                       //cleanedAddr->serialize (serializedCleanedAddress);
 
                       if ( serializedCleanedAddress[8] == 0x00 && serializedCleanedAddress[9] == 0x00 &&
@@ -930,7 +1018,8 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
 
                   uint8_t multicastAddrCheckerBuf[16];
                   Ipv6Address multicastCheckAddress = Ipv6Address ("ff02::1");
-                  memcpy(multicastAddrCheckerBuf, multicastCheckAddress.words(),sizeof(multicastAddrCheckerBuf));
+                  convertFromIpv6AddressToUint8(multicastCheckAddress, multicastAddrCheckerBuf);
+                  //memcpy(words, multicastCheckAddress.words(),sizeof(multicastAddrCheckerBuf));
                   //multicastCheckAddress->getBytes (multicastAddrCheckerBuf);
 
                   // The address takes the form ff02::00XX.
@@ -1050,7 +1139,8 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
             }
 
             uint8_t contexPrefix[16];
-            memcpy(contexPrefix, m_contextTable[contextId].contextPrefix.words(), sizeof(contexPrefix));
+            convertFromIpv6AddressToUint8(m_contextTable[contextId].contextPrefix, contexPrefix);
+            //memcpy(contexPrefix, m_contextTable[contextId].contextPrefix.words(), sizeof(contexPrefix));
             uint8_t contextLength = m_contextTable[contextId].prefixLength;
 
             uint8_t srcAddress[16] = { };
@@ -1063,7 +1153,8 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
                 memcpy (srcAddress +14, encoding->getSrcInlinePart(), 2);
             }
             else  {// SixLowPanIphc::HC_COMPR_0
-                memcpy(srcAddress, makeAutoconfiguredLinkLocalAddress (src).toIpv6().words(), sizeof(srcAddress));
+                convertFromIpv6AddressToUint8(makeAutoconfiguredLinkLocalAddress (src).toIpv6(), srcAddress);
+                //memcpy(srcAddress, makeAutoconfiguredLinkLocalAddress (src).toIpv6().words(), sizeof(srcAddress));
                 //Ipv6Address::MakeAutoconfiguredLinkLocalAddress (src)->getBytes (srcAddress);
             }
 
@@ -1079,8 +1170,10 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
                 uint8_t prefixBitMask = ~addressBitMask;
                 srcAddress[bytesToCopy] = (contexPrefix[bytesToCopy] & prefixBitMask) | (srcAddress[bytesToCopy] & addressBitMask);
             }
-            uint32_t *w = reinterpret_cast<uint32_t *>(srcAddress);
-            ipHeader->setSrcAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
+            //uint32_t *w = reinterpret_cast<uint32_t *>(srcAddress);
+            Ipv6Address addrAux;
+            convertFromUint8ToIpv6Address(srcAddress, addrAux);
+            ipHeader->setSrcAddress(addrAux);
             //ipHeader->setSource ( Ipv6Address::Deserialize (srcAddress) );
         }
     }
@@ -1089,18 +1182,22 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
         if (encoding->getSam () == SixLowPanIphc::HC_INLINE) {
             uint8_t srcAddress[16] = { };
             memcpy (srcAddress, encoding->getSrcInlinePart (), 16);
-            uint32_t *w = reinterpret_cast<uint32_t *>(srcAddress);
+            Ipv6Address addrAux;
+            convertFromUint8ToIpv6Address(srcAddress, addrAux);
+            //uint32_t *w = reinterpret_cast<uint32_t *>(srcAddress);
             //ipHeader->setSource ( Ipv6Address::Deserialize (srcAddress) );
-            ipHeader->setSrcAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
+            ipHeader->setSrcAddress(addrAux);
         }
         else if (encoding->getSam() == SixLowPanIphc::HC_COMPR_64) {
             uint8_t srcAddress[16] = { };
             memcpy (srcAddress +8, encoding->getSrcInlinePart(), 8);
             srcAddress[0] = 0xfe;
             srcAddress[1] = 0x80;
-            uint32_t *w = reinterpret_cast<uint32_t *>(srcAddress);
+            Ipv6Address addrAux;
+            convertFromUint8ToIpv6Address(srcAddress, addrAux);
+            //uint32_t *w = reinterpret_cast<uint32_t *>(srcAddress);
             //ipHeader->setSource ( Ipv6Address::Deserialize (srcAddress) );
-            ipHeader->setSrcAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
+            ipHeader->setSrcAddress(addrAux);
         }
         else if (encoding->getSam() == SixLowPanIphc::HC_COMPR_16 ) {
             uint8_t srcAddress[16] = { };
@@ -1109,12 +1206,13 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
             srcAddress[1] = 0x80;
             srcAddress[11] = 0xff;
             srcAddress[12] = 0xfe;
-            uint32_t *w = reinterpret_cast<uint32_t *>(srcAddress);
+            Ipv6Address addrAux;
+            convertFromUint8ToIpv6Address(srcAddress, addrAux);
+            //uint32_t *w = reinterpret_cast<uint32_t *>(srcAddress);
             //ipHeader->setSource ( Ipv6Address::Deserialize (srcAddress) );
-            ipHeader->setSrcAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
+            ipHeader->setSrcAddress(addrAux);
         }
         else {// SixLowPanIphc::HC_COMPR_0
-
             //ipHeader->setSource (Ipv6Address::MakeAutoconfiguredLinkLocalAddress (src));
             ipHeader->setSourceAddress(makeAutoconfiguredLinkLocalAddress (src));
         }
@@ -1140,7 +1238,8 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
         }
 
         uint8_t contexPrefix[16];
-        memcpy(contexPrefix, m_contextTable[contextId].contextPrefix.words(), sizeof(contexPrefix));
+        convertFromIpv6AddressToUint8(m_contextTable[contextId].contextPrefix, contexPrefix);
+        //memcpy(contexPrefix, m_contextTable[contextId].contextPrefix.words(), sizeof(contexPrefix));
         uint8_t contextLength = m_contextTable[contextId].prefixLength;
 
         if (encoding->getM () == false) {
@@ -1155,7 +1254,8 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
                 memcpy (dstAddress +14, encoding->getDstInlinePart (), 2);
             }
             else {// SixLowPanIphc::HC_COMPR_0
-                memcpy(dstAddress, makeAutoconfiguredLinkLocalAddress (src).toIpv6().words(), sizeof(dstAddress));
+                convertFromIpv6AddressToUint8(makeAutoconfiguredLinkLocalAddress (dst).toIpv6(), dstAddress);
+                //memcpy(dstAddress, makeAutoconfiguredLinkLocalAddress (dst).toIpv6().words(), sizeof(dstAddress));
                 //Ipv6Address::MakeAutoconfiguredLinkLocalAddress (dst)->getBytes (dstAddress);
             }
 
@@ -1171,9 +1271,10 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
                 uint8_t prefixBitMask = ~addressBitMask;
                 dstAddress[bytesToCopy] = (contexPrefix[bytesToCopy] & prefixBitMask) | (dstAddress[bytesToCopy] & addressBitMask);
             }
-            uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
-            ipHeader->setDestAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
-
+            Ipv6Address addrAux;
+            convertFromUint8ToIpv6Address(dstAddress, addrAux);
+            //uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
+            ipHeader->setDestAddress(addrAux);
             //ipHeader->setDestination ( Ipv6Address::Deserialize (dstAddress) );
         }
         else {
@@ -1185,8 +1286,11 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
             dstAddress[3] = contextLength;
             memcpy (dstAddress +4, contexPrefix, 8);
             memcpy (dstAddress +12, encoding->getDstInlinePart ()+2, 4);
-            uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
-            ipHeader->setDestAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
+            Ipv6Address addrAux;
+            convertFromUint8ToIpv6Address(dstAddress, addrAux);
+            //uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
+            ipHeader->setDestAddress(addrAux);
+
             //ipHeader->setDestination ( Ipv6Address::Deserialize (dstAddress) );
         }
     }
@@ -1198,8 +1302,10 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
             if (encoding->getDam() == SixLowPanIphc::HC_INLINE) {
                 uint8_t dstAddress[16] = { };
                 memcpy (dstAddress, encoding->getDstInlinePart (), 16);
-                uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
-                ipHeader->setDestAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
+                Ipv6Address addrAux;
+                convertFromUint8ToIpv6Address(dstAddress, addrAux);
+                //uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
+                ipHeader->setDestAddress(addrAux);
                 //ipHeader->setDestination ( Ipv6Address::Deserialize (dstAddress) );
             }
             else if (encoding->getDam() == SixLowPanIphc::HC_COMPR_64) {
@@ -1207,8 +1313,10 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
                 memcpy (dstAddress +8, encoding->getDstInlinePart (), 8);
                 dstAddress[0] = 0xfe;
                 dstAddress[1] = 0x80;
-                uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
-                ipHeader->setDestAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
+                Ipv6Address addrAux;
+                convertFromUint8ToIpv6Address(dstAddress, addrAux);
+                //uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
+                ipHeader->setDestAddress(addrAux);
                 //ipHeader->setDestination ( Ipv6Address::Deserialize (dstAddress) );
             }
             else if (encoding->getDam() == SixLowPanIphc::HC_COMPR_16) {
@@ -1218,8 +1326,10 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
                 dstAddress[1] = 0x80;
                 dstAddress[11] = 0xff;
                 dstAddress[12] = 0xfe;
-                uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
-                ipHeader->setDestAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
+                Ipv6Address addrAux;
+                convertFromUint8ToIpv6Address(dstAddress, addrAux);
+                //uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
+                ipHeader->setDestAddress(addrAux);
                 //ipHeader->setDestination ( Ipv6Address::Deserialize (dstAddress) );
             }
             else {// SixLowPanIphc::HC_COMPR_0
@@ -1232,8 +1342,10 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
             if (encoding->getDam () == SixLowPanIphc::HC_INLINE ) {
                 uint8_t dstAddress[16] = { };
                 memcpy (dstAddress, encoding->getDstInlinePart (), 16);
-                uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
-                ipHeader->setDestAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
+                Ipv6Address addrAux;
+                convertFromUint8ToIpv6Address(dstAddress, addrAux);
+                //uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
+                ipHeader->setDestAddress(addrAux);
                 //ipHeader->setDestination ( Ipv6Address::Deserialize (dstAddress) );
             }
             else if (encoding->getDam () == SixLowPanIphc::HC_COMPR_64) {
@@ -1242,16 +1354,20 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
                 memcpy (dstAddress +1, encoding->getDstInlinePart (), 1);
                 memcpy (dstAddress +11, encoding->getDstInlinePart ()+1, 5);
                 //ipHeader->setDestination ( Ipv6Address::Deserialize (dstAddress) );
-                uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
-                ipHeader->setDestAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
+                Ipv6Address addrAux;
+                convertFromUint8ToIpv6Address(dstAddress, addrAux);
+                //uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
+                ipHeader->setDestAddress(addrAux);
             }
             else if (encoding->getDam () == SixLowPanIphc::HC_COMPR_16) {
                 uint8_t dstAddress[16] = { };
                 dstAddress[0] = 0xff;
                 memcpy (dstAddress +1, encoding->getDstInlinePart (), 1);
                 memcpy (dstAddress +13, encoding->getDstInlinePart ()+1, 3);
-                uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
-                ipHeader->setDestAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
+                Ipv6Address addrAux;
+                convertFromUint8ToIpv6Address(dstAddress, addrAux);
+                //uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
+                ipHeader->setDestAddress(addrAux);
                 //ipHeader->setDestination ( Ipv6Address::Deserialize (dstAddress) );
             }
             else {// SixLowPanIphc::HC_COMPR_0
@@ -1259,8 +1375,10 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
                 dstAddress[0] = 0xff;
                 dstAddress[1] = 0x02;
                 memcpy (dstAddress+15, encoding->getDstInlinePart (), 1);
-                uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
-                ipHeader->setDestAddress(Ipv6Address(w[0], w[1], w[2], w[3]));
+                Ipv6Address addrAux;
+                convertFromUint8ToIpv6Address(dstAddress, addrAux);
+                //uint32_t *w = reinterpret_cast<uint32_t *>(dstAddress);
+                ipHeader->setDestAddress(addrAux);
                 //ipHeader->setDestination ( Ipv6Address::Deserialize (dstAddress) );
             }
         }
@@ -1726,10 +1844,14 @@ bool Ipv6SixLowPan::findMulticastCompressionContext (Ipv6Address address, uint8_
           if (contextLength <= 64) {// only 64-bit prefixes or less are allowed.
               uint8_t contextBytes[16];
               uint8_t addressBytes[16];
+
               Ipv6Address p = context.contextPrefix.getPrefix(contextLength);
 
-              memcpy(contextBytes, p.words(), sizeof(contextBytes));
-              memcpy(addressBytes, address.words(), sizeof(addressBytes));
+              convertFromIpv6AddressToUint8(p, contextBytes);
+              convertFromIpv6AddressToUint8(address, addressBytes);
+
+              //memcpy(contextBytes, p.words(), sizeof(contextBytes));
+              //memcpy(addressBytes, address.words(), sizeof(addressBytes));
 
               if (addressBytes[3] == contextLength &&
                   addressBytes[4] == contextBytes[0] &&
@@ -1751,60 +1873,6 @@ bool Ipv6SixLowPan::findMulticastCompressionContext (Ipv6Address address, uint8_
 }
 
 
-// Convenience methods to handle address
-
-L3Address Ipv6SixLowPan::makeAutoconfiguredLinkLocalAddress(L3Address addr)
-{
-    if (addr.getType() != L3Address::MAC)
-        throw cRuntimeError("AdL3Addresss not of type MAC");
-    Ipv6Address ret = Ipv6Address::formLinkLocalAddress(addr.toMac().formInterfaceIdentifier());
-    return L3Address(ret);
-}
-
-L3Address Ipv6SixLowPan::makeAutoconfiguredAddress (L3Address addrAux, Ipv6Address prefix, int prefixLeng)
-{
-    MacAddress addr = addrAux.toMac();
-    Ipv6Address ipv6PrefixAddr;
-    ipv6PrefixAddr.setPrefix(prefix, prefixLeng);
-
-    Ipv6Address ret;
-    uint8_t buf[16];
-    uint32_t buf2Word[4];
-    uint8_t *buf2 = (uint8_t *)buf2Word;
-
-    addr.getAddressBytes(buf);
-    memcpy(buf2Word, ipv6PrefixAddr.words(), sizeof(buf2Word));
-
-    memcpy (buf2 + 8, buf, 3);
-    buf2[11] = 0xff;
-    buf2[12] = 0xfe;
-    memcpy (buf2 + 13, buf + 3, 3);
-    buf2[8] ^= 0x02;
-    ret.set(buf2Word[0], buf2Word[1], buf2Word[2], buf2Word[3]);
-    return ret;
-}
-
-
-
-Ipv6Address Ipv6SixLowPan::cleanPrefix (Ipv6Address address, int prefixLength)
-{
-  uint32_t w[4];
-  memcpy(w, address.words(), sizeof(w));
-
-  uint8_t *addressBytes = (uint8_t *)w;
-  uint8_t bytesToClean = prefixLength / 8;
-  uint8_t bitsToClean = prefixLength % 8;
-  for (uint8_t i=0; i<bytesToClean; i++) {
-      addressBytes[i] = 0;
-  }
-  if (bitsToClean)
-  {
-      uint8_t cleanupMask = (1<<bitsToClean)-1;
-      addressBytes[bytesToClean] &= cleanupMask;
-  }
-  Ipv6Address cleanedAddress(w[0], w[1], w[2], w[3]);
-  return cleanedAddress;
-}
 
 // Fragmentation methods
 
