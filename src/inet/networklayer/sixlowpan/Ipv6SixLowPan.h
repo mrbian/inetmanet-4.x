@@ -112,6 +112,7 @@ protected:
       //virtual int numInitStages() const override { return NUM_INIT_STAGES; }
       virtual void initialize(int) override;
       virtual void handleMessage(cMessage *msg) override;
+      virtual void fragmentAndSend(Packet *packet, const NetworkInterface *ie, const MacAddress& nextHopAddr, bool fromHL) override;
       virtual void sendDatagramToOutput(Packet *packet, const NetworkInterface *destIE, const MacAddress& macAddr) override;
       // Handle incoming sixLowPan packets
       virtual bool handleMessageFromNetwork(Packet *packet);
@@ -193,6 +194,7 @@ protected:
     virtual bool processAndSend(Packet *packet, const L3Address &src, const L3Address &dest, const bool &doSendFrom, const int &ifaceId);
 
 
+public:
     // methods to transform the address
 
     // Transform internal ipv6 address representation to an array of uint8_t changing the byte order
@@ -213,7 +215,7 @@ protected:
     //Set to '0' the bits until prefixLength
     static Ipv6Address cleanPrefix (Ipv6Address address, int prefixLength);
 
-
+protected:
     // Fragmentation structures and methods
 
     typedef std::pair< std::pair<L3Address, L3Address>, std::pair<uint16_t, uint16_t> > FragmentKey_t;
@@ -390,6 +392,7 @@ protected:
    B m_compressionThreshold;
    cPar *m_meshUnderJitter;
    bool aceptAllInterfaces; // accept all sixlowpan messages even if the interface is not sixlowpan
+   B ipv6FragemtationMtu;
 };
 
 }
