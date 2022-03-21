@@ -599,7 +599,7 @@
         requires = "Ipv6"
         labels = ""
         nedPackages = "
-                       inet.networklayer.sixlowpan
+                       inet.wirelesspan.networklayer.sixlowpan
                       "
         extraSourceFolders = ""
         compileFlags = "-DINET_WITH_SIXLOWPAN"
@@ -613,7 +613,7 @@
         requires = "Ethernet Ipv6 SixLowPan Ppp TcpInet Udp"
         labels = "protocols examples"
         nedPackages = "
-                       inet.examples.sixlowpan
+                       inet.examples.wirelesspan.sixlowpan
                       "
         extraSourceFolders = ""
         compileFlags = ""
