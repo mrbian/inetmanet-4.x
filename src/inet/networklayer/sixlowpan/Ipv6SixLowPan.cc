@@ -137,7 +137,7 @@ L3Address Ipv6SixLowPan::makeAutoconfiguredAddress (L3Address addrAux, Ipv6Addre
     buf2[12] = 0xfe;
     memcpy (buf2 + 13, buf + 3, 3);
     buf2[8] ^= 0x02;
-//    Ipv6SixLowPan::convertFromUint8ToIpv6Address(buf2, ret);
+    Ipv6SixLowPan::convertFromUint8ToIpv6Address(buf2, ret);
     return ret;
 }
 
