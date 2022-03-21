@@ -27,7 +27,7 @@
 // Author: Alfonso Ariza aarizaq@uma.es
 //
 
-package inet.networklayer.sixlowpan;
+package inet.wirelesspan.networklayer.sixlowpan;
 import inet.networklayer.ipv6.Ipv6;
 
 //

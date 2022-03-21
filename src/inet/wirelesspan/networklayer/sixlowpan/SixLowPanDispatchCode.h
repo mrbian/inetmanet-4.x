@@ -43,7 +43,7 @@ namespace inet {
 
 namespace sixlowpan {
 
-class SixLowPanDispatchCode
+class INET_API SixLowPanDispatchCode
 {
 public:
   /**

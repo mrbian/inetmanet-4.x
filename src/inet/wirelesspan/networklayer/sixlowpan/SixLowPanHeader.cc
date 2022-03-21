@@ -19,8 +19,8 @@
 
 // Disable warnings about unused variables, empty switch stmts, etc:
 
-#include "inet/networklayer/sixlowpan/SixLowPanDispatchCode.h"
-#include "inet/networklayer/sixlowpan/SixLowPanHeader_m.h"
+#include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanDispatchCode.h"
+#include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanHeader_m.h"
 
 namespace inet {
 namespace sixlowpan {

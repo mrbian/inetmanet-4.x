@@ -35,8 +35,9 @@
 #include <map>
 #include <set>
 #include <list>
+
+#include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanHeader_m.h"
 #include "inet/common/INETDefs.h"
-#include "inet/networklayer/sixlowpan/SixLowPanHeader_m.h"
 #include "inet/common/Units.h"
 #include "inet/networklayer/common/IpProtocolId_m.h"
 #include "inet/common/lifecycle/ModuleOperations.h"
@@ -47,14 +48,17 @@
 #include "inet/networklayer/common/NetworkInterface.h"
 #include "inet/networklayer/ipv6/Ipv6.h"
 
-#ifdef INET_WITH_IPv6
+#ifndef INET_WITH_IPv6
+#error "This module needs inet/inetmanet ipv6"
+#endif
 
+#ifdef INET_WITH_IPv6
 namespace inet {
 namespace sixlowpan {
 
 using namespace units::values;
 
-class Ipv6SixLowPan : public Ipv6 {
+class INET_API Ipv6SixLowPan : public Ipv6 {
 public:
     Ipv6SixLowPan() {}
     virtual ~Ipv6SixLowPan();

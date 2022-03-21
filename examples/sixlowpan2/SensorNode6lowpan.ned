@@ -5,7 +5,7 @@
 //
 
 
-package inet.networklayer.sixlowpan;
+package inet.examples.sixlowpan2;
 import inet.node.base.ApplicationLayerNodeBase;
 //
 // This module implements a wireless sensor node. It has one 802.15.4 wireless interface
@@ -13,13 +13,12 @@ import inet.node.base.ApplicationLayerNodeBase;
 //# TODO and energyconsumer in the radio
 //# TODO there is no management; the IdealEnergyStorage never depletes...
 //
-module SensorNode6lowpan extends ApplicationLayerNodeBase
+module SensorNode6lowpan2 extends ApplicationLayerNodeBase
 {
     parameters:
         @display("i=misc/sensor2");
         hasIpv4 = default(false);
         hasIpv6 = default(true);
-        ipv6.typename = default("SixLowPanNetworkLayer");
         *.routingTableModule = "^.ipv6.routingTable";
         
         @figure[submodules];

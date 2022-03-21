@@ -1,8 +1,8 @@
-package inet.examples.sixlowpan;
+package inet.examples.sixlowpan2;
 
 import inet.networklayer.configurator.ipv6.Ipv6FlatNetworkConfigurator;
 import inet.node.ethernet.Eth100M;
-import inet.networklayer.sixlowpan.SensorNode6lowpan;
+import inet.examples.sixlowpan2.SensorNode6lowpan2;
 import inet.node.inet.StandardHost;
 import inet.node.inet.WirelessHost;
 import inet.physicallayer.wireless.apsk.packetlevel.ApskScalarRadioMedium;
@@ -12,50 +12,50 @@ import inet.visualizer.common.IntegratedMultiVisualizer;
 import inet.visualizer.common.IntegratedVisualizer;
 
 
-network SixLowPanIeee802154
+network SixLowPanIeee8021542
 {
     @display("bgb=20,20;bgi=showcases/floorplan,s");
     submodules:
-        sensor1: SensorNode6lowpan {
+        sensor1: SensorNode6lowpan2 {
             @display("p=9.5,3.5;i=misc/sensor");
         }
-        sensor2: SensorNode6lowpan {
+        sensor2: SensorNode6lowpan2 {
             @display("p=9.5,16.5;i=misc/sensor");
         }
-        sensor3: SensorNode6lowpan {
+        sensor3: SensorNode6lowpan2 {
             @display("p=10.75,10.75;i=misc/sensor");
         }
-        sensor4: SensorNode6lowpan {
+        sensor4: SensorNode6lowpan2 {
             @display("p=2.5,17.5;i=misc/sensor");
         }
-        sensor5: SensorNode6lowpan {
+        sensor5: SensorNode6lowpan2 {
             @display("p=2.5,7;i=misc/sensor");
         }
-        lamp1: SensorNode6lowpan {
+        lamp1: SensorNode6lowpan2 {
             @display("p=8,5;i=status/bulb");
         }
-        lamp2: SensorNode6lowpan {
+        lamp2: SensorNode6lowpan2 {
             @display("p=8.75,13.5;i=status/bulb");
         }
-        lamp3: SensorNode6lowpan {
+        lamp3: SensorNode6lowpan2 {
             @display("p=13.5,8.5;i=status/bulb");
         }
-        lamp4: SensorNode6lowpan {
+        lamp4: SensorNode6lowpan2 {
             @display("p=16.5,9.5;i=status/bulb");
         }
-        lamp5: SensorNode6lowpan {
+        lamp5: SensorNode6lowpan2 {
             @display("p=13.5,14;i=status/bulb");
         }
-        lamp6: SensorNode6lowpan {
+        lamp6: SensorNode6lowpan2 {
             @display("p=4,13;i=status/bulb");
         }
-        lamp7: SensorNode6lowpan {
+        lamp7: SensorNode6lowpan2 {
             @display("p=4,10.5;i=status/bulb");
         }
-        lamp8: SensorNode6lowpan {
+        lamp8: SensorNode6lowpan2 {
             @display("p=4,5;i=status/bulb");
         }
-        controller: SensorNode6lowpan {
+        controller: SensorNode6lowpan2 {
             @display("p=6.5,10.5;i=misc/sensorgateway");
         }
         configurator: Ipv6FlatNetworkConfigurator {

@@ -7,7 +7,7 @@
 // Edited with OMNeT++ Academic/Noncommercial Edition.
 //
 
-package inet.networklayer.sixlowpan;
+package inet.wirelesspan.networklayer.sixlowpan;
 
 import inet.common.MessageDispatcher;
 import inet.networklayer.contract.IIpv6Tunneling;

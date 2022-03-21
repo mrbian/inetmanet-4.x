@@ -29,6 +29,11 @@
  */
 
 // TODO: Check the fragmentation.
+#include "inet/wirelesspan/networklayer/sixlowpan/Ipv6SixLowPan.h"
+
+#include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanDispatchCode.h"
+#include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanDispatchCode.h"
+#include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanHeader_m.h"
 #include "inet/common/INETDefs.h"
 #include "inet/networklayer/ipv6/Ipv6InterfaceData.h"
 #include "inet/networklayer/ipv6/Ipv6Header.h"
@@ -38,9 +43,6 @@
 #include "inet/linklayer/common/MacAddressTag_m.h"
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/common/packet/ReassemblyBuffer.h"
-#include "inet/networklayer/sixlowpan/Ipv6SixLowPan.h"
-#include "inet/networklayer/sixlowpan/SixLowPanHeader_m.h"
-#include "inet/networklayer/sixlowpan/SixLowPanDispatchCode.h"
 #include "inet/networklayer/ipv6/Ipv6ExtensionHeaders_m.h"
 
 #ifdef INET_WITH_IPv6
