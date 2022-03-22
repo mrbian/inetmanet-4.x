@@ -35,10 +35,9 @@
 #include <map>
 #include <set>
 #include <list>
-
-#include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanHeader_m.h"
 #include "inet/common/INETDefs.h"
 #include "inet/common/Units.h"
+#include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanHeader_m.h"
 #include "inet/networklayer/common/IpProtocolId_m.h"
 #include "inet/common/lifecycle/ModuleOperations.h"
 #include "inet/common/lifecycle/OperationalBase.h"
@@ -54,6 +53,7 @@
 
 #ifdef INET_WITH_IPv6
 namespace inet {
+namespace wirelesspan {
 namespace sixlowpan {
 
 using namespace units::values;
@@ -401,6 +401,6 @@ protected:
 
 }
 }
-
+}
 #endif
 #endif /* IPV6SIXLOWPAN_H_ */

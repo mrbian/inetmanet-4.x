@@ -26,7 +26,7 @@ cplusplus {{
 }}
 
 
-namespace inet::sixlowpan;
+namespace inet::wirelesspan::sixlowpan;
 
 
 class SixLowPanDispatch extends NetworkHeaderBase

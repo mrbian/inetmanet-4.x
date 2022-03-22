@@ -29,12 +29,11 @@
  */
 
 // TODO: Check the fragmentation.
+#include "inet/common/INETDefs.h"
 #include "inet/wirelesspan/networklayer/sixlowpan/Ipv6SixLowPan.h"
-
 #include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanDispatchCode.h"
 #include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanDispatchCode.h"
 #include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanHeader_m.h"
-#include "inet/common/INETDefs.h"
 #include "inet/networklayer/ipv6/Ipv6InterfaceData.h"
 #include "inet/networklayer/ipv6/Ipv6Header.h"
 #include "inet/transportlayer/udp/UdpHeader_m.h"
@@ -47,6 +46,7 @@
 
 #ifdef INET_WITH_IPv6
 namespace inet {
+namespace wirelesspan {
 namespace sixlowpan {
 
 
@@ -2368,5 +2368,5 @@ bool Ipv6SixLowPan::processFragment (Packet *packet, L3Address const &src, L3Add
 
 }
 }
-
+}
 #endif

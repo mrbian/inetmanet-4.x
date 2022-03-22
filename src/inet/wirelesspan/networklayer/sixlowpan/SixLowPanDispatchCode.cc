@@ -20,7 +20,7 @@
 
 #include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanDispatchCode.h"
 namespace inet {
-
+namespace wirelesspan {
 namespace sixlowpan {
 
 SixLowPanDispatchCode::SixLowPanDispatchCode ()
@@ -80,5 +80,6 @@ SixLowPanDispatchCode::GetNhcDispatchType (uint8_t dispatch)
 }
 
 
+}
 }
 }

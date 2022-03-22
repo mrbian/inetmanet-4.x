@@ -23,6 +23,7 @@
 #include "inet/wirelesspan/networklayer/sixlowpan/SixLowPanHeader_m.h"
 
 namespace inet {
+namespace wirelesspan {
 namespace sixlowpan {
 /*
 uint8_t SixLowPanDispatch::getDispatchType() const
@@ -520,5 +521,5 @@ B SixLowPanBc0::getSerializedSize() const {
 }
 
 }  // namespace sixlowpan
-}  // namespace inet
-
+}
+} // namespace inet

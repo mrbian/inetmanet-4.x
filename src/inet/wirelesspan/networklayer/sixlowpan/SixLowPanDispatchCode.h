@@ -40,7 +40,7 @@
 #include "inet/common/INETDefs.h"
 
 namespace inet {
-
+namespace wirelesspan {
 namespace sixlowpan {
 
 class INET_API SixLowPanDispatchCode
@@ -130,5 +130,5 @@ public:
 
 }
 }
-
+}
 #endif

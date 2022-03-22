@@ -87,7 +87,7 @@ simple Ipv6SixLowPan extends Ipv6
         string ContexCompresionList = default(""); // Format index?addrerss/prefix Length|allowed|valid time   example "0?fe80::8aa:ff:fe00/120|true|100 1?fa80::8aa:ff:fe00/110|true|200"
         bool aceptAllInterfaces = default(true); // accept all sixlowpan messages even if the interface is not sixlowpan
         int ipv6FragemtationMtu @unit(B) = default(B(-1)); //Only if the interface is sixlowpan, the value to determine to fragment the packet is std::max(mtu output interface, ipv6FragemtationMtu).  the six low pan will fragment the packet if the compressed packet is bigger than the MTU. This can reduce the IPV6 overhead (sveral ipv6 fragments can use the same ipv6 header)   
-        @class(sixlowpan::Ipv6SixLowPan);
+        @class(wirelesspan::sixlowpan::Ipv6SixLowPan);
         @display("i=block/network2");
         @signal[packetDropped](type=inet::Packet);
         @signal[packetSentToUpper](type=inet::Packet);
