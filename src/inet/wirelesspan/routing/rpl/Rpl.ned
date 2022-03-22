@@ -43,7 +43,7 @@ module Rpl like IManetRouting
         @statistic[parentUnreachable](title = "Preferred parent unreachability detected"; source="parentUnreachable"; record=count; interpolationmode=none);
         
         // properties
-        @class("inet::Rpl");
+        @class("wirelesspan::routing::Rpl");
         @display("i=block/routing");
 
         // context parameters

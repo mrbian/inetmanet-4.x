@@ -64,9 +64,9 @@ void LoadNgBase::initialize(int stage)
         rreqId = sequenceNum = 0;
         rreqCount = rerrCount = 0;
         host = getContainingNode(this);
-        routingTable = getModuleFromPar<IRoutingTable>(par("routingTableModule"), this);
-        interfaceTable = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-        networkProtocol = getModuleFromPar<INetfilter>(par("networkProtocolModule"), this);
+        routingTable.reference(this, "routingTableModule", true);
+        interfaceTable.reference(this, "interfaceTableModule", true);
+        networkProtocol.reference(this, "networkProtocolModule", true);
 
         aodvUDPPort = par("udpPort");
         activeRouteTimeout = par("activeRouteTimeout");

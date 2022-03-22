@@ -19,14 +19,24 @@
 //   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 //  
 
-package inet.wirelesspan.routing.rpl;
+package inet.wirelesspan.nodes;
 
 import inet.node.inet.AdhocHost;
 import inet.wirelesspan.routing.rpl.Rpl;
 import inet.wirelesspan.routing.rpl.TrickleTimer;
 
-module RplRouter extends AdhocHost
-{   
+module RplRouterSixLowPan extends AdhocHost
+{
+    parameters:
+        forwarding = true;
+        hasIpv4 = default(false);
+        hasIpv6 = default(true);
+        
+        ipv6.typename = default("SixLowPanNetworkLayer");
+        ipv6.neighbourDiscovery.typename = default("WpanIpv6NeighbourDiscovery");
+        *.routingTableModule = default("^.ipv6.routingTable");
+        *.routingTableModule = default("^.ipv6.routingTable");
+        *.networkProtocolModule = default("^.ipv6.ipv6");
     submodules:
         rpl: Rpl {
             @display("p=825,226");
@@ -34,7 +44,6 @@ module RplRouter extends AdhocHost
         trickleTimer: TrickleTimer {
             @display("p=946.57495,225.22499");
         }
-
     connections:
         rpl.ipOut --> tn.in++;
         rpl.ipIn <-- tn.out++;

@@ -154,9 +154,9 @@ class INET_API LoadNgBase: public RoutingProtocolBase, public NetfilterBase::Hoo
 
     // environment
     cModule *host = nullptr;
-    IRoutingTable *routingTable = nullptr;
-    IInterfaceTable *interfaceTable = nullptr;
-    INetfilter *networkProtocol = nullptr;
+    ModuleRefByPar<IRoutingTable> routingTable;
+    ModuleRefByPar<IInterfaceTable> interfaceTable;
+    ModuleRefByPar<INetfilter> networkProtocol;
 
     // AODV parameters: the following parameters are configurable, see the NED file for more info.
     unsigned int rerrRatelimit = 0;

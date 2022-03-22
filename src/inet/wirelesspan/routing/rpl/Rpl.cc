@@ -98,11 +98,13 @@ void Rpl::initialize(int stage)
     RoutingProtocolBase::initialize(stage);
 
     if (stage == INITSTAGE_LOCAL) {
-        interfaceTable = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
+
+        routingTable.reference(this, "routingTableModule", true);
+        interfaceTable.reference(this, "interfaceTableModule", true);
+        networkProtocol.reference(this, "networkProtocolModule", true);
 
         EV_DETAIL << "got interface table - " << interfaceTable << endl;
 
-        networkProtocol = getModuleFromPar<INetfilter>(par("networkProtocolModule"), this);
         nd = check_and_cast<Ipv6NeighbourDiscovery*>(getModuleByPath("^.ipv6.neighbourDiscovery"));
 
 
@@ -112,7 +114,6 @@ void Rpl::initialize(int stage)
             mac->subscribe("currentFrequency", this);
 
         EV_DETAIL << "Found MAC module - " << mac << endl;
-        routingTable = getModuleFromPar<Ipv6RoutingTable>(par("routingTableModule"), this);
         trickleTimer = check_and_cast<TrickleTimer*>(getModuleByPath("^.trickleTimer"));
 
         daoEnabled = par("daoEnabled").boolValue();
@@ -169,8 +170,9 @@ void Rpl::initialize(int stage)
         WATCH(uplinkSlotOffset);
     }
     else if (stage == INITSTAGE_ROUTING_PROTOCOLS) {
-        registerService(Protocol::manet, nullptr, gate("ipIn"));
-        registerProtocol(Protocol::manet, gate("ipOut"), nullptr);
+        registerProtocol(Protocol::manet, gate("ipOut"), gate("ipIn"));
+        //registerService(Protocol::manet, nullptr, gate("ipIn"));
+        //registerProtocol(Protocol::manet, gate("ipOut"), nullptr);
         host->subscribe(linkBrokenSignal, this);
         networkProtocol->registerHook(0, this);
     }

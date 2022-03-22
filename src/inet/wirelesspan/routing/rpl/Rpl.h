@@ -150,11 +150,11 @@ public:
   private:
 
     /** Environment */
-    IInterfaceTable *interfaceTable = nullptr;
-    Ipv6RoutingTable *routingTable = nullptr;
+    ModuleRefByPar<IInterfaceTable> interfaceTable;
+    ModuleRefByPar<Ipv6RoutingTable> routingTable;
     Ipv6NeighbourDiscovery *nd = nullptr;
     NetworkInterface *interfaceEntryPtr = nullptr;
-    INetfilter *networkProtocol = nullptr;
+    ModuleRefByPar<INetfilter> networkProtocol;
     ObjectiveFunction *objectiveFunction = nullptr;
     TrickleTimer *trickleTimer = nullptr;
     cModule *host = nullptr;

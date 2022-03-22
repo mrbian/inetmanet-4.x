@@ -41,7 +41,7 @@ import inet.routing.contract.IManetRouting;
 simple LoadNgBase like IManetRouting
 {
     parameters:
-        @class("LoadNgBase");
+        @class("wirelesspan::routing::LoadNgBase");
         @display("i=block/network2");
         string routingTableModule = default("^.ipv4.routingTable");
         string interfaceTableModule = default("^.interfaceTable");

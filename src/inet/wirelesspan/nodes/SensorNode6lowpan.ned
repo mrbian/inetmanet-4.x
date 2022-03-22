@@ -20,7 +20,7 @@ module SensorNode6lowpan extends ApplicationLayerNodeBase
         hasIpv4 = default(false);
         hasIpv6 = default(true);
         ipv6.typename = default("SixLowPanNetworkLayer");
-        *.routingTableModule = "^.ipv6.routingTable";
+        *.routingTableModule = default("^.ipv6.routingTable");
         
         @figure[submodules];
         numWlanInterfaces = default(1);
