@@ -35,7 +35,6 @@
 #include "inet/transportlayer/udp/UdpHeader_m.h"
 #include "inet/power/contract/IEpEnergyStorage.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
-#include "inet/routing/extras/LoadNg/NeigborElement.h"
 
 namespace inet {
 namespace wirelesspan {
