@@ -34,6 +34,7 @@
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/networklayer/common/L3AddressTag_m.h"
 #include "inet/networklayer/common/L3Tools.h"
+#include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandReceiverBase.h"
 
 using namespace std;
 
@@ -159,7 +160,7 @@ public:
     TrickleTimer *trickleTimer = nullptr;
     cModule *host = nullptr;
     cModule *udpApp = nullptr;
-    cModule *mac = nullptr;
+    std::vector<NetworkInterface *> interfaceList;
     vector<cModule*> apps = {};
 
     /** RPL configuration parameters and state management */
@@ -200,12 +201,12 @@ public:
     std::map<Ipv6Address, DaoTimeoutInfo *> pendingDaoAcks;
 
     /** Statistics and control signals */
-    simsignal_t dioReceivedSignal;
-    simsignal_t daoReceivedSignal;
-    simsignal_t parentChangedSignal;
-    simsignal_t rankUpdatedSignal;
-    simsignal_t parentUnreachableSignal;
-    simsignal_t childJoinedSignal;
+    static simsignal_t dioReceivedSignal;
+    static simsignal_t daoReceivedSignal;
+    static simsignal_t parentChangedSignal;
+    static simsignal_t rankUpdatedSignal;
+    static simsignal_t parentUnreachableSignal;
+    static simsignal_t childJoinedSignal;
 
     int numDaoDropped = 0;
 
@@ -225,7 +226,10 @@ public:
     std::vector<cFigure::Color> colorPalette;
     int udpPacketsRecv = 0;
     cFigure::Color dodagColor = cFigure::BLACK;
-    double currentFrequency = -1; // stores current frequency reported by MAC
+
+
+    physicallayer::NarrowbandReceiverBase *receiver = nullptr;
+    double currentFrequency(); // stores current frequency reported by MAC
 
     // Low-latency params, only for use in 6TiSCH
     long uplinkSlotOffset = 0; // smallest slot offset of the uplink cell
@@ -644,9 +648,10 @@ public:
      * @param details
      */
     virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) override;
+#if LOWLATENCYSUPPORT
     virtual void receiveSignal(cComponent *src, simsignal_t id, long value, cObject *details) override;
-    virtual void receiveSignal(cComponent *source, simsignal_t signalID, double value, cObject *details) override;
-
+#endif
+    //virtual void receiveSignal(cComponent *source, simsignal_t signalID, double value, cObject *details) override;
 
     std::vector<uint16_t> getNodesPerHopDistance();
     bool isRplPacket(Packet *packet);

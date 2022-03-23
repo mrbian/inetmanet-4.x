@@ -27,7 +27,7 @@ simple TrickleTimer
 {
     parameters:
         // properties
-        @class("inet::TrickleTimer");
+        @class("wirelesspan::routing::TrickleTimer");
 
 
     gates:

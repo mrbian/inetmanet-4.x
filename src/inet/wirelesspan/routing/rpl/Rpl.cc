@@ -28,12 +28,23 @@
 #include <math.h>
 #include "inet/wirelesspan/routing/rpl/Rpl.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
+#include "inet/physicallayer/wireless/common/contract/packetlevel/IRadio.h"
+#include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandReceiverBase.h"
 
 namespace inet {
 namespace wirelesspan {
 namespace routing {
 
 Define_Module(Rpl);
+
+// statistic signals
+simsignal_t Rpl::dioReceivedSignal = registerSignal("dioReceived");
+simsignal_t Rpl::daoReceivedSignal = registerSignal("daoReceived");
+simsignal_t Rpl::parentUnreachableSignal = registerSignal("parentUnreachable");
+simsignal_t Rpl::parentChangedSignal = registerSignal("parentChanged");
+simsignal_t Rpl::rankUpdatedSignal = registerSignal("rankUpdated");
+simsignal_t Rpl::childJoinedSignal = registerSignal("childJoined");
+
 
 std::ostream& operator<<(std::ostream& os, std::vector<Ipv6Address> &list)
 {
@@ -49,6 +60,14 @@ std::ostream& operator<<(std::ostream& os, std::map<Ipv6Address, std::pair<cMess
     for (auto a : acks)
         os << a.first << " (" << a.second.second << " attempts), timeout event - " << a.second.first << endl;
     return os;
+}
+
+double Rpl::currentFrequency()
+{
+    if (receiver) {
+        return receiver->getCenterFrequency().get();
+    }
+    return -1;
 }
 
 // TODO: Refactor utility functions out
@@ -81,7 +100,6 @@ std::ostream& operator<<(std::ostream& os, std::map<Ipv6Address, std::pair<cMess
 //    prefParentConnector(nullptr)
 //{}
 
-
 Rpl::Rpl()
 {}
 
@@ -99,6 +117,7 @@ void Rpl::initialize(int stage)
 
     if (stage == INITSTAGE_LOCAL) {
 
+
         routingTable.reference(this, "routingTableModule", true);
         interfaceTable.reference(this, "interfaceTableModule", true);
         networkProtocol.reference(this, "networkProtocolModule", true);
@@ -108,12 +127,12 @@ void Rpl::initialize(int stage)
         nd = check_and_cast<Ipv6NeighbourDiscovery*>(getModuleByPath("^.ipv6.neighbourDiscovery"));
 
 
-        mac = getModuleByPath("^.wlan[0].mac.mac");
+//        mac = getModuleByPath("^.wlan[0].mac.mac");
+//
+//        if (mac)
+//            mac->subscribe("currentFrequency", this);
 
-        if (mac)
-            mac->subscribe("currentFrequency", this);
-
-        EV_DETAIL << "Found MAC module - " << mac << endl;
+//        EV_DETAIL << "Found MAC module - " << mac << endl;
         trickleTimer = check_and_cast<TrickleTimer*>(getModuleByPath("^.trickleTimer"));
 
         daoEnabled = par("daoEnabled").boolValue();
@@ -132,29 +151,15 @@ void Rpl::initialize(int stage)
         pAllowDaoForwarding = par("allowDaoForwarding").boolValue();
         pJoinAtSinkAllowed = par("allowJoinAtSink").boolValue() || (uniform(0, 1) < par("joinAtSinkProbability").doubleValue());
 
-        // statistic signals
-        dioReceivedSignal = registerSignal("dioReceived");
-        daoReceivedSignal = registerSignal("daoReceived");
-        parentUnreachableSignal = registerSignal("parentUnreachable");
-        parentChangedSignal = registerSignal("parentChanged");
-        rankUpdatedSignal = registerSignal("rankUpdated");
-        childJoinedSignal = registerSignal("childJoined");
-
         startDelay = par("startDelay").doubleValue();
 
         if (par("layoutConfigurator").boolValue())
             generateLayout(host->getParentModule()); // generate layout using the topmost simulation module, TODO: refactor into mobility extension module
 
-        dagInfo = *(new DodagInfo());
+        //dagInfo = *(new DodagInfo());
+        dagInfo = DodagInfo();
 
 
-        // low-latency mode settings
-        if (par("lowLatencyMode").boolValue()) {
-            auto tschSf = getModuleByPath("^.wlan[0].mac.sixtischInterface.sf");
-            uplinkSlotOffsetSignal = registerSignal("uplinkSlotOffset");
-
-            tschSf->subscribe("uplinkScheduled", this);
-        }
 
         WATCH(numParentUpdates);
         WATCH_MAP(candidateParents);
@@ -169,10 +174,40 @@ void Rpl::initialize(int stage)
         WATCH(isMobile);
         WATCH(uplinkSlotOffset);
     }
+    else if (stage == INITSTAGE_NETWORK_CONFIGURATION) {
+        // list of interfaces.
+        const char *auxChar = par("interfaceList").stringValue();
+        std::vector<std::string> interfaceListStr = cStringTokenizer(auxChar).asVector();
+        for (const auto &elem : interfaceListStr) {
+            auto ie = interfaceTable->findInterfaceByName(elem.c_str());
+            if (ie) {
+                auto mod = ie->getSubmodule("radio");
+                if (mod != nullptr) {
+                    auto radio = dynamic_cast<physicallayer::IRadio *>(mod);
+                    if (radio) {
+                        auto rec = dynamic_cast<const physicallayer::NarrowbandReceiverBase *> (radio->getReceiver());
+                        if (rec)
+                            receiver = const_cast<physicallayer::NarrowbandReceiverBase *>(rec);
+                    }
+                }
+                interfaceList.push_back(ie);
+            }
+        }
+        if (interfaceList.empty())
+            throw cRuntimeError("Not found any interface");
+        if (interfaceList.size() > 1)
+            throw cRuntimeError("this RPL implementation only support 1 interface");
+    }
     else if (stage == INITSTAGE_ROUTING_PROTOCOLS) {
+            // low-latency mode settings
+#if LOWLATENCYSUPPORT
+        if (par("lowLatencyMode").boolValue()) {
+            auto tschSf = getModuleByPath("^.wlan[0].mac.sixtischInterface.sf");
+            uplinkSlotOffsetSignal = registerSignal("uplinkSlotOffset");
+            tschSf->subscribe("uplinkScheduled", this);
+        }
+#endif
         registerProtocol(Protocol::manet, gate("ipOut"), gate("ipIn"));
-        //registerService(Protocol::manet, nullptr, gate("ipIn"));
-        //registerProtocol(Protocol::manet, gate("ipOut"), nullptr);
         host->subscribe(linkBrokenSignal, this);
         networkProtocol->registerHook(0, this);
     }
@@ -361,8 +396,6 @@ cModule* Rpl::findSubmodule(std::string sname, cModule *host) {
 
 void Rpl::start()
 {
-    NetworkInterface* ie = nullptr;
-
     if (startDelay > 0) {
         scheduleAt(simTime() + startDelay, new cMessage("", RPL_START));
         return;
@@ -372,22 +405,23 @@ void Rpl::start()
     isRoot = par("isRoot").boolValue(); // Initialization of this parameter should be here to ensure
                                         // multi-gateway configurator will have time to assign 'root' roles
                                         // to randomly chosen nodes
-    position = *(new Coord());
+    //position = *(new Coord());
+    interfaceEntryPtr = interfaceList.front();
 
-    // set network interface entry pointer (TODO: Update for IEEE 802.15.4)
-    for (int i = 0; i < interfaceTable->getNumInterfaces(); i++)
-    {
-        ie = interfaceTable->getInterface(i);
+//    // set network interface entry pointer (TODO: Update for IEEE 802.15.4)
+//    for (int i = 0; i < interfaceTable->getNumInterfaces(); i++)
+//    {
+//        ie = interfaceTable->getInterface(i);
+//
+//        if (strstr(ie->getInterfaceName(), "wlan") != nullptr)
+//        {
+//            interfaceEntryPtr = ie;
+//            EV_DETAIL << "Interface #" << i << " set as IE pointer" << endl;
+//            break;
+//        }
+//    }
 
-        if (strstr(ie->getInterfaceName(), "wlan") != nullptr)
-        {
-            interfaceEntryPtr = ie;
-            EV_DETAIL << "Interface #" << i << " set as IE pointer" << endl;
-            break;
-        }
-    }
-
-    selfId = interfaceTable->getInterface(1)->getMacAddress().getInt();
+    selfId = interfaceEntryPtr->getMacAddress().getInt(); //interfaceTable->getInterface(1)->getMacAddress().getInt();
     mobility = check_and_cast<IMobility*> (getParentModule()->getSubmodule("mobility"));
     isMobile = mobility->getMaxSpeed() > 0;
     position = mobility->getCurrentPosition();
@@ -890,9 +924,9 @@ void Rpl::processDio(const Ptr<const Dio>& dio)
 
     EV_DETAIL << "Processing DIO from " << dio->getSrcAddress()
                 << ", advertised rank - " << dio->getRank()
-                << "\ncurrent freq - " << currentFrequency << endl;
+                << "\ncurrent freq - " << currentFrequency() << endl;
 
-    emit(dioReceivedSignal, dio->dup());
+    emit(dioReceivedSignal, dio.get());
 
     // Custom low-latency mode part: do not join a DODAG if no slot offset is advertised to daisy-chain to
     if (par("lowLatencyMode").boolValue() && dio->getRank() > 1 && dio->getSlotOffset() == 0)
@@ -975,7 +1009,7 @@ void Rpl::processDao(const Ptr<const Dao>& dao) {
         return;
     }
 
-    emit(daoReceivedSignal, dao->dup());
+    emit(daoReceivedSignal, dao.get());
     auto daoSender = dao->getSrcAddress();
 
     if (!isRoot && daoSender == preferredParent->getSrcAddress())
@@ -1903,10 +1937,8 @@ void Rpl::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, 
             }
         }
     }
-
-
 }
-
+#if LOWLATENCYSUPPORT
 // Low-latency mode signals
 void Rpl::receiveSignal(cComponent *src, simsignal_t id, long value, cObject *details) {
     std::string signalName = getSignalName(id);
@@ -1918,16 +1950,16 @@ void Rpl::receiveSignal(cComponent *src, simsignal_t id, long value, cObject *de
         uplinkSlotOffset = value;
     }
 }
-
-void Rpl::receiveSignal(cComponent *source, simsignal_t signalID, double value, cObject *details) {
-    std::string signalName = getSignalName(signalID);
-
-    if (std::strcmp(signalName.c_str(), "currentFrequency") == 0) {
-//        EV_DETAIL << "RPL received current frequnecy - " << value << endl;
-        currentFrequency = value;
-    }
-
-}
+#endif
+//void Rpl::receiveSignal(cComponent *source, simsignal_t signalID, double value, cObject *details) {
+//    std::string signalName = getSignalName(signalID);
+//
+//    if (std::strcmp(signalName.c_str(), "currentFrequency") == 0) {
+////        EV_DETAIL << "RPL received current frequnecy - " << value << endl;
+//        currentFrequency = value;
+//    }
+//
+//}
 
 // Getting current freq from MAC
 

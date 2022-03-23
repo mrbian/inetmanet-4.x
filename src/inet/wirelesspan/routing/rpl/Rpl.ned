@@ -30,13 +30,14 @@ module Rpl like IManetRouting
         @signal[parentUnreachable](type=long);
         
         // Statistics collections
-        @signal[dioReceived](type=inet::Dio);
-        @signal[daoReceived](type=inet::Dao);
-     	@signal[isSink](type=bool);
-     	@signal[parentChanged](type=long);
-     	@signal[rankUpdated](type=long);
-     	@signal[parentUnreachable](type=inet::Dio);
-     	@statistic[isSink](title="Node is a sink"; source="isSink"; record=count; interplationmode=none);
+        @signal[dioReceived](type=wirelesspan::routing::Dio);
+        @signal[daoReceived](type=wirelesspan::routing::Dao);
+        @signal[isSink](type=bool);
+        @signal[parentChanged](type=long);
+        @signal[rankUpdated](type=long);
+        @signal[childJoined](type=long);
+        @signal[parentUnreachable](type=wirelesspan::routing::Dio);
+        @statistic[isSink](title="Node is a sink"; source="isSink"; record=count; interplationmode=none);
         @statistic[dioReceived](title = "DIO packets received"; source="dioReceived"; record=count; interpolationmode=none);  
         @statistic[daoReceived](title = "DAO packets received"; source="daoReceived"; record=count; interpolationmode=none);
         @statistic[parentChanged](title = "Preferred parent has changed"; source="parentChanged"; record=count; interpolationmode=none);
@@ -45,13 +46,12 @@ module Rpl like IManetRouting
         // properties
         @class("wirelesspan::routing::Rpl");
         @display("i=block/routing");
-
         // context parameters
         string interfaceTableModule = default(absPath("^.interfaceTable"));  // The path to the InterfaceTable module
         string routingTableModule = default(absPath("^.ipv6.routingTable"));
         string networkProtocolModule = default(absPath("^.ipv6.ipv6"));
-    	
     	// General parameters
+        string interfaceList = default("wlan0");
         bool isRoot = default(false);
         bool disabled = default(false);
         bool daoEnabled = default(true);
