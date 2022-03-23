@@ -44,7 +44,7 @@ ObjectiveFunction::~ObjectiveFunction() {
 
 }
 
-Dio* ObjectiveFunction::getPreferredParent(std::map<Ipv6Address, Dio *> candidateParents, Dio* currentPreferredParent)
+Ptr<Dio> ObjectiveFunction::getPreferredParent(std::map<Ipv6Address, Ptr<Dio> > candidateParents, const Ptr<const Dio> &currentPreferredParent)
 {
     if (candidateParents.empty()) {
         EV_WARN << "Couldn't determine preferred parent, provided set is empty" << endl;
@@ -56,10 +56,10 @@ Dio* ObjectiveFunction::getPreferredParent(std::map<Ipv6Address, Dio *> candidat
         EV_DETAIL << cp.first << " - " << cp.second->getRank() << endl;
 
     // Select the first entry as initial preferred parent
-    Dio *newPrefParent = candidateParents.begin()->second;
+    auto newPrefParent =  candidateParents.begin()->second;
     uint16_t currentMinRank = newPrefParent->getRank();
     // Iterate through candidate parent set and select the one with lowest rank
-    for (std::pair<Ipv6Address, Dio *> candidate : candidateParents) {
+    for (auto candidate : candidateParents) {
         uint16_t candidateParentRank = candidate.second->getRank();
         if (candidateParentRank < currentMinRank) {
             currentMinRank = candidateParentRank;
@@ -74,10 +74,10 @@ Dio* ObjectiveFunction::getPreferredParent(std::map<Ipv6Address, Dio *> candidat
     if (currentPreferredParent->getRank() - newPrefParent->getRank() >= minHopRankIncrease)
         return newPrefParent;
     else
-        return currentPreferredParent;
+        return constPtrCast<Dio>(currentPreferredParent);
 }
 
-uint16_t ObjectiveFunction::calcRank(Dio* preferredParent) {
+uint16_t ObjectiveFunction::calcRank(const Ptr<const Dio> &preferredParent) {
     if (!preferredParent)
         throw cRuntimeError("Cannot calculate rank, preferredParent argument is null");
 

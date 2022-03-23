@@ -51,7 +51,7 @@ class ObjectiveFunction : public cObject
      * from each neighbor
      * @return best parent candidate based on the type of objective function in use
      */
-    virtual Dio* getPreferredParent(std::map<Ipv6Address, Dio *> candidateParents, Dio* currentPreferredParent);
+    virtual Ptr<Dio> getPreferredParent(std::map<Ipv6Address, Ptr<Dio> > candidateParents, const Ptr<const Dio> &currentPreferredParent);
     /**
      * Calculate node's rank based on the chosen preferred parent [RFC 6550, 3.5].
      *
@@ -59,7 +59,7 @@ class ObjectiveFunction : public cObject
      * represented by last DIO received from it
      * @return updated rank based on the minHopRankIncrease and OF
      */
-    virtual uint16_t calcRank(Dio* preferredParent);
+    virtual uint16_t calcRank(const Ptr<const Dio> &preferredParent);
 
     void setMinHopRankIncrease(int incr) { minHopRankIncrease = incr; }
 

@@ -225,7 +225,7 @@ void Rpl::generateLayout(cModule *net) {
 
     auto sinkPos = sink->getSubmodule("mobility");
 
-    Coord *anchor = new Coord(sinkPos->par("initialX").doubleValue(), sinkPos->par("initialY").doubleValue());
+    Coord anchor(sinkPos->par("initialX").doubleValue(), sinkPos->par("initialY").doubleValue());
     double padX = par("padX").doubleValue();
     double padY = par("padY").doubleValue();
     double gap = par("gridColumnsGapMultiplier").doubleValue();
@@ -235,7 +235,7 @@ void Rpl::generateLayout(cModule *net) {
     int numBranches = par("numBranches").intValue();
     int numHosts = net->par("numHosts").intValue();
 
-    configureTopologyLayout(*anchor, padX, padY, gap, net, bLayout, numBranches, numHosts, numSinks);
+    configureTopologyLayout(anchor, padX, padY, gap, net, bLayout, numBranches, numHosts, numSinks);
 }
 
 void Rpl::deleteManualRoutes() {
@@ -397,7 +397,9 @@ cModule* Rpl::findSubmodule(std::string sname, cModule *host) {
 void Rpl::start()
 {
     if (startDelay > 0) {
-        scheduleAt(simTime() + startDelay, new cMessage("", RPL_START));
+        auto startMsg = new cMessage("", RPL_START);
+        scheduleAt(simTime() + startDelay, startMsg);
+        pendingTimers.insert(startMsg);
         return;
     }
     hasStarted = true;
@@ -406,20 +408,9 @@ void Rpl::start()
                                         // multi-gateway configurator will have time to assign 'root' roles
                                         // to randomly chosen nodes
     //position = *(new Coord());
+    position = Coord::NIL;
     interfaceEntryPtr = interfaceList.front();
 
-//    // set network interface entry pointer (TODO: Update for IEEE 802.15.4)
-//    for (int i = 0; i < interfaceTable->getNumInterfaces(); i++)
-//    {
-//        ie = interfaceTable->getInterface(i);
-//
-//        if (strstr(ie->getInterfaceName(), "wlan") != nullptr)
-//        {
-//            interfaceEntryPtr = ie;
-//            EV_DETAIL << "Interface #" << i << " set as IE pointer" << endl;
-//            break;
-//        }
-//    }
 
     selfId = interfaceEntryPtr->getMacAddress().getInt(); //interfaceTable->getInterface(1)->getMacAddress().getInt();
     mobility = check_and_cast<IMobility*> (getParentModule()->getSubmodule("mobility"));
@@ -454,8 +445,11 @@ void Rpl::start()
 
 
     // For demo purposes
-    if (par("scheduleEthernetPkt").boolValue())
+    if (par("scheduleEthernetPkt").boolValue()) {
+        auto sendEth = new cMessage("", SEND_ETHER);
         scheduleAt(simTime() + 20, new cMessage("", SEND_ETHER));
+        pendingTimers.insert(sendEth);
+    }
 }
 
 void Rpl::refreshDisplay() const {
@@ -481,7 +475,21 @@ void Rpl::refreshDisplay() const {
 
 void Rpl::stop()
 {
-    cancelAndDelete(detachedTimeoutEvent);
+    if (detachedTimeoutEvent)
+        cancelAndDelete(detachedTimeoutEvent);
+    if (daoAckTimeoutEvent)
+        cancelAndDelete(daoAckTimeoutEvent);
+    daoAckTimeoutEvent = nullptr;
+    detachedTimeoutEvent = nullptr;
+    for (auto elem : pendingDaoAcks) {
+        auto pending = elem.second;
+        cancelAndDelete(pending->timeoutPtr);
+        delete pending;
+    }
+    for (auto elem : pendingTimers)
+        cancelAndDelete(elem);
+    pendingTimers.clear();
+    pendingDaoAcks.clear();
 }
 
 void Rpl::handleMessageWhenUp(cMessage *message)
@@ -495,7 +503,8 @@ void Rpl::handleMessageWhenUp(cMessage *message)
 
 void Rpl::processSelfMessage(cMessage *message)
 {
-    switch (message->getKind()) {
+    auto type = message->getKind();
+    switch (type) {
         case DETACHED_TIMEOUT: {
             floating = false;
             EV_DETAIL << "Detached state ended, processing new incoming RPL packets" << endl;
@@ -519,23 +528,36 @@ void Rpl::processSelfMessage(cMessage *message)
                 retransmitDao(*advDest);
             break;
         }
-        default: EV_WARN << "Unknown self-message received - " << message << endl;
+        default:
+            throw cRuntimeError("Unknown self-message received - %s", message->str().c_str());
+            //EV_WARN << "Unknown self-message received - " << message << endl;
     }
-    delete message;
+    pendingTimers.erase(message);
+    if (detachedTimeoutEvent == message)
+        detachedTimeoutEvent = nullptr;
+    if (daoAckTimeoutEvent == message)
+        daoAckTimeoutEvent = nullptr;
+    if (type != DAO_ACK_TIMEOUT)
+        delete message;
 }
 
 void Rpl::clearDaoAckTimer(Ipv6Address daoDest) {
-    if (pendingDaoAcks.count(daoDest))
-        if (pendingDaoAcks[daoDest]->timeoutPtr && pendingDaoAcks[daoDest]->timeoutPtr->isSelfMessage())
-            cancelEvent(pendingDaoAcks[daoDest]->timeoutPtr);
-    pendingDaoAcks.erase(daoDest);
+    auto it = pendingDaoAcks.find(daoDest);
+    if (it != pendingDaoAcks.end()) {
+        if (it->second->timeoutPtr)
+            cancelAndDelete(it->second->timeoutPtr);
+        delete it->second;
+        pendingDaoAcks.erase(it);
+    }
+    return;
 }
 
 void Rpl::clearAllDaoAckTimers() {
-    for (auto t: pendingDaoAcks)
-        if (t.second->timeoutPtr && t.second->timeoutPtr->isSelfMessage())
-            cancelEvent(t.second->timeoutPtr);
-
+    for (auto t: pendingDaoAcks) {
+        if (t.second->timeoutPtr)
+            cancelAndDelete(t.second->timeoutPtr);
+        delete t.second;
+    }
     pendingDaoAcks.erase(pendingDaoAcks.begin(), pendingDaoAcks.end());
 }
 
@@ -561,6 +583,7 @@ void Rpl::retransmitDao(Ipv6Address advDest) {
     EV_DETAIL << "(" << std::to_string(rtxCtn) << " attempt)" << endl;
 
     sendRplPacket(createDao(advDest), DAO, preferredParent->getSrcAddress(), daoDelay);
+
 }
 
 void Rpl::detachFromDodag() {
@@ -587,12 +610,13 @@ void Rpl::detachFromDodag() {
         cancelEvent(detachedTimeoutEvent);
     else
         detachedTimeoutEvent = new cMessage("Detachment from DODAG timeout", DETACHED_TIMEOUT);
+
     if (!isMobile)
         drawConnector(position, cFigure::BLACK);
     scheduleAt(simTime() + detachedTimeout, detachedTimeoutEvent);
 }
 
-void Rpl::eraseBackupParentList(map <Ipv6Address, Dio*> &backupParents) {
+void Rpl::eraseBackupParentList(map <Ipv6Address, Ptr<Dio> > &backupParents) {
 
     if (!backupParents.size())
         return;
@@ -808,12 +832,14 @@ void Rpl::sendRplPacket(const Ptr<RplPacket> &body, RplPacketCode code,
 
         cMessage *daoTimeoutMsg = new cMessage("", DAO_ACK_TIMEOUT);
         daoTimeoutMsg->setContextPointer(new Ipv6Address(advertisedDest));
-        EV_DETAIL << "Created DAO_ACK timeout msg with context pointer - "
-                << *((Ipv6Address *) daoTimeoutMsg->getContextPointer()) << endl;
+        EV_DETAIL << "Created DAO_ACK timeout msg with context pointer - " <<
+                reinterpret_cast<Ipv6Address *>(daoTimeoutMsg->getContextPointer())->str() << endl;
 
         auto daoAckEntry = pendingDaoAcks.find(advertisedDest);
         if (daoAckEntry != pendingDaoAcks.end()) {
-            pendingDaoAcks[advertisedDest]->timeoutPtr = daoTimeoutMsg;
+            if (daoAckEntry->second->timeoutPtr)
+                cancelAndDelete(daoAckEntry->second->timeoutPtr);
+            daoAckEntry->second->timeoutPtr = daoTimeoutMsg;
             EV_DETAIL << "Found existing entry in DAO_ACKs map for dest - " << advertisedDest
                     << " updating timeout event ptr" << endl;
         }
@@ -824,11 +850,9 @@ void Rpl::sendRplPacket(const Ptr<RplPacket> &body, RplPacketCode code,
         EV_DETAIL << "Pending DAO_ACKs:" << endl;
         for (auto e : pendingDaoAcks)
             EV_DETAIL << e.first << " (" << std::to_string(e.second->numRetries) << " attempts), timeout msg ptr - " << e.second->timeoutPtr << endl;
-
         scheduleAt(timeout, daoTimeoutMsg);
     }
     sendPacket(pkt, delay);
-
 }
 
 const Ptr<Dio> Rpl::createDio()
@@ -897,7 +921,7 @@ bool Rpl::isUdpSink(cModule* app) {
     return appName.find("Sink") != std::string::npos;
 }
 
-bool Rpl::isInvalidDio(const Dio* dio) {
+bool Rpl::isInvalidDio(const Ptr<const Dio> &dio) {
     // If INFINITE_RANK is advertised not from the preferred parent (poisoning), discard the packet
 
     // 1st clause: if the node is detached from the DODAG and the advertised rank is INFINITE_RANK, discard the packet
@@ -908,7 +932,7 @@ bool Rpl::isInvalidDio(const Dio* dio) {
 }
 
 void Rpl::processDio(const Ptr<const Dio>& dio, double rxPower) {
-    if (isRoot || isInvalidDio(dio.get()))
+    if (isRoot || isInvalidDio(dio))
         return;
 
     if (dio->getRank() == 1 && rxPower < par("joinAtSinkPowerThresh").doubleValue())
@@ -919,7 +943,7 @@ void Rpl::processDio(const Ptr<const Dio>& dio, double rxPower) {
 
 void Rpl::processDio(const Ptr<const Dio>& dio)
 {
-    if (isRoot || isInvalidDio(dio.get()))
+    if (isRoot || isInvalidDio(dio))
         return;
 
     EV_DETAIL << "Processing DIO from " << dio->getSrcAddress()
@@ -940,7 +964,7 @@ void Rpl::processDio(const Ptr<const Dio>& dio)
         instanceId = dio->getInstanceId();
         storing = dio->getStoring();
         dtsn = dio->getDtsn();
-        lastTarget = new Ipv6Address(getSelfAddress());
+        lastTarget = getSelfAddress();
 //        selfAddr = getSelfAddress();
         dodagColor = dio->getColor();
         EV_DETAIL << "Joined DODAG with id - " << dodagId << endl;
@@ -1049,7 +1073,7 @@ void Rpl::processDao(const Ptr<const Dao>& dao) {
     if (!isRoot && preferredParent) {
         if (!storing)
             sendRplPacket(createDao(advertisedDest), DAO,
-                preferredParent->getSrcAddress(), daoDelay * uniform(1, 2), *lastTarget, *lastTransit);
+                preferredParent->getSrcAddress(), daoDelay * uniform(1, 2), lastTarget, lastTransit);
         else
             sendRplPacket(createDao(advertisedDest), DAO,
                 preferredParent->getSrcAddress(), daoDelay * uniform(1, 2));
@@ -1142,7 +1166,7 @@ void Rpl::drawConnector(Coord target, cFigure::Color col, Ipv6Address backupPare
     canvas->addFigure(prefParentConnector);
 }
 
-void Rpl::setParentMobility(Dio* prefParent) {
+void Rpl::setParentMobility(Ptr<Dio> &prefParent) {
     if (!prefParent || !prefParent->isMobile())
         return;
 
@@ -1154,7 +1178,7 @@ void Rpl::setParentMobility(Dio* prefParent) {
 
 void Rpl::updatePreferredParent()
 {
-    Dio *newPrefParent;
+    Ptr<Dio> newPrefParent;
     EV_DETAIL << "Choosing preferred parent from "
             << boolStr(candidateParents.empty() && par("useBackupAsPreferred").boolValue(),
                     "backup", "candidate") << " parent set:" << endl;
@@ -1203,12 +1227,12 @@ void Rpl::updatePreferredParent()
                 app->par("destAddresses") = newPrefParentDodagId.str();
 
         /** Notify 6TiSCH Scheduling Function (if present) about parent change */
-        auto rplCtrlInfo = new RplGenericControlInfo(newPrefParent->getNodeId());
+        auto rplCtrlInfo = RplGenericControlInfo(newPrefParent->getNodeId());
 
         if (par("lowLatencyMode").boolValue())
             emit(uplinkSlotOffsetSignal, newPrefParent->getSlotOffset());
 
-        emit(parentChangedSignal, 0, (cObject*) rplCtrlInfo);
+        emit(parentChangedSignal, 0, (cObject*) &rplCtrlInfo);
         daoSeqNum = 0;
         clearParentRoutes();
         clearAllDaoAckTimers();
@@ -1220,7 +1244,7 @@ void Rpl::updatePreferredParent()
         if (newPrefParentAddr != dodagId)
             updateRoutingTable(newPrefParentAddr, newPrefParentAddr, nullptr, false);
 
-        lastTransit = new Ipv6Address(newPrefParentAddr);
+        lastTransit = Ipv6Address(newPrefParentAddr);
         EV_DETAIL << "Updated preferred parent to - " << newPrefParentAddr << endl;
         numParentUpdates++;
         /**
@@ -1241,7 +1265,8 @@ void Rpl::updatePreferredParent()
                     << " advertising " << getSelfAddress() << " reachability at " << simTime() + timeout << "s" << endl;
         }
     }
-    preferredParent = newPrefParent->dup();
+    preferredParent = dynamicPtrCast<Dio>(newPrefParent->dupShared());
+
 
     /** Recalculate rank based on the objective function */
     auto newRank = objectiveFunction->calcRank(preferredParent);
@@ -1253,7 +1278,7 @@ void Rpl::updatePreferredParent()
     }
 }
 
-void Rpl::clearObsoleteBackupParents(map <Ipv6Address, Dio*> &backupParents) {
+void Rpl::clearObsoleteBackupParents(map <Ipv6Address, Ptr<Dio> > &backupParents) {
     cCanvas *canvas = getParentModule()->getParentModule()->getCanvas();
 
     vector<Ipv6Address> parentsToDelete;
@@ -1261,7 +1286,6 @@ void Rpl::clearObsoleteBackupParents(map <Ipv6Address, Dio*> &backupParents) {
     for (auto bp : backupParents) {
         if (bp.second->getRank() > rank) {
             auto bkConnector = backupConnectors.find(bp.second->getSrcAddress());
-
             if (bkConnector != backupConnectors.end()) {
                 canvas->removeFigure((*bkConnector).second);
                 backupConnectors.erase(bkConnector);
@@ -1272,7 +1296,10 @@ void Rpl::clearObsoleteBackupParents(map <Ipv6Address, Dio*> &backupParents) {
 
     EV_DETAIL << "Erased obsolete (higher rank) backup parents:" << endl;
     for (auto addr: parentsToDelete) {
-        backupParents.erase(backupParents.find(addr));
+        auto it = backupParents.find(addr);
+        if (it != backupParents.end()) {
+            backupParents.erase(it);
+        }
         EV_DETAIL << addr << ", ";
     }
     EV_DETAIL << endl;
@@ -1319,6 +1346,8 @@ void Rpl::updateRoutingTable(const Ipv6Address &nextHop, const Ipv6Address &dest
         routingTable->addRoute(route);
         EV_DETAIL << "New destination learned - " << dest << " reachable via " << nextHop << endl;
     }
+    else
+        delete route;
 }
 
 bool Rpl::checkDuplicateRoute(Ipv6Route *route) {
@@ -1330,8 +1359,12 @@ bool Rpl::checkDuplicateRoute(Ipv6Route *route) {
             if (rt->getNextHop() != route->getNextHop()) {
                 rt->setNextHop(route->getNextHop());
                 EV_DETAIL << "Duplicate route, updated next hop to " << rt->getNextHop() << " for dest " << dest << endl;
-                if (route->getProtocolData())
+                if (route->getProtocolData()) {
+                    cObject *protocolData = rt->getProtocolData();
                     rt->setProtocolData(route->getProtocolData());
+                    if (protocolData)
+                        delete protocolData;
+                }
             }
             return true;
         }
@@ -1484,12 +1517,12 @@ B Rpl::getRpiHeaderLength() {
 
 void Rpl::extractSourceRoutingData(Packet *pkt) {
     try {
-        lastTransit = new Ipv6Address(pkt->popAtBack<RplTransitInfo>(getTransitOptionsLength()).get()->getTransit());
-        lastTarget = new Ipv6Address(pkt->popAtBack<RplTargetInfo>(getTransitOptionsLength()).get()->getTarget());
+        lastTransit = pkt->popAtBack<RplTransitInfo>(getTransitOptionsLength()).get()->getTransit();
+        lastTarget = pkt->popAtBack<RplTargetInfo>(getTransitOptionsLength()).get()->getTarget();
         if (!isRoot)
             return;
 
-        sourceRoutingTable.insert( std::pair<Ipv6Address, Ipv6Address>(*lastTarget, *lastTransit) );
+        sourceRoutingTable.insert( std::pair<Ipv6Address, Ipv6Address>(lastTarget, lastTransit) );
         EV_DETAIL << "Source routing table updated with new:\n"
                 << "target: " << lastTarget << "\n transit: " << lastTransit << "\n"
                 << printMap(sourceRoutingTable) << endl;
@@ -1542,9 +1575,9 @@ bool Rpl::destIsRoot(Packet *datagram) {
 
 void Rpl::saveDaoTransitOptions(Packet *dao) {
     try {
-        lastTransit = new Ipv6Address(dao->popAtBack<RplTransitInfo>(getTransitOptionsLength()).get()->getTransit());
-        lastTarget = new Ipv6Address(dao->popAtBack<RplTargetInfo>(getTransitOptionsLength()).get()->getTarget());
-        EV_DETAIL << "Updated lastTransit => lastTarget to: " << *lastTransit << " => " << *lastTarget << endl;
+        lastTransit = dao->popAtBack<RplTransitInfo>(getTransitOptionsLength()).get()->getTransit();
+        lastTarget = dao->popAtBack<RplTargetInfo>(getTransitOptionsLength()).get()->getTarget();
+        EV_DETAIL << "Updated lastTransit => lastTarget to: " << lastTransit << " => " << lastTarget << endl;
     }
     catch (std::exception &e) {
         EV_DETAIL << "No Target, Transit headers found on packet:\n " << *dao << endl;
@@ -1708,8 +1741,9 @@ void Rpl::deletePrefParent(bool poisoned)
     auto prefParentAddr = preferredParent->getSrcAddress();
     EV_DETAIL << "Preferred parent " << prefParentAddr
             << boolStr(poisoned, " detachment from DODAG", " unreachability") << " detected" << endl;
-    emit(parentUnreachableSignal, preferredParent);
+    emit(parentUnreachableSignal, preferredParent.get());
     clearParentRoutes();
+
     candidateParents.erase(prefParentAddr);
     preferredParent = nullptr;
     EV_DETAIL << "Erased preferred parent from candidate parent set" << endl;
@@ -1851,11 +1885,12 @@ void Rpl::addNeighbour(const Ptr<const Dio>& dio)
      * In current implementation, neighbor data is represented by most recent
      * DIO packet received from it.
      */
-    auto dioCopy = dio->dup();
+    auto dioCopy = dynamicPtrCast<Dio>(dio->dupShared());
     auto dioSender = dio->getSrcAddress();
     /** If DIO sender has an equal rank, consider it a backup parent */
     if (dio->getRank() == rank) {
-        if (backupParents.find(dioSender) != backupParents.end())
+        auto it = backupParents.find(dioSender);
+        if (it != backupParents.end())
             EV_DETAIL << "Backup parent entry updated - " << dioSender;
         else
             EV_DETAIL << "New backup parent added - " << dioSender;
@@ -1863,12 +1898,14 @@ void Rpl::addNeighbour(const Ptr<const Dio>& dio)
     }
     /** If DIO sender has a lower rank, consider it a candidate parent */
     if (dio->getRank() < rank) {
-        if (candidateParents.find(dioSender) != candidateParents.end())
+        auto it = candidateParents.find(dioSender);
+        if (it != candidateParents.end())
             EV_DETAIL << "Candidate parent entry updated - " << dioSender;
         else
             EV_DETAIL << "New candidate parent added - " << dioSender;
         candidateParents[dioSender] = dioCopy;
     }
+
     EV_DETAIL << " (rank " << dio->getRank() << ")" << endl;
 
     // Highlight backup parents with a dashed line

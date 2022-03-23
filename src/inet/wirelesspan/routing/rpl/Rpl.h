@@ -49,8 +49,8 @@ public:
 
     class DaoTimeoutInfo : public cObject {
         public:
-            cMessage *timeoutPtr;
-            int numRetries;
+            cMessage *timeoutPtr = nullptr;
+            int numRetries = 0;
 
             DaoTimeoutInfo() {
                 this->timeoutPtr = nullptr;
@@ -67,7 +67,6 @@ public:
                 os << timeoutInfo.numRetries << " retries";
                 return os;
             }
-
 
 
     //            int getNumRetries() const {
@@ -138,7 +137,7 @@ public:
                 this->rplInstanceId = rplInstanceId;
             }
 
-            void update(Dio *dio) {
+            void update(Ptr<Dio> &dio) {
                 this->dagId = dio->getDodagId();
                 this->prefParent = dio->getSrcAddress();
                 this->prefParentRank = dio->getRank();
@@ -168,8 +167,8 @@ public:
     uint8_t dodagVersion = 0;
     Ipv6Address dodagId = Ipv6Address::UNSPECIFIED_ADDRESS;
     Ipv6Address selfAddr = Ipv6Address::UNSPECIFIED_ADDRESS;
-    Ipv6Address *lastTarget = nullptr;
-    Ipv6Address *lastTransit = nullptr;
+    Ipv6Address lastTarget;
+    Ipv6Address lastTransit;
     uint8_t instanceId = 0;
     double daoDelay = DEFAULT_DAO_DELAY;
     double daoAckTimeout = 10;
@@ -191,10 +190,10 @@ public:
     uint32_t branchChOffset = 0;
     uint16_t branchSize = 0;
     int daoSeqNum = 0;
-    Dio *preferredParent = nullptr;
+    Ptr<Dio> preferredParent;
     std::string objectiveFunctionType = "hopCount";
-    std::map<Ipv6Address, Dio *> backupParents;
-    std::map<Ipv6Address, Dio *> candidateParents;
+    std::map<Ipv6Address, Ptr<Dio> > backupParents;
+    std::map<Ipv6Address, Ptr<Dio> > candidateParents;
     std::map<Ipv6Address, Ipv6Address> sourceRoutingTable;
 //    std::map<Ipv6Address, std::pair<cMessage *, uint8_t>> pendingDaoAcks;
 
@@ -239,7 +238,7 @@ public:
     Rpl();
     ~Rpl();
 
-    friend std::ostream& operator<<(std::ostream& os, const std::map<Ipv6Address, Dio *> &parentSet)
+    friend std::ostream& operator<<(std::ostream& os, const std::map<Ipv6Address, Ptr<Dio> > &parentSet)
     {
         os << "Address   Rank" << endl;
         for (auto const &entry : parentSet)
@@ -258,6 +257,8 @@ public:
     int numDaoForwarded = 0;
 
     virtual void finish() override;
+
+    std::set<cMessage *> pendingTimers;
 
   protected:
     /** module interface */
@@ -305,7 +306,7 @@ public:
      * @param dio pointer to the DIO object
      * @return true if the node should process the DIO, false otherwise
      */
-    bool isInvalidDio(const Dio* dio);
+    bool isInvalidDio(const Ptr<const Dio> &dio);
 
     void processCrossLayerMsg(const Ptr<const Dio>& dio);
 
@@ -682,8 +683,8 @@ public:
     // map of pointers to the dashed connector line between a node and its backup parents
     mutable map<Ipv6Address, cLineFigure*> backupConnectors;
 
-    virtual void eraseBackupParentList(map <Ipv6Address, Dio*> &backupParents);
-    virtual void clearObsoleteBackupParents(map <Ipv6Address, Dio*> &backupParents);
+    virtual void eraseBackupParentList(map <Ipv6Address, Ptr<Dio> > &backupParents);
+    virtual void clearObsoleteBackupParents(map <Ipv6Address, Ptr<Dio> > &backupParents);
 
     double startDelay = 0;
 
@@ -693,7 +694,7 @@ public:
     IMobility *mobility = nullptr;
 
     // look for mobility module of the parent, if it's mobile, to dynamically update the connection arrow
-    void setParentMobility(Dio* prefParent);
+    void setParentMobility(Ptr<Dio> &prefParent);
 
     /** Pick random color for parent-child connector drawing (if node's sink) */
     cFigure::Color pickRandomColor();
