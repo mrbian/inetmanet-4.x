@@ -147,12 +147,22 @@ void WakeUpRadioBase::startReception(cMessage *timer, IRadioSignal::SignalPart p
 
 void WakeUpRadioBase::sendBeacon()
 {
+    if (transmissionTimer->isScheduled())
+        return;
     Packet *packet = new Packet();
     auto chunk = makeShared<BitCountChunk>();
     chunk->setLength(b(16));
     packet->addTagIfAbsent<SignalBitrateReq>()->setDataBitrate(bps((int)std::ceil(16/interval.dbl())));
     encapsulate(packet);
     WirelessSignal *signal = check_and_cast<WirelessSignal *>(medium->transmitPacket(this, packet));
+    auto transmission = signal->getTransmission();
+    scheduleAt(transmission->getEndTime(IRadioSignal::SignalPart::SIGNAL_PART_WHOLE), transmissionTimer);
+    EV_INFO << "Transmission started: " << (IWirelessSignal *)signal << " " << IRadioSignal::getSignalPartName(IRadioSignal::SignalPart::SIGNAL_PART_WHOLE) << " as " << transmission << endl;
+    updateTransceiverState();
+    updateTransceiverPart();
+    emit(transmissionStartedSignal, check_and_cast<const cObject *>(transmission));
+    // TODO move to radio medium
+    check_and_cast<RadioMedium *>(medium.get())->emit(IRadioMedium::signalDepartureStartedSignal, check_and_cast<const cObject *>(transmission));
 }
 
 void WakeUpRadioBase::setRadioMode(RadioMode newRadioMode)
