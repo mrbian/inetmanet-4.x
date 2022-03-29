@@ -14,7 +14,7 @@ namespace inet {
 
 namespace physicallayer {
 
-class INET_API WakeUpRadioBase : public NarrowbandRadioBase
+class INET_API WakeUpRadioBase : public NarrowbandRadioBase, public cListener
 {
 protected:
     cMessage *awake = nullptr;
@@ -29,6 +29,13 @@ protected:
   protected:
 
     virtual void parseControllerRadioModeSwitchingTimes();
+
+    virtual ReceptionState getReceptionState() const override;
+
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details) override;
+
+    virtual void updateTransceiverState() override;
+
 
     virtual void handleUpperCommand(cMessage *message) override;
     virtual void initialize(int stage) override;

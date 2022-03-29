@@ -56,13 +56,29 @@ void WakeUpRadioBase::parseControllerRadioModeSwitchingTimes()
         throw cRuntimeError("Check your switchingTimes parameter! Some parameters may be missed");
 }
 
-Radio::RadioMode WakeUpRadioBase::getRadioMode() const
+IRadio::RadioMode WakeUpRadioBase::getRadioMode() const
 {
     // TODO: emulate, if the radio is sleeping, the upper should perceive it like in receiving mode
+    if (this->radioMode == IRadio::RADIO_MODE_TRANSMITTER || this->radioMode == IRadio::RADIO_MODE_TRANSCEIVER)
+        return this->radioMode;
     if (controlledRadio->Radio::getRadioMode() == IRadio::RADIO_MODE_SLEEP || controlledRadio->Radio::getRadioMode() == IRadio::RADIO_MODE_OFF)
         return IRadio::RADIO_MODE_RECEIVER;
     return controlledRadio->Radio::getRadioMode();
 }
+
+IRadio::ReceptionState WakeUpRadioBase::getReceptionState() const
+{
+    auto stateControled = controlledRadio->Radio::getReceptionState();
+    auto state = this->receptionState;
+    if (state == IRadio::RECEPTION_STATE_BUSY || state == IRadio::RECEPTION_STATE_RECEIVING)
+        return state;
+    if (this->radioMode == IRadio::RADIO_MODE_TRANSMITTER || this->radioMode == IRadio::RADIO_MODE_TRANSCEIVER)
+        return IRadio::RECEPTION_STATE_UNDEFINED;
+    if (controlledRadio->Radio::getRadioMode() == IRadio::RADIO_MODE_SLEEP)
+        return IRadio::RECEPTION_STATE_IDLE;
+    return stateControled;
+}
+
 
 void WakeUpRadioBase::initialize(int stage)
 {
@@ -116,6 +132,47 @@ void WakeUpRadioBase::handleSelfMessage(cMessage *message)
         Radio::handleSelfMessage(message);
     }
 }
+
+
+void WakeUpRadioBase::receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details)
+{
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+    emit(signalID, value, details);
+}
+
+
+void WakeUpRadioBase::updateTransceiverState()
+{
+    // reception state
+    ReceptionState newRadioReceptionState;
+    if (radioMode == RADIO_MODE_OFF || radioMode == RADIO_MODE_SWITCHING || radioMode == RADIO_MODE_SLEEP || radioMode == RADIO_MODE_TRANSMITTER)
+        newRadioReceptionState = RECEPTION_STATE_UNDEFINED;
+    else if (receptionTimer && receptionTimer->isScheduled())
+        newRadioReceptionState = RECEPTION_STATE_RECEIVING;
+    else if (isListeningPossible())
+        newRadioReceptionState = RECEPTION_STATE_BUSY;
+    else
+        newRadioReceptionState = RECEPTION_STATE_IDLE;
+    if (receptionState != newRadioReceptionState) {
+        EV_INFO << "Changing radio reception state from \x1b[1m" << getRadioReceptionStateName(receptionState) << "\x1b[0m to \x1b[1m" << getRadioReceptionStateName(newRadioReceptionState) << "\x1b[0m." << endl;
+        receptionState = newRadioReceptionState;
+        emit(receptionStateChangedSignal, newRadioReceptionState);
+    }
+    // transmission state
+    TransmissionState newRadioTransmissionState;
+    if (radioMode == RADIO_MODE_OFF || radioMode == RADIO_MODE_SWITCHING || radioMode == RADIO_MODE_SLEEP || radioMode == RADIO_MODE_RECEIVER)
+        newRadioTransmissionState = TRANSMISSION_STATE_UNDEFINED;
+    else if (transmissionTimer->isScheduled())
+        newRadioTransmissionState = TRANSMISSION_STATE_TRANSMITTING;
+    else
+        newRadioTransmissionState = TRANSMISSION_STATE_IDLE;
+    if (transmissionState != newRadioTransmissionState) {
+        EV_INFO << "Changing radio transmission state from \x1b[1m" << getRadioTransmissionStateName(transmissionState) << "\x1b[0m to \x1b[1m" << getRadioTransmissionStateName(newRadioTransmissionState) << "\x1b[0m." << endl;
+        transmissionState = newRadioTransmissionState;
+        emit(transmissionStateChangedSignal, newRadioTransmissionState);
+    }
+}
+
 
 
 void WakeUpRadioBase::startReception(cMessage *timer, IRadioSignal::SignalPart part)
