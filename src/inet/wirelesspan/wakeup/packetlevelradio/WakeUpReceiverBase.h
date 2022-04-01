@@ -8,8 +8,8 @@
 #ifndef __INET_WAKEUPRECEIVERBASE_H
 #define __INET_WAKEUPRECEIVERBASE_H
 
+#include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpBandListening.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/FlatReceiverBase.h"
-#include "inet/physicallayer/wireless/wakeup/packetlevel//WakeUpBandListening.h"
 
 namespace inet {
 

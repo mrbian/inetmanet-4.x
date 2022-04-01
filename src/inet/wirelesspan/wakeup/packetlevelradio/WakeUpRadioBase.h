@@ -33,6 +33,7 @@ protected:
     virtual ReceptionState getReceptionState() const override;
 
     virtual void receiveSignal(cComponent *source, simsignal_t signalID, intval_t value, cObject *details) override;
+    virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) override;
 
     virtual void updateTransceiverState() override;
 
@@ -63,6 +64,9 @@ protected:
     virtual void setAwakeningInterval(simtime_t interval);
     virtual simtime_t getAwakeningInterval() const;
     virtual void setBitrate(bps newBitrate);
+
+    virtual void setWakeUpMode(); // force the controlled radio to sleep and start the scanning mode
+    virtual void cancelScanning();
 };
 
 } // namespace physicallayer

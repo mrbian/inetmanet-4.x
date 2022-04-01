@@ -16,7 +16,7 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-package inet.linklayer.ieee802154Loss;
+package inet.wirelesspan.linklayer.ieee802154Loss;
 
 import inet.linklayer.contract.IWirelessInterface;
 import inet.networklayer.common.NetworkInterface;

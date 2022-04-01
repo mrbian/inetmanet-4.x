@@ -4,6 +4,8 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 
+#include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpRadioBase.h"
+
 #include "inet/common/Simsignals.h"
 #include "inet/common/packet/chunk/BitCountChunk.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/RadioControlInfo_m.h"
@@ -11,7 +13,6 @@
 #include "inet/physicallayer/wireless/common/medium/RadioMedium.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/FlatReceiverBase.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/FlatTransmitterBase.h"
-#include "inet/physicallayer/wireless/wakeup/packetlevel/WakeUpRadioBase.h"
 
 
 namespace inet {
@@ -56,6 +57,17 @@ void WakeUpRadioBase::parseControllerRadioModeSwitchingTimes()
         throw cRuntimeError("Check your switchingTimes parameter! Some parameters may be missed");
 }
 
+
+void WakeUpRadioBase::setWakeUpMode()
+{
+    Enter_Method("setWakeUpMode");
+    controlledRadio->Radio::setRadioMode(IRadio::RADIO_MODE_SLEEP);
+    this->setState(IRadio::RADIO_MODE_SLEEP);
+    rescheduleAfter(interval, awake);
+    if (scanning->isScheduled())
+        cancelEvent(scanning);
+}
+
 IRadio::RadioMode WakeUpRadioBase::getRadioMode() const
 {
     // TODO: emulate, if the radio is sleeping, the upper should perceive it like in receiving mode
@@ -89,13 +101,36 @@ void WakeUpRadioBase::initialize(int stage)
         auto mod = toControlled->getPathEndGate()->getOwner();
         cModule *modAux = this->getParentModule()->getSubmodule("controlledRadio");
         controlledRadio = check_and_cast<Radio *>(modAux);
+
+
         if (mod != controlledRadio)
             throw cRuntimeError("check gate and radio controlled module");
 
         awake = new cMessage("awakeRadio");
+        scanning = new cMessage("scanTime");
+
         interval = par("interval");
+        scanInterval = par("scanTime");
+
         parseControllerRadioModeSwitchingTimes();
+        controlledRadio->subscribe(radioModeChangedSignal, this);
+        controlledRadio->subscribe(transmissionStartedSignal, this);
+        controlledRadio->subscribe(receptionStartedSignal, this);
+        controlledRadio->subscribe(transmissionStateChangedSignal, this);
+        controlledRadio->subscribe(receptionStateChangedSignal, this);
+        controlledRadio->subscribe(receivedSignalPartChangedSignal, this);
+        controlledRadio->subscribe(transmittedSignalPartChangedSignal, this);
+
+        setWakeUpMode();
     }
+}
+
+void WakeUpRadioBase::cancelScanning()
+{
+    if (awake->isScheduled())
+        cancelEvent(awake);
+    if (scanning->isScheduled())
+        cancelEvent(scanning);
 }
 
 void WakeUpRadioBase::setState(RadioMode newRadioMode)
@@ -109,11 +144,8 @@ void WakeUpRadioBase::handleSelfMessage(cMessage *message)
     if (message == awake) {
         if (radioMode == IRadio::RADIO_MODE_OFF || radioMode == IRadio::RADIO_MODE_SLEEP)
             setState(IRadio::RADIO_MODE_RECEIVER);
-        scheduleAt(interval, awake);
-        if (scanning->isScheduled()) {
-            cancelEvent(scanning);
-        }
-        scheduleAt(scanInterval, scanning);
+        scheduleAfter(interval, awake);
+        rescheduleAfter(scanInterval, scanning);
     }
     else if (message == scanning) {
         if (radioMode == IRadio::RADIO_MODE_RECEIVER) {
@@ -140,6 +172,11 @@ void WakeUpRadioBase::receiveSignal(cComponent *source, simsignal_t signalID, in
     emit(signalID, value, details);
 }
 
+void WakeUpRadioBase::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details)
+{
+    Enter_Method("%s", cComponent::getSignalName(signalID));
+    emit(signalID, obj, details);
+}
 
 void WakeUpRadioBase::updateTransceiverState()
 {
@@ -194,6 +231,7 @@ void WakeUpRadioBase::startReception(cMessage *timer, IRadioSignal::SignalPart p
         EV_INFO << "Reception started: \x1b[1mignoring\x1b[0m " << (IWirelessSignal *)signal << " " << IRadioSignal::getSignalPartName(part) << " as " << reception << endl;
 
     sendAwakeReceiver();
+    cancelScanning();
     timer->setKind(part);
     scheduleAt(arrival->getEndTime(part), timer);
     updateTransceiverState();
@@ -204,6 +242,7 @@ void WakeUpRadioBase::startReception(cMessage *timer, IRadioSignal::SignalPart p
 
 void WakeUpRadioBase::sendBeacon()
 {
+    cancelScanning();
     if (transmissionTimer->isScheduled())
         return;
     Packet *packet = new Packet();

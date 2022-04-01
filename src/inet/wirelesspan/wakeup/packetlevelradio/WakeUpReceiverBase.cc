@@ -5,7 +5,8 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 
-#include "inet/physicallayer/wireless/wakeup/packetlevel/WakeUpReceiverBase.h"
+#include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpReceiverBase.h"
+
 #include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandReceptionBase.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandTransmissionBase.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/FlatReceiverBase.h"

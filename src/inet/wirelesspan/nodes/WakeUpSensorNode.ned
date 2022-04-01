@@ -5,7 +5,7 @@
 //
 
 
-package inet.examples.sixlowpan2;
+package inet.wirelesspan.nodes;
 import inet.node.base.ApplicationLayerNodeBase;
 //
 // This module implements a wireless sensor node. It has one 802.15.4 wireless interface
@@ -13,17 +13,17 @@ import inet.node.base.ApplicationLayerNodeBase;
 //# TODO and energyconsumer in the radio
 //# TODO there is no management; the IdealEnergyStorage never depletes...
 //
-module SensorNode6lowpan2 extends ApplicationLayerNodeBase
+module WakeUpSensorNode extends ApplicationLayerNodeBase
 {
     parameters:
         @display("i=misc/sensor2");
-        hasIpv4 = default(false);
-        hasIpv6 = default(true);
-        *.routingTableModule = "^.ipv6.routingTable";
+        hasIpv4 = default(true);
+        hasIpv6 = default(false);
+        *.routingTableModule = default("^.ipv4.routingTable");
         
         @figure[submodules];
         numWlanInterfaces = default(1);
         energyStorage.typename = default("IdealEpEnergyStorage");
-        wlan[*].typename = default("Ieee802154NarrowbandInterface");
+        wlan[*].typename = default("WakeUpIeee802154NarrowbandInterface");
         wlan[*].radio.energyConsumer.typename = default("SensorStateBasedEpEnergyConsumer"); //FIXME does this consumer exist???
 }

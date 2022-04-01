@@ -5,7 +5,7 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 
-#include "inet/physicallayer/wireless/wakeup/packetlevel/WakeUpDimensionalTransmitter.h"
+#include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpDimensionalTransmitter.h"
 
 #include "inet/mobility/contract/IMobility.h"
 #include "inet/physicallayer/wireless/common/analogmodel/packetlevel/DimensionalTransmission.h"

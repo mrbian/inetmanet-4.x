@@ -282,18 +282,18 @@ class INET_API Ieee802154Mac : public MacProtocolBase, public IMacProtocol, publ
     virtual void handleCommand(cMessage *msg) {}
 
     // FSM functions
-    void fsmError(t_mac_event event, cMessage *msg);
-    void executeMac(t_mac_event event, cMessage *msg);
-    void updateStatusIdle(t_mac_event event, cMessage *msg);
-    void updateStatusBackoff(t_mac_event event, cMessage *msg);
-    void updateStatusCCA(t_mac_event event, cMessage *msg);
-    void updateStatusTransmitFrame(t_mac_event event, cMessage *msg);
-    void updateStatusWaitAck(t_mac_event event, cMessage *msg);
-    void updateStatusSIFS(t_mac_event event, cMessage *msg);
-    void updateStatusTransmitAck(t_mac_event event, cMessage *msg);
-    void updateStatusNotIdle(cMessage *msg);
-    void manageQueue();
-    void updateMacState(t_mac_states newMacState);
+    virtual void fsmError(t_mac_event event, cMessage *msg);
+    virtual void executeMac(t_mac_event event, cMessage *msg);
+    virtual void updateStatusIdle(t_mac_event event, cMessage *msg);
+    virtual void updateStatusBackoff(t_mac_event event, cMessage *msg);
+    virtual void updateStatusCCA(t_mac_event event, cMessage *msg);
+    virtual void updateStatusTransmitFrame(t_mac_event event, cMessage *msg);
+    virtual void updateStatusWaitAck(t_mac_event event, cMessage *msg);
+    virtual void updateStatusSIFS(t_mac_event event, cMessage *msg);
+    virtual void updateStatusTransmitAck(t_mac_event event, cMessage *msg);
+    virtual void updateStatusNotIdle(cMessage *msg);
+    virtual void manageQueue();
+    virtual void updateMacState(t_mac_states newMacState);
 
     void attachSignal(Packet *mac, simtime_t_cref startTime);
     void manageMissingAck(t_mac_event event, cMessage *msg);

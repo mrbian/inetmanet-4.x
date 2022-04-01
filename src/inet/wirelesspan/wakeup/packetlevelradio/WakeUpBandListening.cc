@@ -5,7 +5,7 @@
 //
 
 
-#include "inet/physicallayer/wireless/wakeup/packetlevel//WakeUpBandListening.h"
+#include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpBandListening.h"
 
 namespace inet {
 namespace physicallayer {

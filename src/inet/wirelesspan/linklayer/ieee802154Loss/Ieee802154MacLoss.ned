@@ -22,7 +22,7 @@
 //* part of:    Modifications to the MF-2 framework by CSEM
 //**************************************************************************/
 
-package inet.linklayer.ieee802154Loss;
+package inet.wirelesspan.linklayer.ieee802154Loss;
 
 import inet.queueing.contract.IPacketQueue;
 import inet.linklayer.base.MacProtocolBase;

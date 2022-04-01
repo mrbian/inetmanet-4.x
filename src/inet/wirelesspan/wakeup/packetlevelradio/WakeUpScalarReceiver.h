@@ -5,26 +5,24 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 
-#ifndef __INET_WAKEUPDIMENSIONALRECEIVER_H
-#define __INET_WAKEUPDIMENSIONALRECEIVER_H
+#ifndef __INET_WAKEUPSCALARRECEIVER_H
+#define __INET_WAKEUPSCALARRECEIVER_H
 
-#include "inet/physicallayer/wireless/wakeup/packetlevel/WakeUpReceiverBase.h"
-
+#include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpReceiverBase.h"
 namespace inet {
 
 namespace physicallayer {
 
-class INET_API WakeUpDimensionalReceiver : public WakeUpReceiverBase
+class INET_API WakeUpScalarReceiver : public WakeUpReceiverBase
 {
   protected:
     W minInterferencePower;
 
   public:
-    WakeUpDimensionalReceiver();
+    WakeUpScalarReceiver();
 
     void initialize(int stage) override;
 
-    bool computeIsReceptionPossible(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part) const override;
 
     virtual std::ostream& printToStream(std::ostream& stream, int level, int evFlags = 0) const override;
 

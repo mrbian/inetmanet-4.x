@@ -5,21 +5,20 @@
 // SPDX-License-Identifier: LGPL-3.0-or-later
 //
 
-#include "inet/physicallayer/wireless/wakeup/packetlevel/WakeUpScalarReceiver.h"
+#include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpDimensionalReceiver.h"
 
 namespace inet {
 
 namespace physicallayer {
 
-Define_Module(WakeUpScalarReceiver);
+Define_Module(WakeUpDimensionalReceiver);
 
-WakeUpScalarReceiver::WakeUpScalarReceiver() :
+WakeUpDimensionalReceiver::WakeUpDimensionalReceiver() :
         WakeUpReceiverBase()
 {
 }
 
-
-void WakeUpScalarReceiver::initialize(int stage)
+void WakeUpDimensionalReceiver::initialize(int stage)
 {
     WakeUpReceiverBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
@@ -27,9 +26,11 @@ void WakeUpScalarReceiver::initialize(int stage)
     }
 }
 
-std::ostream& WakeUpScalarReceiver::printToStream(std::ostream& stream, int level, int evFlags) const
+
+
+std::ostream& WakeUpDimensionalReceiver::printToStream(std::ostream& stream, int level, int evFlags) const
 {
-    stream << "WakeUpScalarReceiver";
+    stream << "WakeUpDimensionalReceiver";
     return FlatReceiverBase::printToStream(stream, level);
 }
 
