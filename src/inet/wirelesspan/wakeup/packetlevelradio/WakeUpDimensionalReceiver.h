@@ -24,8 +24,6 @@ class INET_API WakeUpDimensionalReceiver : public WakeUpReceiverBase
 
     void initialize(int stage) override;
 
-    bool computeIsReceptionPossible(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part) const override;
-
     virtual std::ostream& printToStream(std::ostream& stream, int level, int evFlags = 0) const override;
 
     virtual W getMinInterferencePower() const override { return minInterferencePower; }

@@ -7,6 +7,7 @@
 
 package inet.wirelesspan.wakeup.packetlevelradio;
 
+import inet.linklayer.contract.INetworkInterface;
 import inet.linklayer.contract.IWirelessInterface;
 import inet.networklayer.common.NetworkInterface;
 import inet.physicallayer.wireless.common.contract.packetlevel.IRadio;
@@ -17,9 +18,11 @@ import inet.wirelesspan.wakeup.packetlevelradio.WakeUpRadioBase;
 //
 // This module implements an IEEE 802.15.4 narrowband network interface.
 //
-module WakeUpIeee802154NarrowbandInterface extends NetworkInterface like IWirelessInterface
+//module WakeUpIeee802154NarrowbandInterface extends NetworkInterface like IWirelessInterface
+module WakeUpIeee802154NarrowbandInterface extends NetworkInterface like INetworkInterface
 {
     parameters:
+        @display("i=block/ifcard");
         @class(NetworkInterface);
         string interfaceTableModule;
         string energySourceModule = default("");

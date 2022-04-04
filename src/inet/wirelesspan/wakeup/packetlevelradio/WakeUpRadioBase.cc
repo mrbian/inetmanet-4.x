@@ -330,6 +330,12 @@ void WakeUpRadioBase::setPower(W newPower)
     flatTransmitter->setPower(newPower);
 }
 
+void WakeUpRadioBase::setBitrate(bps newBitrate)
+{
+    FlatTransmitterBase *flatTransmitter = const_cast<FlatTransmitterBase *>(check_and_cast<const FlatTransmitterBase *>(transmitter));
+    flatTransmitter->setBitrate(newBitrate);
+}
+
 void WakeUpRadioBase::sendAwakeReceiver()
 {
     if (getRadioMode() == Radio::RADIO_MODE_OFF || getRadioMode() == Radio::RADIO_MODE_SLEEP) {

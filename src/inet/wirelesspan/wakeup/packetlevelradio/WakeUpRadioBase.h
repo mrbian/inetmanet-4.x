@@ -61,8 +61,8 @@ protected:
     WakeUpRadioBase();
 
     virtual void setPower(W newPower);
-    virtual void setAwakeningInterval(simtime_t interval);
-    virtual simtime_t getAwakeningInterval() const;
+    virtual void setAwakeningInterval(simtime_t it) {interval = it;}
+    virtual simtime_t getAwakeningInterval() const {return interval;}
     virtual void setBitrate(bps newBitrate);
 
     virtual void setWakeUpMode(); // force the controlled radio to sleep and start the scanning mode
