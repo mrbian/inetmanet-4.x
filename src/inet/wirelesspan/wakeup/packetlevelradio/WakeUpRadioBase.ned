@@ -105,7 +105,7 @@ module WakeUpRadioBase extends LayeredProtocolBase like IRadio
 
         double interval @unit(s) = default(33ms);
         double scanTime @unit(s) = default(0.1ms);
-        @class(WakeUpRadioBase);
+        @class(physicallayer::WakeUpRadioBase);
 
         @display("i=block/wrxtx");
     gates:

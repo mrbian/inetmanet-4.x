@@ -95,8 +95,7 @@ IRadio::ReceptionState WakeUpRadioBase::getReceptionState() const
 void WakeUpRadioBase::initialize(int stage)
 {
     Radio::initialize(stage);
-    if  (stage == INITSTAGE_PHYSICAL_LAYER) {
-        // initialize
+    if (stage == INITSTAGE_LOCAL) {
         toControlled = gate("toControlled");
         auto mod = toControlled->getPathEndGate()->getOwner();
         cModule *modAux = this->getParentModule()->getSubmodule("controlledRadio");
@@ -111,7 +110,9 @@ void WakeUpRadioBase::initialize(int stage)
 
         interval = par("interval");
         scanInterval = par("scanTime");
-
+    }
+    else if  (stage == INITSTAGE_PHYSICAL_LAYER) {
+        // initialize
         parseControllerRadioModeSwitchingTimes();
         controlledRadio->subscribe(radioModeChangedSignal, this);
         controlledRadio->subscribe(transmissionStartedSignal, this);
