@@ -63,8 +63,8 @@ module WakeUpRadioBase extends LayeredProtocolBase like IRadio
         *.bandwidth = default(this.bandwidth);               // passed down to transmitter and receiver by default
 
         string signalAnalogRepresentation @enum("scalar","dimensional") = default("scalar");
-        transmitter.typename = default(signalAnalogRepresentation == "scalar" ? "Ieee802154NarrowbandScalarTransmitter" : signalAnalogRepresentation == "dimensional" ? "Ieee802154NarrowbandDimensionalTransmitter" : "");
-        receiver.typename = default(signalAnalogRepresentation == "scalar" ? "Ieee802154NarrowbandScalarReceiver" : signalAnalogRepresentation == "dimensional" ? "Ieee802154NarrowbandDimensionalReceiver" : "");
+        transmitter.typename = default(signalAnalogRepresentation == "scalar" ? "WakeUpScalarTransmitter" : signalAnalogRepresentation == "dimensional" ? "WakeUpDimensionalTransmitter" : "");
+        receiver.typename = default(signalAnalogRepresentation == "scalar" ? "WakeUpScalarReceiver" : signalAnalogRepresentation == "dimensional" ? "WakeUpDimensionalReceiver" : "");
 
 
         // 802.15.4-2006 (page 28)

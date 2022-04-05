@@ -35,6 +35,7 @@ module WakeUpScalarRadioMedium extends RadioMedium
         // TODO couple with sensitivity
         backgroundNoise.power = default(-96.616dBm);
         backgroundNoise.dimensions = default("time");
+        mediumLimitCache.maxTransmissionDuration = default(34 ms);
 }
 
 

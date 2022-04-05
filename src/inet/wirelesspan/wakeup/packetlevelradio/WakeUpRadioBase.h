@@ -25,6 +25,10 @@ protected:
     cGate *toControlled = nullptr;
     simtime_t controlledSwitchingTimes[RADIO_MODE_SWITCHING][RADIO_MODE_SWITCHING];
 
+    bool inmediateAwake = true;
+
+    int controlledSistemGateId = -1;
+
 
   protected:
 
@@ -42,6 +46,10 @@ protected:
     virtual void initialize(int stage) override;
     virtual void handleSelfMessage(cMessage *message) override;
     virtual void handleUpperPacket(Packet *packet) override;
+    virtual void handleMessageWhenUp(cMessage *message) override;
+
+
+    virtual bool isFromControlled(cMessage *message) const;
 
     virtual RadioMode getRadioMode() const override;
     virtual void sendAwakeReceiver();

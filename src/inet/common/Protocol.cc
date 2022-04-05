@@ -159,5 +159,6 @@ const Protocol Protocol::ieee8021rTag("ieee8021rtag", "IEEE 802.1R TAG"); // TOD
 // Additional wireless protocols
 const Protocol Protocol::lora("lora", "Lora"); //Lora Protocol
 const Protocol Protocol::lte("lte", "LTE", Protocol::LinkLayer); //LTE Protocol
+const Protocol Protocol::wakeUpOnRadio("wakeuponradio", "WakeUpOnRadio", Protocol::PhysicalLayer); //WakeUpOnRadio
 } // namespace inet
 
