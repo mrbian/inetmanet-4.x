@@ -75,6 +75,8 @@ protected:
 
     virtual void setWakeUpMode(); // force the controlled radio to sleep and start the scanning mode
     virtual void cancelScanning();
+    virtual void setModeControlled(RadioMode newRadioMode);
+    virtual void setRadioModeNoBeacon(RadioMode newRadioMode);
 };
 
 } // namespace physicallayer

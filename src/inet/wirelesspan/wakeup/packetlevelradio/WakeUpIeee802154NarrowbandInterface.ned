@@ -13,6 +13,8 @@ import inet.networklayer.common.NetworkInterface;
 import inet.physicallayer.wireless.common.contract.packetlevel.IRadio;
 import inet.queueing.contract.IPacketQueue;
 import inet.linklayer.ieee802154.Ieee802154NarrowbandMac;
+import inet.wirelesspan.linklayer.ieee802154Loss.Ieee802154MacLoss;
+import inet.wirelesspan.linklayer.ieee802154Loss.Ieee802154LossNarrowbandMac;
 import inet.wirelesspan.wakeup.packetlevelradio.WakeUpRadioBase;
 
 //
@@ -38,7 +40,7 @@ module WakeUpIeee802154NarrowbandInterface extends NetworkInterface like INetwor
                 packetCapacity = default(100);
                 @display("p=200,100;q=l2queue");
         }
-        mac: Ieee802154NarrowbandMac {
+        mac: Ieee802154LossNarrowbandMac {
             parameters:
                 @display("p=300,100");
         }

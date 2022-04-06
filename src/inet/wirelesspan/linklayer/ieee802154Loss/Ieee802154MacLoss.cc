@@ -141,7 +141,10 @@ void Ieee802154MacLoss::updateStatusIdle(t_mac_event event, cMessage *msg)
             delete msg;
 
             if (useMACAcks) {
-                radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                if (wakeUpRadio)
+                    wakeUpRadio->setRadioModeNoBeacon(IRadio::RADIO_MODE_TRANSMITTER);
+                else
+                    radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
                 updateMacState(WAITSIFS_6);
                 startTimer(TIMER_SIFS);
             }
@@ -154,7 +157,10 @@ void Ieee802154MacLoss::updateStatusIdle(t_mac_event event, cMessage *msg)
             nbRxFrames++;
 
             if (useMACAcks) {
-                radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                if (wakeUpRadio)
+                    wakeUpRadio->setRadioModeNoBeacon(IRadio::RADIO_MODE_TRANSMITTER);
+                else
+                    radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
                 updateMacState(WAITSIFS_6);
                 startTimer(TIMER_SIFS);
             }
@@ -193,7 +199,12 @@ void Ieee802154MacLoss::updateStatusBackoff(t_mac_event event, cMessage *msg)
                 EV_DETAIL << "suspending current transmit tentative and transmitting ack";
                 transmissionAttemptInterruptedByRx = true;
                 cancelEvent(backoffTimer);
-                radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+
+                if (wakeUpRadio)
+                    wakeUpRadio->setRadioModeNoBeacon(IRadio::RADIO_MODE_TRANSMITTER);
+                else
+                    radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+
                 updateMacState(WAITSIFS_6);
                 startTimer(TIMER_SIFS);
             }
@@ -215,7 +226,11 @@ void Ieee802154MacLoss::updateStatusBackoff(t_mac_event event, cMessage *msg)
                 transmissionAttemptInterruptedByRx = true;
                 cancelEvent(backoffTimer);
 
-                radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                if (wakeUpRadio)
+                    wakeUpRadio->setRadioModeNoBeacon(IRadio::RADIO_MODE_TRANSMITTER);
+                else
+                    radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+
                 updateMacState(WAITSIFS_6);
                 startTimer(TIMER_SIFS);
             }
@@ -357,10 +372,10 @@ void Ieee802154MacLoss::updateStatusTransmitFrame(t_mac_event event, cMessage *m
     if (event == EV_FRAME_TRANSMITTED && currentTxFrame != nullptr) {
 //        delete msg;
         Packet *packet = currentTxFrame;
-        const auto& csmaHeader = packet->peekAtFront<Ieee802154MacHeader>();
-        radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
-
         bool expectAck = useMACAcks;
+        const auto& csmaHeader = packet->peekAtFront<Ieee802154MacHeader>();
+
+
         if (!csmaHeader->getDestAddr().isBroadcast() && !csmaHeader->getDestAddr().isMulticast()) {
             // unicast
             EV_DETAIL << "(4) FSM State TRANSMITFRAME_4, "
@@ -373,6 +388,15 @@ void Ieee802154MacLoss::updateStatusTransmitFrame(t_mac_event event, cMessage *m
             expectAck = false;
         }
 
+        if (wakeUpRadio) {
+            if (expectAck) // no sleep and awake the remote module
+                wakeUpRadio->setModeControlled(IRadio::RADIO_MODE_RECEIVER);
+            else
+                wakeUpRadio->setWakeUpMode();
+        }
+        else
+            radio->setRadioMode(IRadio::RADIO_MODE_RECEIVER);
+
         if (expectAck) {
             EV_DETAIL << "RadioSetupRx -> WAITACK." << endl;
             updateMacState(WAITACK_5);
@@ -382,8 +406,6 @@ void Ieee802154MacLoss::updateStatusTransmitFrame(t_mac_event event, cMessage *m
             EV_DETAIL << ": RadioSetupRx, manageQueue..." << endl;
             deleteCurrentTxFrame();
             manageQueue();
-            if (wakeUpRadio)
-                wakeUpRadio->setWakeUpMode();
         }
         delete msg;
     }

@@ -61,7 +61,7 @@ void WakeUpRadioBase::parseControllerRadioModeSwitchingTimes()
 void WakeUpRadioBase::setWakeUpMode()
 {
     Enter_Method("setWakeUpMode");
-    controlledRadio->Radio::setRadioMode(IRadio::RADIO_MODE_SLEEP);
+    setModeControlled(IRadio::RADIO_MODE_SLEEP);
     if (interval > simtime_t::ZERO) {
         this->setState(IRadio::RADIO_MODE_SLEEP);
         rescheduleAfter(interval, awake);
@@ -141,6 +141,10 @@ void WakeUpRadioBase::cancelScanning()
         cancelEvent(awake);
     if (scanning->isScheduled())
         cancelEvent(scanning);
+    if (interval > simtime_t::ZERO)
+        this->setState(IRadio::RADIO_MODE_SLEEP);
+    else
+        this->setState(IRadio::RADIO_MODE_RECEIVER);
 }
 
 void WakeUpRadioBase::setState(RadioMode newRadioMode)
@@ -241,7 +245,7 @@ void WakeUpRadioBase::startReception(cMessage *timer, IRadioSignal::SignalPart p
     auto packet = medium->receivePacket(this, signal);
     if (packet->getTag<PacketProtocolTag>()->getProtocol() == &Protocol::wakeUpOnRadio) {
         // Wake on radio, check timer
-        simtime_t arrivalTime = arrival->getStartTime(IRadioSignal::SignalPart::SIGNAL_PART_WHOLE);
+        //simtime_t arrivalTime = arrival->getStartTime(IRadioSignal::SignalPart::SIGNAL_PART_WHOLE);
         simtime_t endArrivalTime = arrival->getEndTime(IRadioSignal::SignalPart::SIGNAL_PART_WHOLE);
         if (isReceiverMode(radioMode) || (awake->isScheduled() && awake->getArrivalTime() <= endArrivalTime)) {
             // awakening possible
@@ -308,9 +312,29 @@ void WakeUpRadioBase::sendBeacon()
 
 void WakeUpRadioBase::setRadioMode(RadioMode newRadioMode)
 {
+    Enter_Method("setRadioMode");
     if (newRadioMode == IRadio::RADIO_MODE_TRANSMITTER) {
         setState(IRadio::RADIO_MODE_TRANSMITTER);
         sendBeacon();
+        setModeControlled(newRadioMode);
+    }
+    else if (newRadioMode == IRadio::RADIO_MODE_RECEIVER) {
+        setWakeUpMode();
+        //controlledRadio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
+    }
+}
+
+void WakeUpRadioBase::setModeControlled(RadioMode newRadioMode)
+{
+    Enter_Method("setModeControlled");
+    cancelScanning();
+    controlledRadio->setRadioMode(newRadioMode);
+}
+
+void WakeUpRadioBase::setRadioModeNoBeacon(RadioMode newRadioMode)
+{
+    if (newRadioMode == IRadio::RADIO_MODE_TRANSMITTER) {
+        setState(IRadio::RADIO_MODE_TRANSMITTER);
         controlledRadio->setRadioMode(newRadioMode);
     }
     else if (newRadioMode == IRadio::RADIO_MODE_RECEIVER) {
