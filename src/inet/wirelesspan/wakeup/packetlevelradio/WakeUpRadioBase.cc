@@ -62,8 +62,13 @@ void WakeUpRadioBase::setWakeUpMode()
 {
     Enter_Method("setWakeUpMode");
     controlledRadio->Radio::setRadioMode(IRadio::RADIO_MODE_SLEEP);
-    this->setState(IRadio::RADIO_MODE_SLEEP);
-    rescheduleAfter(interval, awake);
+    if (interval > simtime_t::ZERO) {
+        this->setState(IRadio::RADIO_MODE_SLEEP);
+        rescheduleAfter(interval, awake);
+    }
+    else
+        this->setState(IRadio::RADIO_MODE_RECEIVER);
+
     if (scanning->isScheduled())
         cancelEvent(scanning);
 }
@@ -155,14 +160,18 @@ void WakeUpRadioBase::handleSelfMessage(cMessage *message)
             cancelScanning();
         }
         else {
-            scheduleAfter(interval, awake);
-            rescheduleAfter(scanInterval, scanning);
+            if (interval > simtime_t::ZERO) {
+                scheduleAfter(interval, awake);
+                rescheduleAfter(scanInterval, scanning);
+            }
         }
     }
     else if (message == scanning) {
         if (radioMode == IRadio::RADIO_MODE_RECEIVER) {
+
             if (getReceptionState () == RECEPTION_STATE_IDLE || getReceptionState () == RECEPTION_STATE_UNDEFINED) {
-                setState(IRadio::RADIO_MODE_SLEEP);
+                if (interval > simtime_t::ZERO)
+                    setState(IRadio::RADIO_MODE_SLEEP);
                 if (controlledRadio->Radio::getRadioMode() == RADIO_MODE_RECEIVER && controlledRadio->getReceptionState () == RECEPTION_STATE_IDLE){
                     controlledRadio->setRadioMode(IRadio::RADIO_MODE_SLEEP);
                 }
