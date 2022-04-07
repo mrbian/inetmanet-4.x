@@ -11,7 +11,6 @@ import inet.applications.ethernet.EtherAppServer;
 import inet.common.MessageDispatcher;
 import inet.common.lifecycle.NodeStatus;
 import inet.linklayer.contract.IEthernetInterface;
-import inet.linklayer.ethernet.contract.IEthernetEncapsulation;
 import inet.linklayer.ethernet.contract.IEthernetLayer;
 import inet.linklayer.ieee8021q.IIeee8021qLayer;
 import inet.linklayer.ieee8021r.IIeee8021rLayer;
@@ -62,14 +61,14 @@ module EthernetHost
             parameters:
                 @display("p=450,150;b=500,5,,,,1");
         }
-        encap: <default("EthernetEncapsulation")> like IEthernetEncapsulation if typename != "" {
+        llc: <default("Ieee8022Llc")> like IIeee8022Llc {
+            parameters:
+                @display("p=450,200");
+        }
+        encap: <default("EthernetEncapsulation")> like IEthernetLayer if typename != "" {
             parameters:
                 registerProtocol = true;
-                @display("p=350,250");
-        }
-        llc: <default("")> like IIeee8022Llc if typename != "" {
-            parameters:
-                @display("p=550,200");
+                @display("p=350,300");
         }
         ethernet: <default("")> like IEthernetLayer if typename != "" {
             @display("p=550,300");
@@ -88,13 +87,12 @@ module EthernetHost
         srv.out --> dp.in++;
         dp.out++ --> srv.in;
 
-        dp.out++ --> encap.upperLayerIn if exists(encap);
-        encap.upperLayerOut --> dp.in++ if exists(encap);
+        dp.out++ --> llc.upperLayerIn;
+        llc.upperLayerOut --> dp.in++;
+        llc.lowerLayerOut --> encap.upperLayerIn if exists(llc) && exists(encap);
+        encap.upperLayerOut --> llc.lowerLayerIn if exists(llc) && exists(encap);
         encap.lowerLayerOut --> li.in++ if exists(encap);
         li.out++ --> encap.lowerLayerIn if exists(encap);
-
-        dp.out++ --> llc.upperLayerIn if exists(llc);
-        llc.upperLayerOut --> dp.in++ if exists(llc);
         llc.lowerLayerOut --> ethernet.upperLayerIn if exists(llc) && exists(ethernet);
         ethernet.upperLayerOut --> llc.lowerLayerIn if exists(llc) && exists(ethernet);
         ethernet.lowerLayerOut --> li.in++ if exists(ethernet);
