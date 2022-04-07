@@ -20,6 +20,6 @@ module WakeUpDimensionalTransmitter extends DimensionalTransmitterBase
 {
     parameters:
         modulation = default("BPSK");
-        @class(physicallayer::WakeUpDimensionalTransmitter);
+        @class(wirelesspan::physicallayer::WakeUpDimensionalTransmitter);
 }
 

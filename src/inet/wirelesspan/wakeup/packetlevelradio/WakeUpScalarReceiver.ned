@@ -15,6 +15,6 @@ module WakeUpScalarReceiver extends NarrowbandReceiverBase
         modulation = default("BPSK");
         errorModel.typename = default("ApskErrorModel");
         double minInterferencePower @unit(dBm);
-        @class(physicallayer::WakeUpScalarReceiver);
+        @class(wirelesspan::physicallayer::WakeUpScalarReceiver);
 }
 

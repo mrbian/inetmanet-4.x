@@ -11,7 +11,7 @@
 #include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpReceiverBase.h"
 
 namespace inet {
-
+namespace wirelesspan {
 namespace physicallayer {
 
 class INET_API WakeUpDimensionalReceiver : public WakeUpReceiverBase
@@ -30,7 +30,7 @@ class INET_API WakeUpDimensionalReceiver : public WakeUpReceiverBase
 };
 
 } // namespace physicallayer
-
+}
 } // namespace inet
 
 #endif

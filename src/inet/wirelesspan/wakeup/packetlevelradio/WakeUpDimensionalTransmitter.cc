@@ -13,8 +13,10 @@
 #include "inet/physicallayer/wireless/common/modulation/BpskModulation.h"
 
 namespace inet {
-
+namespace wirelesspan {
 namespace physicallayer {
+
+using namespace inet::physicallayer;
 
 Define_Module(WakeUpDimensionalTransmitter);
 
@@ -53,6 +55,6 @@ const ITransmission *WakeUpDimensionalTransmitter::createTransmission(const IRad
 }
 
 } // namespace physicallayer
-
+}
 } // namespace inet
 

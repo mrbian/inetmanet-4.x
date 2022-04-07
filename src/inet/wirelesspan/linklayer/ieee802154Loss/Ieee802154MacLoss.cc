@@ -46,8 +46,10 @@
 
 
 namespace inet {
+namespace wirelesspan {
 
-using namespace physicallayer;
+using namespace inet::physicallayer;
+using namespace inet::wirelesspan::physicallayer;
 
 Define_Module(Ieee802154MacLoss);
 
@@ -276,7 +278,10 @@ void Ieee802154MacLoss::updateStatusCCA(t_mac_event event, cMessage *msg)
                 attachSignal(mac, simTime() + aTurnaroundTime);
 //                sendDown(msg);
                 // give time for the radio to be in Tx state before transmitting
-                sendDelayed(mac, aTurnaroundTime, lowerLayerOutGateId);
+                if (wakeUpRadio && wakeUpRadio->getAwakeningInterval() > simtime_t::ZERO) // must wait until all the radios are awake
+                    sendDelayed(mac, wakeUpRadio->getAwakeningInterval(), lowerLayerOutGateId);
+                else
+                    sendDelayed(mac, aTurnaroundTime, lowerLayerOutGateId);
                 nbTxFrames++;
             }
             else {
@@ -458,7 +463,7 @@ void Ieee802154MacLoss::updateStatusWaitAck(t_mac_event event, cMessage *msg)
             break;
     }
 }
-
+}
 
 } // namespace inet
 

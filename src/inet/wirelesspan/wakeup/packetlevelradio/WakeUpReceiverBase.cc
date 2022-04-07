@@ -14,8 +14,10 @@
 #include "inet/physicallayer/wireless/common/base/packetlevel/FlatTransmissionBase.h"
 
 namespace inet {
-
+namespace wirelesspan {
 namespace physicallayer {
+
+using namespace inet::physicallayer;
 
 Define_Module(WakeUpReceiverBase);
 
@@ -93,6 +95,6 @@ std::ostream& WakeUpReceiverBase::printToStream(std::ostream& stream, int level,
 }
 
 } // namespace physicallayer
-
+}
 } // namespace inet
 

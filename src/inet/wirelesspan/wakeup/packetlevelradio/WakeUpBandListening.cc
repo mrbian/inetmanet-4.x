@@ -8,7 +8,10 @@
 #include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpBandListening.h"
 
 namespace inet {
+namespace wirelesspan {
 namespace physicallayer {
+
+using namespace inet::physicallayer;
 
 WakeUpBandListening::WakeUpBandListening(const IRadio *radio, simtime_t startTime, simtime_t endTime, Coord startPosition, Coord endPosition, Hz centerFrequency, Hz bandwidth, std::vector<FreqItem> b) :
         BandListening(radio, startTime, endTime, startPosition, endPosition,centerFrequency,bandwidth),
@@ -26,5 +29,6 @@ std::ostream& WakeUpBandListening::printToStream(std::ostream& stream, int level
 }
 
 } // namespace physicallayer
+}
 } // namespace inet
 

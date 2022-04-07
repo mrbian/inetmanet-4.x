@@ -8,9 +8,10 @@
 #include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpScalarReceiver.h"
 
 namespace inet {
-
+namespace wirelesspan {
 namespace physicallayer {
 
+using namespace inet::physicallayer;
 Define_Module(WakeUpScalarReceiver);
 
 WakeUpScalarReceiver::WakeUpScalarReceiver() :
@@ -34,6 +35,6 @@ std::ostream& WakeUpScalarReceiver::printToStream(std::ostream& stream, int leve
 }
 
 } // namespace physicallayer
-
+}
 } // namespace inet
 

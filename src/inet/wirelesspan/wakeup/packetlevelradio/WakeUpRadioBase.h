@@ -11,10 +11,10 @@
 #include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandRadioBase.h"
 
 namespace inet {
-
+namespace wirelesspan {
 namespace physicallayer {
 
-class INET_API WakeUpRadioBase : public NarrowbandRadioBase, public cListener
+class INET_API WakeUpRadioBase : public inet::physicallayer::NarrowbandRadioBase, public cListener
 {
 protected:
     cMessage *awake = nullptr;
@@ -28,6 +28,7 @@ protected:
     bool inmediateAwake = true;
 
     int controlledSistemGateId = -1;
+    std::set<int> channels;
 
 
   protected:
@@ -56,7 +57,7 @@ protected:
     virtual void sendAwakeTransmitter();
     virtual void setRadioMode(RadioMode newRadioMode) override;
 
-    virtual void startReception(cMessage *timer, IRadioSignal::SignalPart part) override;
+    virtual void startReception(cMessage *timer, inet::physicallayer::IRadioSignal::SignalPart part) override;
     virtual void endReception(cMessage *timer) override;
 
     // internal methods
@@ -80,7 +81,7 @@ protected:
 };
 
 } // namespace physicallayer
-
+}
 } // namespace inet
 
 #endif

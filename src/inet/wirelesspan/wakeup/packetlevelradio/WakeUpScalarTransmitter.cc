@@ -14,10 +14,12 @@
 
 
 namespace inet {
+namespace wirelesspan {
 namespace physicallayer {
 
 Define_Module(WakeUpScalarTransmitter);
 
+using namespace inet::physicallayer;
 WakeUpScalarTransmitter::WakeUpScalarTransmitter() :
     FlatTransmitterBase()
 {
@@ -45,5 +47,6 @@ const ITransmission *WakeUpScalarTransmitter::createTransmission(const IRadio *t
 }
 
 } // namespace physicallayer
+}
 } // namespace inet
 

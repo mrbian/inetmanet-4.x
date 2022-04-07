@@ -13,11 +13,13 @@
 #include "inet/physicallayer/wireless/common/medium/RadioMedium.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/FlatReceiverBase.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/FlatTransmitterBase.h"
-
+#include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpPreamble_m.h"
 
 namespace inet {
-
+namespace wirelesspan {
 namespace physicallayer {
+
+using namespace inet::physicallayer;
 
 Define_Module(WakeUpRadioBase);
 
@@ -119,6 +121,8 @@ void WakeUpRadioBase::initialize(int stage)
 
         interval = par("interval");
         scanInterval = par("scanTime");
+        // the channel 0 is always present and must awake all the nodes in the coverage area
+        channels.insert(0);
     }
     else if  (stage == INITSTAGE_PHYSICAL_LAYER) {
         // initialize
@@ -243,24 +247,34 @@ void WakeUpRadioBase::startReception(cMessage *timer, IRadioSignal::SignalPart p
     auto arrival = signal->getArrival();
     auto reception = signal->getReception();
     auto packet = medium->receivePacket(this, signal);
+
     if (packet->getTag<PacketProtocolTag>()->getProtocol() == &Protocol::wakeUpOnRadio) {
-        // Wake on radio, check timer
-        //simtime_t arrivalTime = arrival->getStartTime(IRadioSignal::SignalPart::SIGNAL_PART_WHOLE);
-        simtime_t endArrivalTime = arrival->getEndTime(IRadioSignal::SignalPart::SIGNAL_PART_WHOLE);
-        if (isReceiverMode(radioMode) || (awake->isScheduled() && awake->getArrivalTime() <= endArrivalTime)) {
-            // awakening possible
-            auto transmission = signal->getTransmission();
-            auto isReceptionAttempted = medium->isReceptionAttempted(this, transmission, part);
-            EV_INFO << "Reception started: " << (isReceptionAttempted ? "\x1b[1mattempting\x1b[0m" : "\x1b[1mnot attempting\x1b[0m") << " " << (IWirelessSignal *)signal << " " << IRadioSignal::getSignalPartName(part) << " as " << reception << endl;
-            if (isReceptionAttempted) {
-                receptionTimer = timer;
-                emit(receptionStartedSignal, check_and_cast<const cObject *>(reception));
-                if (inmediateAwake) {
-                    sendAwakeReceiver();
-                    cancelScanning();
+        auto preamble = packet->peekAtFront<WakeUpPreamble>();
+        // ignore channels
+        auto it = channels.find(preamble->getChannel());
+        if (it != channels.end()) {
+            // Wake on radio, check timer
+            //simtime_t arrivalTime = arrival->getStartTime(IRadioSignal::SignalPart::SIGNAL_PART_WHOLE);
+            simtime_t endArrivalTime = arrival->getEndTime(IRadioSignal::SignalPart::SIGNAL_PART_WHOLE);
+            if (isReceiverMode(radioMode) || (awake->isScheduled() && awake->getArrivalTime() <= endArrivalTime)) {
+                // awakening possible
+                auto transmission = signal->getTransmission();
+                auto isReceptionAttempted = medium->isReceptionAttempted(this, transmission, part);
+                EV_INFO << "Reception started: " << (isReceptionAttempted ? "\x1b[1mattempting\x1b[0m" : "\x1b[1mnot attempting\x1b[0m") << " " << (IWirelessSignal*) signal << " " << IRadioSignal::getSignalPartName(part)  << " as " << reception << endl;
+                if (isReceptionAttempted) {
+                    receptionTimer = timer;
+                    emit(receptionStartedSignal, check_and_cast<const cObject*>(reception));
+                    if (inmediateAwake) {
+                        sendAwakeReceiver();
+                        cancelScanning();
+                    }
                 }
             }
+            else
+                EV_INFO << "Radio will be off all the period, reception started: \x1b[1mignoring\x1b[0m " << (IWirelessSignal *)signal << " " << IRadioSignal::getSignalPartName(part) << " as " << reception << endl;
         }
+        else
+            EV_INFO << "Channel ignored, Reception started: \x1b[1mignoring\x1b[0m " << (IWirelessSignal *)signal << " " << IRadioSignal::getSignalPartName(part) << " as " << reception << endl;
     }
     else {
         // TODO should be this, but it breaks fingerprints: if (receptionTimer == nullptr && isReceiverMode(radioMode) && arrival->getStartTime(part) == simTime()) {
@@ -290,9 +304,10 @@ void WakeUpRadioBase::sendBeacon()
     if (transmissionTimer->isScheduled())
         return;
     Packet *packet = new Packet();
-    auto chunk = makeShared<BitCountChunk>();
-    chunk->setLength(b(16));
-    packet->insertAtBack(chunk);
+    auto preamble = makeShared<WakeUpPreamble>();
+    //preamble->setChannel(channel);
+
+    packet->insertAtBack(preamble);
     packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::wakeUpOnRadio);
     packet->addTagIfAbsent<SignalBitrateReq>()->setDataBitrate(bps((int)std::floor(16/interval.dbl())));
     encapsulate(packet);
@@ -375,10 +390,15 @@ void WakeUpRadioBase::handleUpperPacket(Packet *packet)
     }
     else {
         simtime_t switchingTime = controlledSwitchingTimes[controlledRadio->getRadioMode()][RADIO_MODE_TRANSMITTER];
-        if (inmediateAwake)
-            sendDelayed(packet, switchingTime, toControlled);
-        else
-            sendDelayed(packet, switchingTime + interval, toControlled);
+
+        // The mac already delay it
+        sendDelayed(packet, switchingTime, toControlled);
+
+//        if (inmediateAwake)
+//            sendDelayed(packet, switchingTime, toControlled);
+//        else
+//            sendDelayed(packet, switchingTime + interval, toControlled);
+
     }
 }
 
@@ -447,6 +467,6 @@ void WakeUpRadioBase::sendAwakeTransmitter()
 
 
 } // namespace physicallayer
-
+}
 } // namespace inet
 

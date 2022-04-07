@@ -12,10 +12,10 @@
 #include "inet/physicallayer/wireless/common/base/packetlevel/FlatReceiverBase.h"
 
 namespace inet {
-
+namespace wirelesspan {
 namespace physicallayer {
 
-class INET_API WakeUpReceiverBase : public FlatReceiverBase
+class INET_API WakeUpReceiverBase : public inet::physicallayer::FlatReceiverBase
 {
   protected:
     W minInterferencePower;
@@ -27,11 +27,11 @@ class INET_API WakeUpReceiverBase : public FlatReceiverBase
 
     void initialize(int stage) override;
 
-    const IListening *createListening(const IRadio *radio, const simtime_t startTime, const simtime_t endTime, const Coord& startPosition, const Coord& endPosition) const override;
+    const inet::physicallayer::IListening *createListening(const inet::physicallayer::IRadio *radio, const simtime_t startTime, const simtime_t endTime, const Coord& startPosition, const Coord& endPosition) const override;
 
-    bool computeIsReceptionPossible(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part) const override;
+    bool computeIsReceptionPossible(const inet::physicallayer::IListening *listening, const inet::physicallayer::IReception *reception, inet::physicallayer::IRadioSignal::SignalPart part) const override;
 
-    bool computeIsReceptionPossible(const IListening *listening, const ITransmission *transmission) const override;
+    bool computeIsReceptionPossible(const inet::physicallayer::IListening *listening, const inet::physicallayer::ITransmission *transmission) const override;
 
     virtual std::ostream& printToStream(std::ostream& stream, int level, int evFlags = 0) const override;
 
@@ -39,7 +39,7 @@ class INET_API WakeUpReceiverBase : public FlatReceiverBase
 };
 
 } // namespace physicallayer
-
+}
 } // namespace inet
 
 #endif

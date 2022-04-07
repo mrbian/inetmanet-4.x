@@ -36,7 +36,7 @@
 #include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpRadioBase.h"
 
 namespace inet {
-
+namespace wirelesspan {
 /**
  * @brief Generic CSMA Mac-Layer.
  *
@@ -87,6 +87,7 @@ class INET_API Ieee802154MacLoss : public Ieee802154Mac
     Ieee802154MacLoss& operator=(const Ieee802154MacLoss&);
 };
 
+}
 } // namespace inet
 
 #endif // ifndef __INET_IEEE802154MAC_H

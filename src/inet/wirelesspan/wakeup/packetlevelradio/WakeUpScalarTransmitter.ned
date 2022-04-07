@@ -13,6 +13,6 @@ module WakeUpScalarTransmitter extends NarrowbandTransmitterBase
 {
     parameters:
         modulation = default("BPSK");
-        @class(physicallayer::WakeUpScalarTransmitter);
+        @class(wirelesspan::physicallayer::WakeUpScalarTransmitter);
 }
 

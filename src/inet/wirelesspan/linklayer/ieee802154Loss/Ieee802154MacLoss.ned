@@ -42,7 +42,7 @@ module Ieee802154MacLoss extends Ieee802154Mac
         double probabilityLink = default(0); // (between 0..1) percentage of links that will lost packet in every node, after set the failure links
         double probabilityFailurePacket = default(0); // (between 0..1) probability of loss in link with loss.
         bool setLossProbability = default(false);
-        @class(Ieee802154MacLoss);
+        @class(wirelesspan::Ieee802154MacLoss);
         @signal[linkBroken](type=inet::Packet);
         @statistic[linkBroken](title="link break"; source=linkBroken; record=count; interpolationmode=none);
         @statistic[packetDropNotAddressToUs](title="packet drop: not addressed to us"; source=packetDropReasonIsNotAddressedToUs(packetDropped); record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);

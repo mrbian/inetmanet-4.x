@@ -11,20 +11,20 @@
 #include "inet/physicallayer/wireless/common/base/packetlevel/FlatTransmitterBase.h"
 
 namespace inet {
-
+namespace wirelesspan {
 namespace physicallayer {
 
-class INET_API WakeUpScalarTransmitter : public FlatTransmitterBase
+class INET_API WakeUpScalarTransmitter : public inet::physicallayer::FlatTransmitterBase
 {
   public:
     WakeUpScalarTransmitter();
 
     virtual std::ostream& printToStream(std::ostream& stream, int level, int evFlags = 0) const override;
-    virtual const ITransmission *createTransmission(const IRadio *radio, const Packet *packet, const simtime_t startTime) const override;
+    virtual const inet::physicallayer::ITransmission *createTransmission(const inet::physicallayer::IRadio *radio, const Packet *packet, const simtime_t startTime) const override;
 };
 
 } // namespace physicallayer
-
+}
 } // namespace inet
 
 #endif
