@@ -207,7 +207,7 @@ void Ipv6SixLowPan::initialize(int stage)
         const char *prefixChar = par("ContexCompresionList").stringValue();
         std::vector<std::string> prefixList = cStringTokenizer(prefixChar).asVector();
 
-        for (int i = 0; i < prefixList.size(); i++) {
+        for (size_t i = 0; i < prefixList.size(); i++) {
             std::string process = prefixList[i];
             auto posIndex = process.find("?");
             if (posIndex == std::string::npos)
@@ -867,7 +867,7 @@ Ipv6SixLowPan::compressLowPanIphc (Packet * packet, L3Address const &src, L3Addr
 
       // Compress header extensions
       iphcHeader->setNh(false);
-      for (int i = 0; i < ipHeader->getExtensionHeaderArraySize(); i++) {
+      for (size_t i = 0; i < ipHeader->getExtensionHeaderArraySize(); i++) {
           auto extension = ipHeader->getExtensionHeader(i);
           if (canCompressLowPanNhc((IpProtocolId)extension->getExtensionType())) {
               iphcHeader->setNh (true);
@@ -1513,7 +1513,7 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
     }
     if (encoding->getNh()) {
         // Compressed headers, first decompress EXT headers
-        for (int i = 0; i < encoding->getExtensionHeaderArraySize(); i++) {
+        for (size_t i = 0; i < encoding->getExtensionHeaderArraySize(); i++) {
             if (decompressLowPanNhc(ipHeader, encoding->getExtensionHeaderForUpdate(i))==B(0)) {
                 ipHeader->appendExtensionHeader(encoding->getExtensionHeaderForUpdate(i)->dup());
             }
@@ -1534,7 +1534,7 @@ Ipv6SixLowPan::decompressLowPanIphc (Packet * packet, L3Address const &src, L3Ad
 
     }
     else {
-        for (int i = 0; i < encoding->getExtensionHeaderArraySize(); i++) {
+        for (size_t i = 0; i < encoding->getExtensionHeaderArraySize(); i++) {
             ipHeader->appendExtensionHeader(encoding->getExtensionHeaderForUpdate(i)->dup());
         }
     }

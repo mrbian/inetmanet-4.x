@@ -880,7 +880,7 @@ void LoadNgBase::handleRREP(const Ptr<Rrep>& rrep, const L3Address& sourceAddr, 
     else if (destRoute && destRoute->getSource() == this) {    // already exists
         destRouteData = check_and_cast<LoadNgRouteData *>(destRoute->getProtocolData());
         if (destRouteData == nullptr)
-            throw cRuntimeError("");
+            throw cRuntimeError("destRouteData == nullptr");
         // Upon comparison, the existing entry is updated only in the following circumstances:
         //updateRoutingTable(destRoute, destRoute->getNextHopAsGeneric(), destRoute->getMetric(), destRouteData->getDestSeqNum(), true, simTime() + activeRouteTimeout, destRouteData->getMetric(), destRouteData->getMetric());
         updateValidRouteLifeTime(rrep->getDestAddr(), simTime() + activeRouteTimeout);
@@ -1364,7 +1364,7 @@ IRoute *LoadNgBase::createRoute(const L3Address& destAddr, const L3Address& next
     IRoute *route = routingTable->findBestMatchingRoute(destAddr);
     if (route != nullptr) {
         if (route->getSource() == this)
-            throw cRuntimeError("");
+            throw cRuntimeError("route->getSource() == this");
         else
             routingTable->deleteRoute(route);
     }

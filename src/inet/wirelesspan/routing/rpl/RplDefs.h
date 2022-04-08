@@ -95,7 +95,7 @@ inline std::ostream& operator<<(std::ostream& os, std::list<uint8_t> &list)
 
 inline std::ostream& operator<<(std::ostream& os, std::deque<Ipv6Address> const& srcRoutingAddresses)
 {
-    for (auto i = 0; i < srcRoutingAddresses.size() - 1; i++)
+    for (size_t i = 0; i < srcRoutingAddresses.size() - 1; i++)
         os << srcRoutingAddresses[i] << " => ";
     os << srcRoutingAddresses[srcRoutingAddresses.size() - 1] << endl;
 
