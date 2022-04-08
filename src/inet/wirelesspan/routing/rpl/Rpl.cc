@@ -857,7 +857,7 @@ void Rpl::sendRplPacket(const Ptr<RplPacket> &body, RplPacketCode code,
 
 const Ptr<Dio> Rpl::createDio()
 {
-    auto ourMacAddr = interfaceTable->getInterface(1)->getMacAddress();
+   // auto ourMacAddr = interfaceTable->getInterface(1)->getMacAddress();
     selfId = interfaceTable->getInterface(1)->getMacAddress().getInt();
     auto dio = makeShared<Dio>();
     dio->setInstanceId(instanceId);
