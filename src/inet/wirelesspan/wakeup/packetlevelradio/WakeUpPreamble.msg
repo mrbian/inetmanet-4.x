@@ -24,7 +24,7 @@ namespace inet::wirelesspan::physicallayer;
 
 class WakeUpPreamble extends FieldsChunk
 {
-   uint8_t channel = 0;
+   uint8_t listeningCode = 0;
    chunkLength = B(1);
 }
 

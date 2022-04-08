@@ -28,7 +28,7 @@ protected:
     bool inmediateAwake = true;
 
     int controlledSistemGateId = -1;
-    std::set<int> channels;
+    std::set<int> listeningCodes;
 
 
   protected:
@@ -42,7 +42,6 @@ protected:
 
     virtual void updateTransceiverState() override;
 
-
     virtual void handleUpperCommand(cMessage *message) override;
     virtual void initialize(int stage) override;
     virtual void handleSelfMessage(cMessage *message) override;
@@ -53,15 +52,16 @@ protected:
     virtual bool isFromControlled(cMessage *message) const;
 
     virtual RadioMode getRadioMode() const override;
-    virtual void sendAwakeReceiver();
-    virtual void sendAwakeTransmitter();
-    virtual void setRadioMode(RadioMode newRadioMode) override;
+    virtual void controllerRadioAwakeReceiver();
+    virtual void controllerRadioAwakeTransmitter();
+    virtual void setRadioMode(RadioMode newRadioMode) override {setRadioModeWithCode(newRadioMode);}
+    virtual void setRadioModeWithCode(RadioMode newRadioMode, int code = 0);
 
     virtual void startReception(cMessage *timer, inet::physicallayer::IRadioSignal::SignalPart part) override;
     virtual void endReception(cMessage *timer) override;
 
     // internal methods
-    virtual void sendBeacon();
+    virtual void sendBeacon(int code = 0);
     virtual void setState(RadioMode newRadioMode);
 
   public:
@@ -78,6 +78,13 @@ protected:
     virtual void cancelScanning();
     virtual void setModeControlled(RadioMode newRadioMode);
     virtual void setRadioModeNoBeacon(RadioMode newRadioMode);
+
+    // this method awake the node in tranmitting mode and sends the code to awake the rest of nodes
+    virtual void awakeNodes(int code) {setRadioModeWithCode(IRadio::RADIO_MODE_TRANSMITTER, code);}
+
+    virtual std::vector<int> getListeningCodes() const;
+    virtual void addListeningCode(const int &);
+    virtual bool removeListeningCode(const int &);
 };
 
 } // namespace physicallayer

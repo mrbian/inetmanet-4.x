@@ -122,7 +122,7 @@ void WakeUpRadioBase::initialize(int stage)
         interval = par("interval");
         scanInterval = par("scanTime");
         // the channel 0 is always present and must awake all the nodes in the coverage area
-        channels.insert(0);
+        listeningCodes.insert(0);
     }
     else if  (stage == INITSTAGE_PHYSICAL_LAYER) {
         // initialize
@@ -164,7 +164,7 @@ void WakeUpRadioBase::handleSelfMessage(cMessage *message)
             setState(IRadio::RADIO_MODE_RECEIVER);
         if (receptionTimer && !inmediateAwake) {
             // energy detected
-            sendAwakeReceiver();
+            controllerRadioAwakeReceiver();
             cancelScanning();
         }
         else {
@@ -239,8 +239,6 @@ void WakeUpRadioBase::updateTransceiverState()
     }
 }
 
-
-
 void WakeUpRadioBase::startReception(cMessage *timer, IRadioSignal::SignalPart part)
 {
     auto signal = static_cast<WirelessSignal *>(timer->getControlInfo());
@@ -251,8 +249,8 @@ void WakeUpRadioBase::startReception(cMessage *timer, IRadioSignal::SignalPart p
     if (packet->getTag<PacketProtocolTag>()->getProtocol() == &Protocol::wakeUpOnRadio) {
         auto preamble = packet->peekAtFront<WakeUpPreamble>();
         // ignore channels
-        auto it = channels.find(preamble->getChannel());
-        if (it != channels.end()) {
+        auto it = listeningCodes.find(preamble->getListeningCode());
+        if (it != listeningCodes.end()) {
             // Wake on radio, check timer
             //simtime_t arrivalTime = arrival->getStartTime(IRadioSignal::SignalPart::SIGNAL_PART_WHOLE);
             simtime_t endArrivalTime = arrival->getEndTime(IRadioSignal::SignalPart::SIGNAL_PART_WHOLE);
@@ -265,7 +263,7 @@ void WakeUpRadioBase::startReception(cMessage *timer, IRadioSignal::SignalPart p
                     receptionTimer = timer;
                     emit(receptionStartedSignal, check_and_cast<const cObject*>(reception));
                     if (inmediateAwake) {
-                        sendAwakeReceiver();
+                        controllerRadioAwakeReceiver();
                         cancelScanning();
                     }
                 }
@@ -298,7 +296,7 @@ void WakeUpRadioBase::startReception(cMessage *timer, IRadioSignal::SignalPart p
     check_and_cast<RadioMedium *>(medium.get())->emit(IRadioMedium::signalArrivalStartedSignal, check_and_cast<const cObject *>(reception));
 }
 
-void WakeUpRadioBase::sendBeacon()
+void WakeUpRadioBase::sendBeacon(int code)
 {
     cancelScanning();
     if (transmissionTimer->isScheduled())
@@ -306,6 +304,7 @@ void WakeUpRadioBase::sendBeacon()
     Packet *packet = new Packet();
     auto preamble = makeShared<WakeUpPreamble>();
     //preamble->setChannel(channel);
+    preamble->setListeningCode(code);
 
     packet->insertAtBack(preamble);
     packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::wakeUpOnRadio);
@@ -325,12 +324,12 @@ void WakeUpRadioBase::sendBeacon()
     check_and_cast<RadioMedium *>(medium.get())->emit(IRadioMedium::signalDepartureStartedSignal, check_and_cast<const cObject *>(transmission));
 }
 
-void WakeUpRadioBase::setRadioMode(RadioMode newRadioMode)
+void WakeUpRadioBase::setRadioModeWithCode(RadioMode newRadioMode, int code)
 {
     Enter_Method("setRadioMode");
     if (newRadioMode == IRadio::RADIO_MODE_TRANSMITTER) {
         setState(IRadio::RADIO_MODE_TRANSMITTER);
-        sendBeacon();
+        sendBeacon(code);
         setModeControlled(newRadioMode);
     }
     else if (newRadioMode == IRadio::RADIO_MODE_RECEIVER) {
@@ -449,7 +448,7 @@ void WakeUpRadioBase::setBitrate(bps newBitrate)
     flatTransmitter->setBitrate(newBitrate);
 }
 
-void WakeUpRadioBase::sendAwakeReceiver()
+void WakeUpRadioBase::controllerRadioAwakeReceiver()
 {
     if (controlledRadio->getRadioMode() == Radio::RADIO_MODE_OFF || controlledRadio->getRadioMode() == Radio::RADIO_MODE_SLEEP) {
         controlledRadio->setRadioMode(RADIO_MODE_RECEIVER);
@@ -457,13 +456,37 @@ void WakeUpRadioBase::sendAwakeReceiver()
 }
 
 
-void WakeUpRadioBase::sendAwakeTransmitter()
+void WakeUpRadioBase::controllerRadioAwakeTransmitter()
 {
     if (controlledRadio->getRadioMode() == Radio::RADIO_MODE_OFF || controlledRadio->getRadioMode() == Radio::RADIO_MODE_SLEEP) {
         controlledRadio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
     }
 }
 
+// handle listening codes
+std::vector<int> WakeUpRadioBase::getListeningCodes() const
+{
+    std::vector<int> codes;
+    for (const auto &elem : listeningCodes) {
+        codes.push_back(elem);
+    }
+    return codes;
+}
+
+void WakeUpRadioBase::addListeningCode(const int &code)
+{
+    listeningCodes.insert(code);
+}
+
+bool WakeUpRadioBase::removeListeningCode(const int & code)
+{
+    auto it = listeningCodes.find(code);
+    if (it != listeningCodes.end()) {
+        listeningCodes.erase(it);
+        return true;
+    }
+    return false;
+}
 
 
 } // namespace physicallayer

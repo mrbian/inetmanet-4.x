@@ -269,7 +269,13 @@ void Ieee802154MacLoss::updateStatusCCA(t_mac_event event, cMessage *msg)
             if (isIdle) {
                 EV_DETAIL << "(3) FSM State CCA_3, EV_TIMER_CCA, [Channel Idle]: -> TRANSMITFRAME_4." << endl;
                 updateMacState(TRANSMITFRAME_4);
-                radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                // Here, the code should a function of the destination address.
+
+                if (wakeUpRadio)
+                    wakeUpRadio->awakeNodes(0); // code 0 is default, all nodes
+                else
+                    radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+
                 if (currentTxFrame == nullptr) {
                     currentTxFrame = dequeuePacket();
                     encapsulate(currentTxFrame);
