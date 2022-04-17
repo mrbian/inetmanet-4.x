@@ -176,7 +176,6 @@ module DataService
 module Interface extends NetworkInterface
 {
     parameters:
-        isWireless = default(false);
         string interfaceTableModule;
         @class(NetworkInterface);
         @display("i=block/ifcard");
