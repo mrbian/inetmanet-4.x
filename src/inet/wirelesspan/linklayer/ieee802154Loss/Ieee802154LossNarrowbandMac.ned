@@ -16,7 +16,7 @@
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
 
-package inet.linklayer.ieee802154Loss;
+package inet.wirelesspan.linklayer.ieee802154Loss;
 
 module Ieee802154LossNarrowbandMac extends Ieee802154MacLoss
 {

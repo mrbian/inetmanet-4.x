@@ -137,6 +137,7 @@ class INET_API Protocol
     // Additional wireless protocols
     static const Protocol lora;
     static const Protocol lte;
+    static const Protocol wakeUpOnRadio;
 };
 
 inline std::ostream& operator<<(std::ostream& o, const Protocol& t) { o << t.str(); return o; }

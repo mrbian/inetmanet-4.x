@@ -33,9 +33,10 @@
 #include "inet/linklayer/contract/IMacProtocol.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadio.h"
 #include "inet/linklayer/ieee802154/Ieee802154Mac.h"
+#include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpRadioBase.h"
 
 namespace inet {
-
+namespace wirelesspan {
 /**
  * @brief Generic CSMA Mac-Layer.
  *
@@ -49,6 +50,8 @@ namespace inet {
  */
 class INET_API Ieee802154MacLoss : public Ieee802154Mac
 {
+    physicallayer::WakeUpRadioBase *wakeUpRadio = nullptr;
+
   public:
     Ieee802154MacLoss()
         : Ieee802154Mac()
@@ -69,6 +72,12 @@ class INET_API Ieee802154MacLoss : public Ieee802154Mac
 
     virtual bool discard(const L3Address &addr);
 
+    virtual void updateStatusIdle(t_mac_event event, cMessage *msg) override;
+    virtual void updateStatusBackoff(t_mac_event event, cMessage *msg) override;
+    virtual void updateStatusCCA(t_mac_event event, cMessage *msg) override;
+    virtual void updateStatusTransmitFrame(t_mac_event event, cMessage *msg) override;
+    virtual void updateStatusWaitAck(t_mac_event event, cMessage *msg) override;
+
   private:
     /** @brief Copy constructor is not allowed.
      */
@@ -78,6 +87,7 @@ class INET_API Ieee802154MacLoss : public Ieee802154Mac
     Ieee802154MacLoss& operator=(const Ieee802154MacLoss&);
 };
 
+}
 } // namespace inet
 
 #endif // ifndef __INET_IEEE802154MAC_H

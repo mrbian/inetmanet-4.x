@@ -22,7 +22,7 @@
 //* part of:    Modifications to the MF-2 framework by CSEM
 //**************************************************************************/
 
-package inet.linklayer.ieee802154Loss;
+package inet.wirelesspan.linklayer.ieee802154Loss;
 
 import inet.queueing.contract.IPacketQueue;
 import inet.linklayer.base.MacProtocolBase;
@@ -41,8 +41,8 @@ module Ieee802154MacLoss extends Ieee802154Mac
         double probabilityCompleteFailureLink = default(0); // (between 0..1) percentage of links that will fail in every node        
         double probabilityLink = default(0); // (between 0..1) percentage of links that will lost packet in every node, after set the failure links
         double probabilityFailurePacket = default(0); // (between 0..1) probability of loss in link with loss.
-
-        @class(Ieee802154MacLoss);
+        bool setLossProbability = default(false);
+        @class(wirelesspan::Ieee802154MacLoss);
         @signal[linkBroken](type=inet::Packet);
         @statistic[linkBroken](title="link break"; source=linkBroken; record=count; interpolationmode=none);
         @statistic[packetDropNotAddressToUs](title="packet drop: not addressed to us"; source=packetDropReasonIsNotAddressedToUs(packetDropped); record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
