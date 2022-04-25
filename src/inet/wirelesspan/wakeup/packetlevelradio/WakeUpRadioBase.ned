@@ -34,7 +34,7 @@ module WakeUpRadioBase extends LayeredProtocolBase like IRadio
         bool displayInterferenceRange = default(false);  // if true interference range is displayed as a gray circle around the node
 
         *.energySourceModule = default(absPath(this.energySourceModule));
-
+        
         @signal[packetSentToUpper](type=cPacket);
         @signal[packetReceivedFromUpper](type=cPacket);
         @signal[radioModeChanged](type=long);
@@ -66,6 +66,8 @@ module WakeUpRadioBase extends LayeredProtocolBase like IRadio
         transmitter.typename = default(signalAnalogRepresentation == "scalar" ? "WakeUpScalarTransmitter" : signalAnalogRepresentation == "dimensional" ? "WakeUpDimensionalTransmitter" : "");
         receiver.typename = default(signalAnalogRepresentation == "scalar" ? "WakeUpScalarReceiver" : signalAnalogRepresentation == "dimensional" ? "WakeUpDimensionalReceiver" : "");
 
+
+        string listeningCodes = default("");
 
         // 802.15.4-2006 (page 28)
         *.bitrate = default(250 kbps);
@@ -103,8 +105,8 @@ module WakeUpRadioBase extends LayeredProtocolBase like IRadio
         // TX Output power (typ. 3.5 dBm, ATmega256RFR2, page 564)
         transmitter.power = default(2.24mW);
 
-        double interval @unit(s) = default(33ms);
-        double scanTime @unit(s) = default(0.1ms);
+        double interval @unit(s) = default(10ms);
+        double scanTime @unit(s) = default(1us);
         @class(wirelesspan::physicallayer::WakeUpRadioBase);
 
         @display("i=block/wrxtx");

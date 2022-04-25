@@ -123,6 +123,11 @@ void WakeUpRadioBase::initialize(int stage)
         scanInterval = par("scanTime");
         // the channel 0 is always present and must awake all the nodes in the coverage area
         listeningCodes.insert(0);
+        auto listCodes = cStringTokenizer(par("listeningCodes").stringValue()).asIntVector();
+        if (!listCodes.empty()) {
+            for (const auto &elem: listCodes)
+                listeningCodes.insert(elem);
+        }
     }
     else if  (stage == INITSTAGE_PHYSICAL_LAYER) {
         // initialize
