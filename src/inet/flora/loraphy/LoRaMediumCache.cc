@@ -73,8 +73,8 @@ LoRaMediumCache::LoRaMediumCache() :
     minInterferencePower(W(NaN)),
     minReceptionPower(W(NaN)),
     maxAntennaGain(NaN),
-    minInterferenceTime(NaN),
-    maxTransmissionDuration(NaN),
+    minInterferenceTime(-1),
+    maxTransmissionDuration(-1),
     maxCommunicationRange(m(NaN)),
     maxInterferenceRange(m(NaN))
 {
