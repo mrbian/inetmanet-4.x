@@ -21,15 +21,11 @@ extern "C" {
 #include <libavformat/avformat.h>
 };
 
+#include <iostream>
 #include <sys/stat.h>
 
-#include <iostream>
-
 #include "inet/applications/voipstream/AudioOutFile.h"
-#include "inet/applications/voipstream/VoipStreamPacket_m.h"
 #include "inet/common/lifecycle/LifecycleUnsupported.h"
-#include "inet/networklayer/common/L3AddressResolver.h"
-#include "inet/transportlayer/contract/udp/UdpControlInfo_m.h"
 #include "inet/transportlayer/contract/udp/UdpSocket.h"
 
 namespace inet {
@@ -61,7 +57,7 @@ class INET_API VoipStreamReceiver : public cSimpleModule, public LifecycleUnsupp
         Connection() {}
         void addAudioStream(enum AVCodecID codec_id);
         void openAudio(const char *fileName);
-        void writeAudioFrame(uint8_t *buf, int len);
+        void writeAudioFrame(AVPacket *avpkt);
         void writeLostSamples(int sampleCount);
         void closeAudio();
 
