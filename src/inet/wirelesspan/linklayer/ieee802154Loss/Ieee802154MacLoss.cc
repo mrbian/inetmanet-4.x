@@ -42,7 +42,7 @@
 #include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandTransmitterBase.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadioMedium.h"
 #include "inet/wirelesspan/linklayer/ieee802154Loss/Ieee802154MacLoss.h"
-
+#include "inet/wirelesspan/wakeup/packetlevelradio/ListeningCodeTag_m.h"
 
 
 namespace inet {
@@ -271,15 +271,26 @@ void Ieee802154MacLoss::updateStatusCCA(t_mac_event event, cMessage *msg)
                 updateMacState(TRANSMITFRAME_4);
                 // Here, the code should a function of the destination address.
 
-                if (wakeUpRadio)
-                    wakeUpRadio->awakeNodes(0); // code 0 is default, all nodes
-                else
-                    radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+
+
 
                 if (currentTxFrame == nullptr) {
                     currentTxFrame = dequeuePacket();
                     encapsulate(currentTxFrame);
                 }
+
+
+                if (wakeUpRadio) {
+                    int code = 0;
+                    auto tag = currentTxFrame->findTag<ListeningCodeTag>();
+                    if (tag != nullptr)
+                        code = tag->getCode();
+                    wakeUpRadio->awakeNodes(code); // code 0 is default, all nodes
+                }
+                else
+                    radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+
+
                 Packet *mac = currentTxFrame->dup();
                 attachSignal(mac, simTime() + aTurnaroundTime);
 //                sendDown(msg);
