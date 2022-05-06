@@ -279,16 +279,28 @@ void Ieee802154MacLoss::updateStatusCCA(t_mac_event event, cMessage *msg)
                     encapsulate(currentTxFrame);
                 }
 
-
+                auto tag = currentTxFrame->findTag<ListeningCodeTag>();
+                W power = W(NaN);
+                if (tag != nullptr) {
+                    if (!std::isnan(tag->getOutputPower().get()))
+                        power = tag->getOutputPower();
+                }
                 if (wakeUpRadio) {
                     int code = 0;
-                    auto tag = currentTxFrame->findTag<ListeningCodeTag>();
                     if (tag != nullptr)
                         code = tag->getCode();
+                    if(!std::isnan(power.get()))
+                        wakeUpRadio->setPowerControlled(power);
                     wakeUpRadio->awakeNodes(code); // code 0 is default, all nodes
                 }
-                else
+                else {
+                    if(!std::isnan(power.get())) {
+                        auto flatRadio = check_and_cast<inet::physicallayer::FlatRadioBase *>(radio.get());
+                        flatRadio->setPower(power);
+                    }
                     radio->setRadioMode(IRadio::RADIO_MODE_TRANSMITTER);
+                }
+
 
 
                 Packet *mac = currentTxFrame->dup();

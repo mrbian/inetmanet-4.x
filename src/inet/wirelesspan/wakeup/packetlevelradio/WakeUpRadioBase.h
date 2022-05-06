@@ -9,7 +9,7 @@
 #define __INET_WAKEURADIOBASE_H
 
 #include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandRadioBase.h"
-
+#include "inet/physicallayer/wireless/common/base/packetlevel/FlatRadioBase.h"
 namespace inet {
 namespace wirelesspan {
 namespace physicallayer {
@@ -21,7 +21,7 @@ protected:
     cMessage *scanning = nullptr;
     simtime_t interval;
     simtime_t scanInterval;
-    Radio *controlledRadio = nullptr;
+    inet::physicallayer::FlatRadioBase *controlledRadio = nullptr;
     cGate *toControlled = nullptr;
     simtime_t controlledSwitchingTimes[RADIO_MODE_SWITCHING][RADIO_MODE_SWITCHING];
 
@@ -70,6 +70,8 @@ protected:
     WakeUpRadioBase();
 
     virtual void setPower(W newPower);
+    virtual void setPowerControlled(W newPower);
+
     virtual void setAwakeningInterval(simtime_t it) {interval = it;}
     virtual simtime_t getAwakeningInterval() const {return interval;}
     virtual void setBitrate(bps newBitrate);

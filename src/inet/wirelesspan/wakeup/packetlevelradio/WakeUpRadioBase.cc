@@ -110,9 +110,7 @@ void WakeUpRadioBase::initialize(int stage)
 
         auto mod = toControlled->getPathEndGate()->getOwner();
         cModule *modAux = this->getParentModule()->getSubmodule("controlledRadio");
-        controlledRadio = check_and_cast<Radio *>(modAux);
-
-
+        controlledRadio = check_and_cast<inet::physicallayer::FlatRadioBase *>(modAux);
         if (mod != controlledRadio)
             throw cRuntimeError("check gate and radio controlled module");
 
@@ -447,10 +445,14 @@ void WakeUpRadioBase::setPower(W newPower)
     flatTransmitter->setPower(newPower);
 }
 
+void WakeUpRadioBase::setPowerControlled(W newPower)
+{
+    controlledRadio->setPower(newPower);
+}
+
 void WakeUpRadioBase::setBitrate(bps newBitrate)
 {
-    FlatTransmitterBase *flatTransmitter = const_cast<FlatTransmitterBase *>(check_and_cast<const FlatTransmitterBase *>(transmitter));
-    flatTransmitter->setBitrate(newBitrate);
+    controlledRadio->setBitrate(newBitrate);
 }
 
 void WakeUpRadioBase::controllerRadioAwakeReceiver()

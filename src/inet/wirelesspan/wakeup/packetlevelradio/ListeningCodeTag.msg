@@ -15,10 +15,13 @@
 
 import inet.common.INETDefs;
 import inet.common.TagBase;
+import inet.common.Units;
 
 namespace inet::wirelesspan::physicallayer;
 
 class ListeningCodeTag extends TagBase
 {
     int code;
+    W outputPower =W(NaN);
+    W sensitivity = W(NaN);
 }
