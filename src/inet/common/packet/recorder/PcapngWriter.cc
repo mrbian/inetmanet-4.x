@@ -211,8 +211,10 @@ void PcapngWriter::writePacket(simtime_t stime, const Packet *packet, Direction 
     struct pcapng_packet_block_header pbh;
     pbh.blockTotalLength = blockTotalLength;
     pbh.interfaceId = pcapngInterfaceId;
-    pbh.timestampHigh = (int32_t)stime.inUnit(SIMTIME_S);
-    pbh.timestampLow = (uint32_t)(stime.inUnit(SIMTIME_US) - (uint32_t)1000000 * stime.inUnit(SIMTIME_S));
+    ASSERT(stime >= SIMTIME_ZERO);
+    uint64_t timestamp = stime.inUnit(SIMTIME_US);
+    pbh.timestampHigh = static_cast<uint32_t>((timestamp >> 32) & 0xFFFFFFFFLLU);
+    pbh.timestampLow = static_cast<uint32_t>(timestamp & 0xFFFFFFFFLLU);
     pbh.capturedPacketLength = packet->getByteLength();
     pbh.originalPacketLength = packet->getByteLength();
     fwrite(&pbh, sizeof(pbh), 1, dumpfile);
