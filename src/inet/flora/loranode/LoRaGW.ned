@@ -28,6 +28,10 @@ import inet.applications.contract.IApp;
 import inet.transportlayer.contract.IUdp;
 import inet.networklayer.contract.IRoutingTable;
 import inet.common.MessageDispatcher;
+import inet.common.MessageDispatcher;
+import inet.linklayer.ethernet.contract.IEthernetLayer;
+import inet.protocolelement.contract.IProtocolLayer;
+
 
 module LoRaGW like INetworkNode
 {
@@ -51,6 +55,8 @@ module LoRaGW like INetworkNode
 
         *.mobilityModule = default(exists(mobility) ? absPath(".mobility") : "");
 
+        ethernet.registerProtocol = default(true);
+
         @display("bgb=783.96,587.688;i=device/antennatower");
     gates:
         inout ethg[numEthInterfaces] @labels(EtherFrame-conn) @allowUnconnected;
@@ -63,15 +69,23 @@ module LoRaGW like INetworkNode
         }
         tn: MessageDispatcher {
             parameters:
-                @display("p=394.80002,276.36002;b=100,5,,,,1");
+                @display("p=400.698,231.672;b=100,5,,,,1");
         }
         nl: MessageDispatcher {
             parameters:
-                @display("p=394.80002,391.41602;b=100,5,,,,1");
+                @display("p=394.788,345.144;b=100,5,,,,1");
         }
+
+        cb: MessageDispatcher {
+            @display("p=393.60602,394.788;b=500,5");
+        }
+        bl: MessageDispatcher {
+            @display("p=399.516,464.526;b=500,5");
+        }
+
         li: MessageDispatcher {
             parameters:
-                @display("p=394.80002,442.17603;b=100,5,,,,1");
+                @display("p=394.788,509.44202;b=100,5,,,,1");
         }
         interfaceTable: InterfaceTable {
             @display("p=135.36,69.936005");
@@ -87,24 +101,37 @@ module LoRaGW like INetworkNode
         }
         eth[sizeof(ethg)]: <default("EthernetInterface")> like IEthernetInterface {
             parameters:
-                @display("p=394.80002,503.088,row,150;q=txQueue");
+                @display("p=400.698,548.448,row,150;q=txQueue");
         }
         udp: <default(firstAvailableOrEmpty("Udp"))> like IUdp if hasUdp {
             parameters:
-                @display("p=394.80002,206.42401");
+                @display("p=394.788,178.482");
         }
         ipv4: <default("Ipv4NetworkLayer")> like INetworkLayer if hasIpv4 {
             parameters:
-                @display("p=394.80002,333.888;q=queue");
+                @display("p=394.788,283.68;q=queue");
         }
         routingTable: <routingTableType> like IRoutingTable if routingTableType != "" {
             parameters:
                 @display("p=135.36,313.584;is=s");
         }
+
+        bridging: <default("")> like IProtocolLayer if typename != "" {
+            @display("p=248.22,419.61002");
+        }
+
+        ethernet: <default(sizeof(ethg) > 0 ? "EthernetEncapsulation" : "")> like IEthernetLayer if typename != "" {
+            @display("p=273.042,502.35");
+        }
+
     connections allowunconnected:
 
         at.out++ --> udp.appIn;
         at.in++ <-- udp.appOut;
+
+
+        bl.out++ --> li.in++;
+        li.out++ --> bl.in++;
 
         packetForwarder.lowerLayerOut --> LoRaGWNic.upperLayerIn;
         LoRaGWNic.upperLayerOut --> packetForwarder.lowerLayerIn;
@@ -120,10 +147,29 @@ module LoRaGW like INetworkNode
         ipv4.ifIn <-- nl.out++;
         ipv4.ifOut --> nl.in++;
 
+
+
         tn.out++ --> ipv4.transportIn;
         tn.in++ <-- ipv4.transportOut;
-        nl.out++ --> li.in++;
-        nl.in++ <-- li.out++;
+        cb.out++ --> nl.in++;
+        cb.in++ <-- nl.out++;
         udp.ipOut --> tn.in++;
         udp.ipIn <-- tn.out++;
+
+        cb.out++ --> bridging.upperLayerIn if exists(bridging);
+        bridging.upperLayerOut --> cb.in++ if exists(bridging);
+
+        cb.out++ --> bl.in++ if !exists(bridging);
+        bl.out++ --> cb.in++ if !exists(bridging);
+
+        bridging.lowerLayerOut --> bl.in++ if exists(bridging);
+        bl.out++ --> bridging.lowerLayerIn if exists(bridging);
+
+        bl.out++ --> ethernet.upperLayerIn if exists(ethernet);
+        ethernet.upperLayerOut --> bl.in++ if exists(ethernet);
+
+        ethernet.lowerLayerOut --> li.in++ if exists(ethernet);
+        li.out++ --> ethernet.lowerLayerIn if exists(ethernet);
+
+
 }

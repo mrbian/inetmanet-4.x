@@ -17,7 +17,7 @@ namespace physicallayer {
 class INET_API FlatRadioBase : public NarrowbandRadioBase
 {
   protected:
-    void handleUpperCommand(cMessage *message) override;
+    virtual void handleUpperCommand(cMessage *message) override;
 
   public:
     FlatRadioBase();

@@ -37,6 +37,7 @@ LoRaReceiver::LoRaReceiver() :
 
 void LoRaReceiver::initialize(int stage)
 {
+    FlatReceiverBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL)
     {
         snirThreshold = math::dB2fraction(par("snirThreshold"));
