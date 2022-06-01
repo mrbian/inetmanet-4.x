@@ -175,7 +175,7 @@ void AckingMac::handleSelfMessage(cMessage *message)
         // packet lost
         emit(linkBrokenSignal, currentTxFrame);
         PacketDropDetails details;
-        details.setReason(OTHER_PACKET_DROP);
+        details.setReason(RETRY_LIMIT_REACHED);
         dropCurrentTxFrame(details);
         if (transmissionState != IRadio::TRANSMISSION_STATE_TRANSMITTING && canDequeuePacket())
             processUpperPacket();
