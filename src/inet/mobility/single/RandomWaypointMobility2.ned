@@ -41,6 +41,7 @@ import inet.mobility.single.RandomWaypointMobility;
 simple RandomWaypointMobility2 extends RandomWaypointMobility
 {
     parameters:
+        string physicalEnvironmentModule = default("physicalEnvironment");
         string Active @enum("ON", "OFF") = default("ON");
         @class(RandomWaypointMobility2);
 }

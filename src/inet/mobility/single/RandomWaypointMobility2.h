@@ -20,7 +20,10 @@
 #define __INET_RANDOMWPMOBILITY2_H
 
 #include "inet/common/INETDefs.h"
+#include "inet/common/IVisitor.h"
+#include "inet/common/ModuleRefByPar.h"
 #include "inet/mobility/single/RandomWaypointMobility.h"
+#include "inet/environment/contract/IPhysicalEnvironment.h"
 
 namespace inet {
 
@@ -34,8 +37,25 @@ namespace inet {
 class INET_API RandomWaypointMobility2 : public RandomWaypointMobility
 {
   protected:
+    physicalenvironment::IPhysicalEnvironment* physicalEnvironment = nullptr;
     /** @brief Initializes mobility model parameters.*/
     virtual void initialize(int stage) override;
+    virtual void setTargetPosition() override;
+    virtual bool isObstacle(const physicalenvironment::IPhysicalObject *object, const Coord& transmissionPosition, const Coord& receptionPosition) const;
+    class Visitor : public IVisitor
+    {
+    protected:
+        const RandomWaypointMobility2 *obstacles = nullptr;
+        const Coord transmissionPosition;
+        const Coord receptionPosition;
+        mutable bool isObstacleFound_ = false;
+    public:
+        Visitor(RandomWaypointMobility2 *, const Coord& endPosition, const Coord& initialPosition);
+        void visit(const cObject *object) const override;
+        bool isObstacleFound() const { return isObstacleFound_; }
+    };
+
+
   public:
     RandomWaypointMobility2();
 };

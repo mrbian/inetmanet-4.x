@@ -43,7 +43,7 @@ simsignal_t LoRaRadio::droppedPacket = cComponent::registerSignal("droppedPacket
 
 void LoRaRadio::initialize(int stage)
 {
-    FlatRadioBase::initialize(stage);
+    NarrowbandRadioBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         iAmGateway = par("iAmGateway").boolValue();
     }
@@ -123,7 +123,7 @@ void LoRaRadio::handleMessageWhenUp(cMessage *message)
 
 void LoRaRadio::handleSelfMessage(cMessage *message)
 {
-    FlatRadioBase::handleSelfMessage(message);
+    NarrowbandRadioBase::handleSelfMessage(message);
     /*if (message == switchTimer)
         handleSwitchTimer(message);
     else if (message == transmissionTimer)
@@ -250,7 +250,7 @@ void LoRaRadio::handleNodeCrash()
 
 void LoRaRadio::startTransmission(Packet *macFrame, IRadioSignal::SignalPart part)
 {
-    FlatRadioBase::startTransmission(macFrame, part);
+    NarrowbandRadioBase::startTransmission(macFrame, part);
    /* auto radioFrame = createSignal(macFrame);
     auto transmission = radioFrame->getTransmission();
     transmissionTimer->setKind(part);
@@ -269,7 +269,7 @@ void LoRaRadio::startTransmission(Packet *macFrame, IRadioSignal::SignalPart par
 
 void LoRaRadio::continueTransmission()
 {
-    FlatRadioBase::continueTransmission();
+    NarrowbandRadioBase::continueTransmission();
     /*
     auto previousPart = (IRadioSignal::SignalPart)transmissionTimer->getKind();
     auto nextPart = (IRadioSignal::SignalPart)(previousPart + 1);
@@ -286,7 +286,7 @@ void LoRaRadio::continueTransmission()
 
 void LoRaRadio::endTransmission()
 {
-    FlatRadioBase::endTransmission();
+    NarrowbandRadioBase::endTransmission();
     /*
     auto part = (IRadioSignal::SignalPart)transmissionTimer->getKind();
     auto radioFrame = static_cast<Signal *>(transmissionTimer->getContextPointer());
@@ -306,7 +306,7 @@ void LoRaRadio::endTransmission()
 
 void LoRaRadio::abortTransmission()
 {
-    FlatRadioBase::abortTransmission();
+    NarrowbandRadioBase::abortTransmission();
  /*   auto part = (IRadioSignal::SignalPart)transmissionTimer->getKind();
     auto radioFrame = static_cast<Signal *>(transmissionTimer->getContextPointer());
     auto transmission = radioFrame->getTransmission();
@@ -320,7 +320,7 @@ void LoRaRadio::abortTransmission()
 
 WirelessSignal *LoRaRadio::createSignal(Packet *packet) const
 {
-    return FlatRadioBase::createSignal(packet);
+    return NarrowbandRadioBase::createSignal(packet);
     /*
     Signal *radioFrame = check_and_cast<Signal *>(medium->transmitPacket(this, packet));
     ASSERT(radioFrame->getDuration() != 0);
@@ -330,7 +330,7 @@ WirelessSignal *LoRaRadio::createSignal(Packet *packet) const
 
 void LoRaRadio::startReception(cMessage *timer, IRadioSignal::SignalPart part)
 {
-    FlatRadioBase::startReception(timer, part);
+    NarrowbandRadioBase::startReception(timer, part);
 /*    auto signal = static_cast<Signal *>(timer->getControlInfo());
     auto arrival = signal->getArrival();
     auto reception = signal->getReception();
@@ -359,7 +359,7 @@ void LoRaRadio::startReception(cMessage *timer, IRadioSignal::SignalPart part)
 
 void LoRaRadio::continueReception(cMessage *timer)
 {
-    FlatRadioBase::continueReception(timer);
+    NarrowbandRadioBase::continueReception(timer);
  /*   auto previousPart = (IRadioSignal::SignalPart)timer->getKind();
     auto nextPart = (IRadioSignal::SignalPart)(previousPart + 1);
     auto radioFrame = static_cast<Signal *>(timer->getControlInfo());
@@ -475,7 +475,7 @@ void LoRaRadio::endReception(cMessage *timer)
 
 void LoRaRadio::abortReception(cMessage *timer)
 {
-    FlatRadioBase::abortReception(timer);
+    NarrowbandRadioBase::abortReception(timer);
   /*  auto radioFrame = static_cast<Signal *>(timer->getControlInfo());
     auto part = (IRadioSignal::SignalPart)timer->getKind();
     auto reception = radioFrame->getReception();
@@ -514,7 +514,7 @@ void LoRaRadio::sendUp(Packet *macFrame)
     if (errorTag && !std::isnan(errorTag->getSymbolErrorRate()))
         emit(symbolErrorRateSignal, errorTag->getSymbolErrorRate());
     EV_INFO << "Sending up " << macFrame << endl;
-    FlatRadioBase::sendUp(macFrame);
+    NarrowbandRadioBase::sendUp(macFrame);
     //send(macFrame, upperLayerOut);
 }
 
@@ -527,6 +527,21 @@ void LoRaRadio::setCurrentTxPower(double txPower)
 {
     currentTxPower = txPower;
 }
+
+
+void LoRaRadio::setPower(W newPower)
+{
+    LoRaTransmitter *flatTransmitter = const_cast<LoRaTransmitter *>(check_and_cast<const LoRaTransmitter *>(transmitter));
+    flatTransmitter->setPower(newPower);
+}
+
+void LoRaRadio::setBitrate(bps newBitrate)
+{
+    LoRaTransmitter *flatTransmitter = const_cast<LoRaTransmitter *>(check_and_cast<const LoRaTransmitter *>(transmitter));
+    flatTransmitter->setBitrate(newBitrate);
+    receptionTimer = nullptr;
+}
+
 
 } // namespace physicallayer
 

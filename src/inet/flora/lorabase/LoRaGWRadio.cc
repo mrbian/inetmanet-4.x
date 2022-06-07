@@ -28,7 +28,7 @@ Define_Module(LoRaGWRadio);
 
 void LoRaGWRadio::initialize(int stage)
 {
-    FlatRadioBase::initialize(stage);
+    NarrowbandRadioBase::initialize(stage);
     iAmGateway = par("iAmGateway").boolValue();
     if (stage == INITSTAGE_LAST) {
         setRadioMode(RADIO_MODE_TRANSCEIVER);
@@ -42,7 +42,7 @@ void LoRaGWRadio::initialize(int stage)
 
 void LoRaGWRadio::finish()
 {
-    FlatRadioBase::finish();
+    NarrowbandRadioBase::finish();
     recordScalar("DER - Data Extraction Rate", double(LoRaGWRadioReceptionFinishedCorrect_counter)/LoRaGWRadioReceptionStarted_counter);
 }
 
@@ -291,6 +291,21 @@ void LoRaGWRadio::abortReception(cMessage *timer)
     updateTransceiverState();
     updateTransceiverPart();
 }
+
+void LoRaGWRadio::setPower(W newPower)
+{
+    LoRaTransmitter *flatTransmitter = const_cast<LoRaTransmitter *>(check_and_cast<const LoRaTransmitter *>(transmitter));
+    flatTransmitter->setPower(newPower);
+}
+
+void LoRaGWRadio::setBitrate(bps newBitrate)
+{
+    LoRaTransmitter *flatTransmitter = const_cast<LoRaTransmitter *>(check_and_cast<const LoRaTransmitter *>(transmitter));
+    flatTransmitter->setBitrate(newBitrate);
+    receptionTimer = nullptr;
+}
+
+
 }
 
 }

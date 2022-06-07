@@ -16,6 +16,7 @@
 #ifndef LORA_LORARADIO_H_
 #define LORA_LORARADIO_H_
 
+#include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandRadioBase.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/PhysicalLayerBase.h"
 #include "inet/physicallayer/common/Signal.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IAntenna.h"
@@ -29,7 +30,7 @@ namespace flora {
 
 using namespace physicallayer;
 
-class INET_API LoRaRadio : public FlatRadioBase //: public PhysicalLayerBase, public virtual IRadio
+class INET_API LoRaRadio : public NarrowbandRadioBase //: public PhysicalLayerBase, public virtual IRadio
 {
 public:
   static simsignal_t minSNIRSignal;
@@ -119,6 +120,9 @@ public:
   virtual IRadioSignal::SignalPart getReceivedSignalPart() const override;
 
   virtual void decapsulate(Packet *packet) const override;
+
+  virtual void setPower(W newPower);
+  virtual void setBitrate(bps newBitrate);
 };
 
 } // namespace physicallayer

@@ -22,7 +22,7 @@
 #include "inet/flora/loraphy/LoRaReception.h"
 #include "inet/flora/loraphy/LoRaTransmission.h"
 #include "inet/flora/loraphy/LoRaTransmitter.h"
-#include "inet/physicallayer/wireless/common/base/packetlevel/FlatRadioBase.h"
+#include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandRadioBase.h"
 #include "inet/physicallayer/wireless/common//medium/RadioMedium.h"
 #include "inet/common/LayeredProtocolBase.h"
 
@@ -30,7 +30,7 @@ namespace inet {
 
 namespace flora {
 using namespace physicallayer;
-class LoRaGWRadio : public FlatRadioBase {
+class LoRaGWRadio : public NarrowbandRadioBase {
 private:
     void completeRadioModeSwitch(RadioMode newRadioMode);
 protected:
@@ -65,6 +65,11 @@ public:
     long LoRaGWRadioReceptionFinishedCorrect_counter;
     simsignal_t LoRaGWRadioReceptionStarted;
     simsignal_t LoRaGWRadioReceptionFinishedCorrect;
+
+
+    virtual void setPower(W newPower);
+    virtual void setBitrate(bps newBitrate);
+
 };
 
 }
