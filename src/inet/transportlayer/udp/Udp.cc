@@ -457,7 +457,7 @@ void Udp::joinMulticastGroups(SockDesc *sd, const std::vector<L3Address>& multic
         MulticastMembership *membership = sd->findMulticastMembership(multicastAddr, interfaceId);
         if (membership)
             throw cRuntimeError("UPD::joinMulticastGroups(): %s group on interface %s is already joined.",
-                    multicastAddr.str().c_str(), ift->getInterfaceById(interfaceId)->getFullName());
+                    multicastAddr.str().c_str(), interfaceId == -1 ? "*" : ift->getInterfaceById(interfaceId)->getFullName());
 
         membership = new MulticastMembership();
         membership->interfaceId = interfaceId;
@@ -706,7 +706,6 @@ void Udp::handleUpperPacket(Packet *packet)
     if (packet->getKind() != UDP_C_DATA)
         throw cRuntimeError("Unknown packet command code (message kind) %d received from app", packet->getKind());
 
-    emit(packetReceivedFromUpperSignal, packet);
     L3Address srcAddr, destAddr;
     int srcPort = -1, destPort = -1;
 

@@ -265,7 +265,6 @@ void Radio::handleLowerCommand(cMessage *message)
 
 void Radio::handleUpperPacket(Packet *packet)
 {
-    emit(packetReceivedFromUpperSignal, packet);
     if (isTransmitterMode(radioMode)) {
         if (transmissionTimer->isScheduled())
             throw cRuntimeError("Received frame from upper layer while already transmitting.");
@@ -274,10 +273,8 @@ void Radio::handleUpperPacket(Packet *packet)
         else
             startTransmission(packet, IRadioSignal::SIGNAL_PART_WHOLE);
     }
-    else {
-        EV_ERROR << "Radio is not in transmitter or transceiver mode, dropping frame." << endl;
-        delete packet;
-    }
+    else
+        throw cRuntimeError("Usage error: Radio is not in transmitter or transceiver mode.");
 }
 
 void Radio::handleSignal(WirelessSignal *signal)
