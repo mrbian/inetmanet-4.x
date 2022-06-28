@@ -38,7 +38,7 @@ import inet.routing.contract.IManetRouting;
 // This implementation is based on RFC 3561. For more information, you may
 // refer to the following link: https://tools.ietf.org/html/rfc3561.html.
 //
-simple LoadNgBase like IManetRouting
+simple LoadNgProtocol like IManetRouting
 {
     parameters:
         @class("wirelesspan::routing::LoadNgBase");
