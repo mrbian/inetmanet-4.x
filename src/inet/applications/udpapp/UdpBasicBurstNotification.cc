@@ -52,8 +52,6 @@ void UdpBasicBurstNotification::processStart()
         socket.bind(localPort);
     }
 
-    const char *destAddrs = par("destAddresses");
-    cStringTokenizer tokenizer(destAddrs);
     IInterfaceTable *ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
 
     if (par("setBroadcast").boolValue())
