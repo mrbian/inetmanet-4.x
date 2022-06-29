@@ -24,16 +24,19 @@ void SelfDocumenterFingerprintCalculator::addEvent(cEvent *event)
         auto ctrl = msg->getControlInfo();
         auto context = msg->getContextPointer();
 
-        auto from = msg->getSenderModule();
+        auto fromModule = msg->getSenderModule();
+        auto fromModuleName = fromModule->getComponentType()->getFullName();
+        auto toModule = msg->getArrivalModule();
+        auto toModuleName = toModule->getComponentType()->getFullName();
         if (msg->isSelfMessage()) {
             std::ostringstream os;
             std::string msgName = msg->getName();
             std::replace_if(msgName.begin(), msgName.end(), isNum, 'N');
-            os << "=SelfDoc={ " << SelfDoc::keyVal("module", from->getComponentType()->getFullName())
+            os << "=SelfDoc={ " << SelfDoc::keyVal("module", fromModuleName)
                     << ", " << SelfDoc::keyVal("action", "SCHEDULE")
                     << ", " << SelfDoc::val("details") << " : {"
                     << SelfDoc::keyVal("msg", opp_typename(typeid(*msg)))
-                    << ", " << SelfDoc::keyVal("kind", SelfDoc::kindToStr(msg->getKind(), from->getProperties(), "selfMessageKinds", nullptr, ""))
+                    << ", " << SelfDoc::keyVal("kind", SelfDoc::kindToStr(msg->getKind(), fromModule->getProperties(), "selfMessageKinds", nullptr, ""))
                     << ", " << SelfDoc::keyVal("ctrl", ctrl ? opp_typename(typeid(*ctrl)) : "")
                     << ", " << SelfDoc::tagsToJson("tags", msg)
                     << ", " << SelfDoc::keyVal("msgname", msgName)
@@ -47,20 +50,21 @@ void SelfDocumenterFingerprintCalculator::addEvent(cEvent *event)
             auto arrivalGate = msg->getArrivalGate();
             if (senderGate == nullptr) {
                 std::ostringstream os;
-                os << "=SelfDoc={ " << SelfDoc::keyVal("module", from->getComponentType()->getFullName())
+                os << "=SelfDoc={ " << SelfDoc::keyVal("module", fromModuleName)
                         << ", " << SelfDoc::keyVal("action", "OUTPUTDIRECT")
                         << ", " << SelfDoc::val("details") << " : {"
                         << SelfDoc::keyVal("msg", opp_typename(typeid(*msg)))
-                        << ", " << SelfDoc::keyVal("kind", SelfDoc::kindToStr(msg->getKind(), from->getProperties(), "directSendKinds", arrivalGate->getProperties(), "messageKinds"))
+                        << ", " << SelfDoc::keyVal("kind", SelfDoc::kindToStr(msg->getKind(), fromModule->getProperties(), "directSendKinds", arrivalGate->getProperties(), "messageKinds"))
                         << ", " << SelfDoc::keyVal("ctrl", ctrl ? opp_typename(typeid(*ctrl)) : "")
                         << ", " << SelfDoc::tagsToJson("tags", msg)
+                        << ", " << SelfDoc::keyVal("destModule", toModuleName)
                         << " } }"
                        ;
                 globalSelfDoc.insert(os.str());
             }
             else {
                 std::ostringstream os;
-                os << "=SelfDoc={ " << SelfDoc::keyVal("module", from->getComponentType()->getFullName())
+                os << "=SelfDoc={ " << SelfDoc::keyVal("module", fromModuleName)
                         << ", " << SelfDoc::keyVal("action", "OUTPUT")
                         << ", " << SelfDoc::val("details") << " : {"
                         << SelfDoc::keyVal("gate", SelfDoc::gateInfo(senderGate))
@@ -68,6 +72,7 @@ void SelfDocumenterFingerprintCalculator::addEvent(cEvent *event)
                         << ", " << SelfDoc::keyVal("kind", SelfDoc::kindToStr(msg->getKind(), senderGate->getProperties(), "messageKinds", arrivalGate->getProperties(), "messageKinds"))
                         << ", " << SelfDoc::keyVal("ctrl", ctrl ? opp_typename(typeid(*ctrl)) : "")
                         << ", " << SelfDoc::tagsToJson("tags", msg)
+                        << ", " << SelfDoc::keyVal("destModule", toModuleName)
                         << " } }"
                        ;
                 globalSelfDoc.insert(os.str());
@@ -75,8 +80,7 @@ void SelfDocumenterFingerprintCalculator::addEvent(cEvent *event)
 
             {
                 std::ostringstream os;
-                auto to = msg->getArrivalModule();
-                os << "=SelfDoc={ " << SelfDoc::keyVal("module", to->getComponentType()->getFullName())
+                os << "=SelfDoc={ " << SelfDoc::keyVal("module", toModuleName)
                         << ", " << SelfDoc::keyVal("action", "INPUT")
                         << ", " << SelfDoc::val("details") << " : {"
                         << SelfDoc::keyVal("gate", SelfDoc::gateInfo(arrivalGate))
@@ -84,6 +88,7 @@ void SelfDocumenterFingerprintCalculator::addEvent(cEvent *event)
                         << ", " << SelfDoc::keyVal("kind", SelfDoc::kindToStr(msg->getKind(), arrivalGate->getProperties(), "messageKinds", senderGate ? senderGate->getProperties() : nullptr, "messageKinds"))
                         << ", " << SelfDoc::keyVal("ctrl", ctrl ? opp_typename(typeid(*ctrl)) : "")
                         << ", " << SelfDoc::tagsToJson("tags", msg)
+                        << ", " << SelfDoc::keyVal("srcModule", fromModuleName)
                         << " } }"
                        ;
                 globalSelfDoc.insert(os.str());

@@ -8,8 +8,8 @@ import json
 import re
 
 def tildeize(t):
-    p = re.compile(r'\binet::(([a-z0-9]+::)*)')
-    t = p.sub(r'\1~', t)
+    p = re.compile(r'\b(inet::([a-z0-9]+::)*)')
+    t = p.sub(r'~\1', t)
     p = re.compile(r'\b(inet\.([a-z0-9]+\.)*)')
     t = p.sub(r'~\1', t)
     return t
@@ -32,17 +32,23 @@ def table(rows, title):
                 s +='<td>'
                 sep = ''
                 for vv in v:
-                    s += sep + '{}'.format(tildeize(vv))
+                    if k == 'function':
+                        s += sep + '{}'.format(vv)
+                    else:
+                        s += sep + '{}'.format(tildeize(vv))
                     sep = ', '
                 s +='</td>'
             else:
-                s +='<td>{}</td>'.format(tildeize(v))
+                if k == 'function':
+                    s +='<td>{}</td>'.format(v)
+                else:
+                    s +='<td>{}</td>'.format(tildeize(v))
         s += '</tr>\n'
     s += '</table>\n'
     return s
 
 def markOpt(t):
-    return '<i>{}?</i>'.format(t)
+    return '{}?'.format(t)
 
 # group the colName column of list of tuple
 def groupCol(rows, colName):
@@ -94,7 +100,7 @@ def aggregateCol(rows, colName):
 db = json.load(sys.stdin)
 
 print('<docfragments>')
-for nedtype, actions in db.items():
+for nedtype, actions in db['ned'].items():
     print('<docfragment nedtype="{}" anchor="after-statistics"><![CDATA[\n{}]]></docfragment>\n\n'.format(
         nedtype,
         table(actions.get('SCHEDULE'), 'Scheduled messages') +
@@ -112,4 +118,17 @@ for nedtype, actions in db.items():
         table(aggregateCol(actions.get('TAG'), 'tagAction'), 'Tagging operations') +
         '')
     )
+
+    # TODO add table for TAGs: modules, who uses the actual TAG
+    # TODO CHUNK_USAGE, STAG_USAGE, RTAG_USAGE, TAG_USAGE
+for msgtype, actions in db['msg'].items():
+    print('<docfragment msgtype="{}" anchor="after-properties"><![CDATA[\n{}]]></docfragment>\n\n'.format(
+        msgtype,
+        table(aggregateCol(actions.get('CHUNK_USAGE'), 'module'), 'Packet operations') +
+        table(aggregateCol(actions.get('STAG_USAGE'), 'module'), 'Shared Tagging operations') +
+        table(aggregateCol(actions.get('RTAG_USAGE'), 'module'), 'Region Tagging operations') +
+        table(aggregateCol(actions.get('TAG_USAGE'), 'module'), 'Tagging operations') +
+        '')
+    )
+
 print('</docfragments>')
