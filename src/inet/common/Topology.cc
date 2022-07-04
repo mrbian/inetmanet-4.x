@@ -403,65 +403,69 @@ void Topology::calculateUnweightedSingleShortestPathsTo(Node *_target) const
     }
 }
 
-void Topology::calculateWeightedSingleShortestPathsTo(Node *_target) const
+void Topology::calculateWeightedSingleShortestPathsFrom(Node *source) const
 {
-    if (!_target)
-        throw cRuntimeError(this, "..ShortestPathTo(): target node is nullptr");
-    auto target = _target;
+    calculateWeightedSingleShortestPaths(source, false);
+}
 
-    // clean path infos
+void Topology::calculateWeightedSingleShortestPathsTo(Node *target) const
+{
+    calculateWeightedSingleShortestPaths(target, true);
+}
+
+void Topology::calculateWeightedSingleShortestPaths(Node *initial, bool to) const
+{
+    if (!initial)
+        throw cRuntimeError(this, "calculateWeightedSingleShortestPaths(): initial node is nullptr");
+
     for (auto& elem : nodes) {
         elem->dist = INFINITY;
         elem->outPaths.clear();
     }
-
-    target->dist = 0;
+    initial->dist = 0;
 
     std::list<Node *> q;
-
-    q.push_back(target);
-
+    q.push_back(initial);
     while (!q.empty()) {
-        Node *dest = q.front();
+        Node *current = q.front();
         q.pop_front();
-
-        ASSERT(dest->getWeight() >= 0.0);
+        ASSERT(current->getWeight() >= 0.0);
 
         // for each w adjacent to v...
-        for (int i = 0; i < dest->getNumInLinks(); i++) {
-            if (!(dest->getLinkIn(i)->isEnabled()))
+        for (int i = 0; i < (to ? current->getNumInLinks() : current->getNumOutLinks()); i++) {
+            if (!(to ? current->getLinkIn(i)->isEnabled() : current->getLinkOut(i)->isEnabled()))
                 continue;
 
-            Node *src = dest->getLinkIn(i)->getLinkInRemoteNode();
-            if (!src->isEnabled())
+            Node *remote = to ? current->getLinkIn(i)->getLinkInRemoteNode() : current->getLinkOut(i)->getLinkOutRemoteNode();
+            if (!remote->isEnabled())
                 continue;
 
-            double linkWeight = dest->getLinkIn(i)->getWeight();
+            double linkWeight = to ? current->getLinkIn(i)->getWeight() : current->getLinkOut(i)->getWeight();
 
             // links with linkWeight == 0 might induce circles
             ASSERT(linkWeight > 0.0);
 
-            double newdist = dest->dist + linkWeight;
-            if (dest != target)
-                newdist += dest->getWeight(); // dest is not the target, uses weight of dest node as price of routing (infinity means dest node doesn't route between interfaces)
-            if (newdist != INFINITY && src->dist > newdist) { // it's a valid shorter path from src to target node
-                if (src->dist != INFINITY)
-                    q.remove(src); // src is in the queue
-                src->dist = newdist;
+            double newdist = current->dist + linkWeight;
+            if (current != initial)
+                newdist += current->getWeight(); // current is not the target, uses weight of current node as price of routing (infinity means current node doesn't route between interfaces)
+            if (newdist != INFINITY && remote->dist > newdist) { // it's a valid shorter path from remote to target node
+                if (remote->dist != INFINITY)
+                    q.remove(remote); // remote is in the queue
+                remote->dist = newdist;
                 // the first one will be the shortest
-                src->outPaths.erase(std::remove(src->outPaths.begin(), src->outPaths.end(), dest->inLinks[i]), src->outPaths.end());
-                src->outPaths.insert(src->outPaths.begin(), dest->inLinks[i]);
+                remote->outPaths.erase(std::remove(remote->outPaths.begin(), remote->outPaths.end(), to ? current->inLinks[i] : current->outLinks[i]), remote->outPaths.end());
+                remote->outPaths.insert(remote->outPaths.begin(), to ? current->inLinks[i] : current->outLinks[i]);
 
-                // insert src node to ordered list
+                // insert remote node to ordered list
                 auto it = q.begin();
                 for (; it != q.end(); ++it)
                     if ((*it)->dist > newdist)
                         break;
 
-                q.insert(it, src);
+                q.insert(it, remote);
             }
-            else if (!contains(src->outPaths, dest->inLinks[i]))
-                src->outPaths.push_back(dest->inLinks[i]);
+            else if (!contains(remote->outPaths, to ? current->inLinks[i] : current->outLinks[i]))
+                (to ? remote : current)->outPaths.push_back(to ? current->inLinks[i] : current->outLinks[i]);
         }
     }
 }
