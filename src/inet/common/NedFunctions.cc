@@ -237,6 +237,9 @@ cNEDValue nedf_selectWithRandomDistribution(cComponent *context, cNEDValue argv[
     if (argv[1].getType() != cNEDValue::STRING)
         throw cRuntimeError("selectWithRandomDistribution(): string arguments expected, argument 2");
 
+    if (context == nullptr)
+        throw cRuntimeError("selectWithRandomDistribution(): context component required");
+
     cStringTokenizer tokenizer1(argv[0]);
     cStringTokenizer tokenizer2(argv[1]);
 
