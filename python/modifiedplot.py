@@ -48,8 +48,11 @@ def plot_vectors(df, props, legend_func=utils.make_legend_label):
         return props[k] if k in props else None
 
     title_cols, legend_cols = utils.extract_label_columns(df, props)
-
-    df.sort_values(by=legend_cols, inplace=True)
+    
+    if 'order' in df.columns:
+        df.sort_values(by='order', inplace=True)
+    else:
+        df.sort_values(by=legend_cols, inplace=True)
     for t in df.itertuples(index=False):
         style = utils._make_line_args(props, t, df)
 #        if t.propertyname != '':
@@ -97,19 +100,23 @@ def plot_vectors_separate(df, props, legend_func=utils.make_legend_label):
     utils.set_plot_title(title)
 
 
-def add_to_dataframe(df, style_tuple_list, default_dict={}):
+def add_to_dataframe(df, style_tuple_list, default_dict={}, order={}):
     """
     Adds 'additional_style' column to dataframe. The concent of this column is added to 'style' object when plotting.
+    Can also specify row order in dataframe (e.g. for ordering items in legend).
     style_tuple_list: [(column, value, {style dictionary}), (...), ...]:
         add style dictionary concents to 'additional_style' column in rows where column=value
     default_dict: {style dictionary}:
         add style to rows not matched by the above
+    order: {'configname': order, ...}
+        assigns order number to particular confignames
         
     example:
     style_tuple_list = [('legend', 'eth[0]', {'linestyle': '--', 'linewidth': 2}), ('legend', 'eth[1]', {'linestyle': '-', 'linewidth': 2, 'marker': 's', 'markersize': 4})]
     default_dict = {'linestyle': '-', 'linewidth': 1}
+    order = {'Default_config': 1, 'Advanced_config': 0, 'Manual_config': 2}
     
-    Note that the value parameter can contain regex (e.g. .*foo). Make sure to escape regex characters such as [ and ] with \
+    Note that the value parameter in style_tuple_list can contain regex (e.g. .*foo). Make sure to escape regex characters such as [ and ] with \
     """
     
     df['additional_style'] = None
@@ -147,5 +154,15 @@ def add_to_dataframe(df, style_tuple_list, default_dict={}):
         if (df['additional_style'][i] == None):
             if debug: print('adding default stuff')
             df['additional_style'][i] = str(default_dict)
+            
+    if order:
+        # order the dataframe
+        df['order'] = None
+        for i in order.items():
+            for j in range(0,len(df)):
+                if df['configname'][j] == i[0]:
+                    df['order'][j] = i[1]
+                    
+        if debug: print("order added.", df['order'], df)
 
     return df

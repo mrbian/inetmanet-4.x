@@ -54,7 +54,6 @@ plt.title("Wifi performance")
 df = pd.pivot_table(df, index='experiment', values='value')
 
 df.sort_values(by="experiment", axis='index', inplace=True, ascending=False)
-print(df)
 
 df.columns=['Number of packets received']
 df.index=['Wifi only','Wifi+WPAN coexistence']
@@ -635,7 +634,6 @@ plt.title("WPAN performance")
 df = pd.pivot_table(df, index='experiment', values='value')
 
 df.sort_values(by="experiment", axis='index', inplace=True, ascending=False)
-print(df)
 
 df.columns=['Number of packets received']
 df.index=['WPAN only','Wifi+WPAN coexistence']
@@ -1138,7 +1136,7 @@ utils.export_data_if_needed(df, props)
             <property name="matplotlibrc.legend.frameon" value="true"/>
             <property name="matplotlibrc.legend.fancybox" value="false"/>
             <property name="grid_show" value="false"/>
-            <property name="confidence_level" value="95%"/>
+            <property name="confidence_level" value="none"/>
             <property name="matplotlibrc.figure.facecolor" value=""/>
             <property name="legend_labels" value="result titles"/>
             <property name="yaxis_title" value=""/>
