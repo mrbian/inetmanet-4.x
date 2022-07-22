@@ -172,8 +172,10 @@ void WiseRoute::handleLowerPacket(Packet *packet)
                 wiseRouteHeader->setNbHops(wiseRouteHeader->getNbHops() + 1);
                 auto p = new Packet(packet->getName());
                 packet->popAtFront<WiseRouteHeader>();
-                p->insertAtBack(packet->peekDataAt(b(0), packet->getDataLength()));
-                wiseRouteHeader->setPayloadLengthField(p->getDataLength());
+                if (wiseRouteHeader->getHeaderKind() != ROUTE_FLOOD) {
+                    p->insertAtBack(packet->peekDataAt(b(0), packet->getDataLength()));
+                    wiseRouteHeader->setPayloadLengthField(p->getDataLength());
+                }
                 p->insertAtFront(wiseRouteHeader);
                 setDownControlInfo(p, MacAddress::BROADCAST_ADDRESS);
                 sendDown(p);
