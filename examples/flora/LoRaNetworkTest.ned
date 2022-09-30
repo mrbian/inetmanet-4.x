@@ -24,6 +24,8 @@ import inet.flora.loranode.LoRaGW;
 import inet.node.inet.StandardHost;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.ethernet.Eth1G;
+import inet.visualizer.contract.IIntegratedVisualizer;
+import inet.environment.common.PhysicalEnvironment;
 
 @license(LGPL);
 network LoRaNetworkTest
@@ -35,6 +37,14 @@ network LoRaNetworkTest
         int networkSizeY = default(500);
         @display("bgb=355.824,356.832");
     submodules:
+        visualizer: <default(firstAvailableOrEmpty("IntegratedVisualizer"))> like IIntegratedVisualizer if typename != "" {
+            parameters:
+                @display("p=100,400;is=s");
+        }
+        physicalEnvironment: PhysicalEnvironment {
+            parameters:
+                @display("p=100,200;is=s");
+        }      
         loRaNodes[numberOfNodes]: LoRaNode {
             @display("p=83.664,233.856");
         }
