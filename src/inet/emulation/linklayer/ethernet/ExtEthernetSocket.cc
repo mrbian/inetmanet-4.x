@@ -103,7 +103,7 @@ void ExtEthernetSocket::openSocket()
     struct ifreq if_idx;
     fd = socket(AF_PACKET, SOCK_RAW, IPPROTO_RAW);
     if (fd == INVALID_SOCKET)
-        throw cRuntimeError("Cannot open socket");
+        throw cRuntimeError("Cannot open socket err:'%s'", strerror(errno));
     // get the index of the interface to send on
     memset(&if_idx, 0, sizeof(struct ifreq));
     strncpy(if_idx.ifr_name, device, IFNAMSIZ - 1);
@@ -121,7 +121,7 @@ void ExtEthernetSocket::openSocket()
     memset(&ifr, 0, sizeof(ifr));
     snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", device);
     if (setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) < 0)
-        throw cRuntimeError("Cannot bind raw socket to '%s' interface", device);
+        throw cRuntimeError("Cannot bind raw socket to '%s' interface err:'%s'", device, strerror(errno));
     // bind to all ethernet frames
     struct sockaddr_ll socket_address;
     memset(&socket_address, 0, sizeof(socket_address));
@@ -129,7 +129,7 @@ void ExtEthernetSocket::openSocket()
     socket_address.sll_ifindex = ifindex;
     socket_address.sll_protocol = htons(ETH_P_ALL);
     if (bind(fd, (struct sockaddr *)&socket_address, sizeof(socket_address)) < 0)
-        throw cRuntimeError("Cannot bind socket");
+        throw cRuntimeError("Cannot bind socket err:'%s'", strerror(errno));
     if (gate("upperLayerOut")->isConnected())
         rtScheduler->addCallback(fd, this);
 }
