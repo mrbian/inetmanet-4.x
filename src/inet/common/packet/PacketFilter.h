@@ -47,7 +47,7 @@ class INET_API PacketFilter
 
         virtual cValue readVariable(cExpression::Context *context, const char *name) override;
         virtual cValue readVariable(cExpression::Context *context, const char *name, intval_t index) override;
-        virtual cValue readMember(cExpression::Context *context, const cValue &object, const char *name) override;
+        virtual cValue readMember(cExpression::Context *context, const cValue& object, const char *name) override;
         virtual cValue readMember(cExpression::Context *context, const cValue& object, const char *name, intval_t index) override;
         virtual cValue callMethod(cExpression::Context *context, const cValue& object, const char *name, cValue argv[], int argc) override;
         virtual cValue callFunction(cExpression::Context *context, const char *name, cValue argv[], int argc) override;
@@ -58,8 +58,8 @@ class INET_API PacketFilter
     cMatchExpression *matchExpression = nullptr;
     PacketDissectorCallback *packetDissectorCallback = nullptr;
     mutable const cPacket *cpacket = nullptr;
-    mutable std::multimap<const Protocol *, Chunk *> protocolToChunkMap;
-    mutable std::multimap<std::string, Chunk *> classNameToChunkMap;
+    mutable std::multimap<const Protocol *, Ptr<const Chunk>> protocolToChunkMap;
+    mutable std::multimap<std::string, Ptr<const Chunk>> classNameToChunkMap;
 
   public:
     PacketFilter();
