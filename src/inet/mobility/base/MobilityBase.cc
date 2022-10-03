@@ -45,43 +45,33 @@ MobilityBase::MobilityBase() :
 {
 }
 
-const char *MobilityBase::DirectiveResolver::resolveDirective(char directive) const
+std::string MobilityBase::DirectiveResolver::resolveDirective(char directive) const
 {
-    static std::string result;
     switch (directive) {
         case 'p':
-            result = mobility->getCurrentPosition().str();
-            break;
+            return mobility->getCurrentPosition().str();
         case 'v':
-            result = mobility->getCurrentVelocity().str();
-            break;
+            return mobility->getCurrentVelocity().str();
         case 's':
-            result = std::to_string(mobility->getCurrentVelocity().length());
-            break;
+            return std::to_string(mobility->getCurrentVelocity().length());
         case 'a':
-            result = mobility->getCurrentAcceleration().str();
-            break;
+            return mobility->getCurrentAcceleration().str();
         case 'P':
-            result = mobility->getCurrentAngularPosition().str();
-            break;
+            return mobility->getCurrentAngularPosition().str();
         case 'V':
-            result = mobility->getCurrentAngularVelocity().str();
-            break;
+            return mobility->getCurrentAngularVelocity().str();
         case 'S': {
             auto angularVelocity = mobility->getCurrentAngularVelocity();
             Coord axis;
             double angle;
             angularVelocity.getRotationAxisAndAngle(axis, angle);
-            result = std::to_string(angle);
-            break;
+            return std::to_string(angle);
         }
         case 'A':
-            result = mobility->getCurrentAngularAcceleration().str();
-            break;
+            return mobility->getCurrentAngularAcceleration().str();
         default:
             throw cRuntimeError("Unknown directive: %c", directive);
     }
-    return result.c_str();
 }
 
 void MobilityBase::initialize(int stage)
@@ -189,7 +179,7 @@ void MobilityBase::refreshDisplay() const
 {
     DirectiveResolver directiveResolver(const_cast<MobilityBase *>(this));
     auto text = format.formatString(&directiveResolver);
-    getDisplayString().setTagArg("t", 0, text);
+    getDisplayString().setTagArg("t", 0, text.c_str());
     if (par("updateDisplayString"))
         updateDisplayStringFromMobilityState();
 }
@@ -283,7 +273,7 @@ void MobilityBase::reflectIfOutside(Coord& targetPosition, Coord& velocity, rad&
         sign = reflect(constraintAreaMin.x, constraintAreaMax.x, lastPosition.x, velocity.x);
         reflect(constraintAreaMin.x, constraintAreaMax.x, targetPosition.x, dummy);
         heading = deg(90) + (heading - deg(90)) * sign;
-        if (sign == -1 && &quaternion != &Quaternion::NIL) {
+        if (sign == -1 && quaternion != Quaternion::NIL) {
             std::swap(quaternion.s, quaternion.v.z);
             std::swap(quaternion.v.x, quaternion.v.y);
             quaternion.v.x *= -1;
@@ -294,7 +284,7 @@ void MobilityBase::reflectIfOutside(Coord& targetPosition, Coord& velocity, rad&
         sign = reflect(constraintAreaMin.y, constraintAreaMax.y, lastPosition.y, velocity.y);
         reflect(constraintAreaMin.y, constraintAreaMax.y, targetPosition.y, dummy);
         heading = heading * sign;
-        if (sign == -1 && &quaternion != &Quaternion::NIL) {
+        if (sign == -1 && quaternion != Quaternion::NIL) {
             quaternion.v.x *= -1;
             quaternion.v.z *= -1;
         }
@@ -303,7 +293,7 @@ void MobilityBase::reflectIfOutside(Coord& targetPosition, Coord& velocity, rad&
         sign = reflect(constraintAreaMin.z, constraintAreaMax.z, lastPosition.z, velocity.z);
         reflect(constraintAreaMin.z, constraintAreaMax.z, targetPosition.z, dummy);
         elevation = elevation * sign;
-        if (sign == -1 && &quaternion != &Quaternion::NIL) {
+        if (sign == -1 && quaternion != Quaternion::NIL) {
             quaternion.v.x *= -1;
             quaternion.v.y *= -1;
         }
@@ -353,18 +343,21 @@ void MobilityBase::raiseErrorIfOutside()
 void MobilityBase::handleIfOutside(BorderPolicy policy, Coord& targetPosition, Coord& velocity)
 {
     rad a;
-    handleIfOutside(policy, targetPosition, velocity, a, a, Quaternion::NIL);
+    Quaternion nil = Quaternion::NIL;
+    handleIfOutside(policy, targetPosition, velocity, a, a, nil);
 }
 
 void MobilityBase::handleIfOutside(BorderPolicy policy, Coord& targetPosition, Coord& velocity, rad& heading)
 {
     rad dummy;
-    handleIfOutside(policy, targetPosition, velocity, heading, dummy, Quaternion::NIL);
+    Quaternion nil = Quaternion::NIL;
+    handleIfOutside(policy, targetPosition, velocity, heading, dummy, nil);
 }
 
 void MobilityBase::handleIfOutside(BorderPolicy policy, Coord& targetPosition, Coord& velocity, rad& heading, rad& elevation)
 {
-    handleIfOutside(policy, targetPosition, velocity, heading, elevation, Quaternion::NIL);
+    Quaternion nil = Quaternion::NIL;
+    handleIfOutside(policy, targetPosition, velocity, heading, elevation, nil);
 }
 
 void MobilityBase::handleIfOutside(BorderPolicy policy, Coord& targetPosition, Coord& velocity, rad& heading, rad& elevation, Quaternion& quaternion)

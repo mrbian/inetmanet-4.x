@@ -20,10 +20,9 @@ namespace inet {
 
 uint64_t L3Address::get(AddressType type) const
 {
-    if (getType() == type)
-        return lo;
-    else
-        throw cRuntimeError("Address is not of the given type");
+    if (getType() != type)
+        throw cRuntimeError("Address %s is of type %s where type %s was expected", str().c_str(), getTypeName(getType()), getTypeName(type));
+    return lo;
 }
 
 void L3Address::set(AddressType type, uint64_t lo)
@@ -56,7 +55,7 @@ L3Address::AddressType L3Address::getType() const
         return L3Address::IPv6;
 }
 
-IL3AddressType *L3Address::getAddressType() const
+const IL3AddressType *L3Address::getAddressType() const
 {
     switch (getType()) {
         case L3Address::NONE:

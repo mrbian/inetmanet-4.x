@@ -68,7 +68,7 @@ class INET_API Dymo : public RoutingProtocolBase, public cListener, public Netfi
 
     // context
     cModule *host;
-    IL3AddressType *addressType;
+    const IL3AddressType *addressType;
     ModuleRefByPar<IInterfaceTable> interfaceTable;
     ModuleRefByPar<IRoutingTable> routingTable;
     ModuleRefByPar<INetfilter> networkProtocol;
