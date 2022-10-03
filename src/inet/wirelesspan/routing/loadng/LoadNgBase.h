@@ -150,7 +150,7 @@ class INET_API LoadNgBase: public RoutingProtocolBase, public NetfilterBase::Hoo
     // bool checkNeigborList();
 
     // context
-    IL3AddressType *addressType = nullptr;    // to support both Ipv4 and v6 addresses.
+    const IL3AddressType *addressType = nullptr;    // to support both Ipv4 and v6 addresses.
 
     // environment
     cModule *host = nullptr;
