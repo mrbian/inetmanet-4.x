@@ -51,7 +51,7 @@ void NS_CLASS packet_queue_destroy(void)
     {
         struct q_pkt *qp = PQ.pkQueue.back();
         if (getNetworkProtocol())
-            getNetworkProtocol()->dropQueuedDatagram(const_cast<const Packet *>(qp->p));
+            getNetworkProtocol()->dropQueuedDatagram(qp->p);
         else
             delete qp->p;
         PQ.pkQueue.pop_back();
@@ -231,7 +231,7 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                             /* Apparently, the link layer implementation can't handle a burst of packets. So to keep ARP happy, buffered
                              * packets are sent with ARP_DELAY seconds between sends. */
                             if (getNetworkProtocol())
-                                getNetworkProtocol()->reinjectQueuedDatagram(const_cast<const Packet *>(qp->p));
+                                getNetworkProtocol()->reinjectQueuedDatagram(qp->p);
                             else
                                 sendDelayed(qp->p, delay, "ipOut");
                             //delay += ARP_DELAY;
@@ -266,7 +266,7 @@ int NS_CLASS packet_queue_set_verdict(struct in_addr dest_addr, int verdict)
                          * sends. */
                          // now Ip layer decremented again
                         if (getNetworkProtocol())
-                            getNetworkProtocol()->reinjectQueuedDatagram(const_cast<const Packet *>(qp->p));
+                            getNetworkProtocol()->reinjectQueuedDatagram(qp->p);
                         else
                             sendDelayed(qp->p, delay, "ipOut");
                         delay += ARP_DELAY;

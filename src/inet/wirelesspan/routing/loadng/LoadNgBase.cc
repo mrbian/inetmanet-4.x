@@ -172,7 +172,7 @@ void LoadNgBase::handleMessageWhenUp(cMessage *msg)
                                  << ", destination "
                                  << networkHeader->getDestinationAddress()
                                  << endl;
-                networkProtocol->reinjectQueuedDatagram(const_cast<const Packet *>(datagram));
+                networkProtocol->reinjectQueuedDatagram(datagram);
             }
             // clear the multimap
             targetAddressToDelayedPackets.erase(lt, ut);
@@ -1725,7 +1725,7 @@ void LoadNgBase::clearState()
 
     // FIXME: Drop the queued datagrams.
     //for (auto it = targetAddressToDelayedPackets.begin(); it != targetAddressToDelayedPackets.end(); it++)
-    //    networkProtocol->dropQueuedDatagram(const_cast<const Packet *>(it->second));
+    //    networkProtocol->dropQueuedDatagram(it->second);
 
     targetAddressToDelayedPackets.clear();
 
@@ -1897,7 +1897,7 @@ void LoadNgBase::completeRouteDiscovery(const L3Address& target)
         Packet *datagram = it->second;
         const auto& networkHeader = getNetworkProtocolHeader(datagram);
         EV_DETAIL << "Sending queued datagram: source " << networkHeader->getSourceAddress() << ", destination " << networkHeader->getDestinationAddress() << endl;
-        networkProtocol->reinjectQueuedDatagram(const_cast<const Packet *>(datagram));
+        networkProtocol->reinjectQueuedDatagram(datagram);
     }
 
     // clear the multimap
@@ -2118,7 +2118,7 @@ void LoadNgBase::cancelRouteDiscovery(const L3Address& destAddr)
     auto lt = targetAddressToDelayedPackets.lower_bound(destAddr);
     auto ut = targetAddressToDelayedPackets.upper_bound(destAddr);
     for (auto it = lt; it != ut; it++)
-        networkProtocol->dropQueuedDatagram(const_cast<const Packet *>(it->second));
+        networkProtocol->dropQueuedDatagram(it->second);
 
     targetAddressToDelayedPackets.erase(lt, ut);
 
