@@ -66,7 +66,6 @@ class INET_API Ipv4 : public OperationalBase, public NetfilterBase, public INetw
     ModuleRefByPar<IInterfaceTable> ift;
     ModuleRefByPar<IArp> arp;
     ModuleRefByPar<Icmp> icmp;
-    int transportInGateBaseId = -1;
 
     // config
     CrcMode crcMode = CRC_MODE_UNDEFINED;
@@ -120,16 +119,7 @@ class INET_API Ipv4 : public OperationalBase, public NetfilterBase, public INetw
     // utility: processing requested ARP resolution timed out
     void arpResolutionTimedOut(IArp::Notification *entry);
 
-    // utility: verifying CRC
-    bool verifyCrc(const Ptr<const Ipv4Header>& ipv4Header);
-
-    // utility: calculate and set CRC
-    void setComputedCrc(Ptr<Ipv4Header>& ipv4Header);
-
     void setTraceRouteTag(Packet *datagram);
-
-  public:
-    static void insertCrc(const Ptr<Ipv4Header>& ipv4Header);
 
   protected:
     /**
