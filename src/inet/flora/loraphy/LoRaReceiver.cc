@@ -17,7 +17,7 @@
 
 #include "inet/flora/loraapp/SimpleLoRaApp.h"
 #include "inet/flora/loraphy/LoRaPhyPreamble_m.h"
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/ScalarNoise.h"
+#include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandNoiseBase.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
 #include "inet/common/ProtocolTag_m.h"
 #include "inet/common/ModuleAccess.h"
@@ -276,7 +276,7 @@ const IListeningDecision *LoRaReceiver::computeListeningDecision(const IListenin
     const IRadioMedium *radioMedium = receiver->getMedium();
     const IAnalogModel *analogModel = radioMedium->getAnalogModel();
     const INoise *noise = analogModel->computeNoise(listening, interference);
-    const ScalarNoise *loRaNoise = check_and_cast<const ScalarNoise *>(noise);
+    const auto loRaNoise = check_and_cast<const NarrowbandNoiseBase *>(noise);
     W maxPower = loRaNoise->computeMaxPower(listening->getStartTime(), listening->getEndTime());
     bool isListeningPossible = maxPower >= energyDetection;
     delete noise;
