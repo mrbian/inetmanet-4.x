@@ -129,7 +129,6 @@ module LoRaGW like INetworkNode
         at.out++ --> udp.appIn;
         at.in++ <-- udp.appOut;
 
-
         bl.out++ --> li.in++;
         li.out++ --> bl.in++;
 
@@ -146,8 +145,6 @@ module LoRaGW like INetworkNode
 
         ipv4.ifIn <-- nl.out++;
         ipv4.ifOut --> nl.in++;
-
-
 
         tn.out++ --> ipv4.transportIn;
         tn.in++ <-- ipv4.transportOut;
@@ -170,6 +167,6 @@ module LoRaGW like INetworkNode
 
         ethernet.lowerLayerOut --> li.in++ if exists(ethernet);
         li.out++ --> ethernet.lowerLayerIn if exists(ethernet);
-
-
+        
+        radioIn[0] --> LoRaGWNic.radioIn;
 }

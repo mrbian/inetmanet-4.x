@@ -32,6 +32,8 @@ module LoRaNode
         @networkNode();
         *.interfaceTableModule = default(absPath(".interfaceTable"));
         @display("bgb=297,313;i=device/accesspoint;is=vs");
+    gates:
+        input radioIn[1] @directIn;
     submodules:
         interfaceTable: InterfaceTable {
             @display("p=30,26");
@@ -46,7 +48,7 @@ module LoRaNode
             @display("p=137,32");
         }
     connections allowunconnected:
-
         SimpleLoRaApp.appOut --> LoRaNic.upperLayerIn;
         LoRaNic.upperLayerOut --> SimpleLoRaApp.appIn;
+        radioIn[0] --> LoRaNic.radioIn;
 }
