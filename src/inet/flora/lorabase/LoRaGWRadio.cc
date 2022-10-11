@@ -196,7 +196,8 @@ void LoRaGWRadio::startReception(cMessage *timer, IRadioSignal::SignalPart part)
     //updateTransceiverState();
     //updateTransceiverPart();
     radioMode = RADIO_MODE_TRANSCEIVER;
-    check_and_cast<LoRaMedium *>(medium.get())->emit(IRadioMedium::signalArrivalStartedSignal, check_and_cast<const cObject *>(reception));
+    check_and_cast<RadioMedium *>(medium.get())->emit(IRadioMedium::signalArrivalStartedSignal, check_and_cast<const cObject *>(reception));
+    //check_and_cast<LoRaMedium *>(medium.get())->emit(IRadioMedium::signalArrivalStartedSignal, check_and_cast<const cObject *>(reception));
     if(iAmGateway) EV << "[MSDebug] start reception, size : " << concurrentReceptions.size() << endl;
 }
 
@@ -274,7 +275,7 @@ void LoRaGWRadio::endReception(cMessage *timer)
     //updateTransceiverState();
     //updateTransceiverPart();
     radioMode = RADIO_MODE_TRANSCEIVER;
-    check_and_cast<LoRaMedium *>(medium.get())->emit(IRadioMedium::signalArrivalEndedSignal, check_and_cast<const cObject *>(reception));
+    check_and_cast<RadioMedium *>(medium.get())->emit(IRadioMedium::signalArrivalEndedSignal, check_and_cast<const cObject *>(reception));
     delete timer;
 }
 
