@@ -65,15 +65,18 @@ module LoRaGWRadio extends FlatRadioBase
         
         //transmitterType = default("Ieee802154UWBIRTransmitter");
         //receiverType = default("Ieee802154UWBIRReceiver");
-                
-        centerFrequency = 2450 MHz;
+        
+        //
+        // The allocated radio frequencies consist of EU 433 (433.05-434.79 MHz) and EU 863-870 (863-870/873 MHz) in Europe; 
+        // AU915-928/AS923-1 (915-928 MHz) in Australia; US 902-928 (902-928 MHz) in North America; 
+        // IN 865-867 (865-867 MHz) in India; AU 915-928/AS 923-1 and EU433 Southeast Asia.[4]; 
+        // and 2.4GHz worldwide. Be careful to check also the configuration of the Source that set the frequency in the nodes
+        //        
+        centerFrequency = default(868MHz); // This parameter with the Gateway is not important, the gateway can receive any 
        
 
-        // B_20dB ATmega256RFR2 (page 564)
-        // *.bandwidth = default(2.8 MHz);
-        // what is meant by bandwidth here?
-        // the B_20dB bandwidth would lead to far too low BERs
-        bandwidth = default(0.25 MHz);
+        
+        bandwidth = default(250kHz); // 125kHz, 250kHz or 500 kHz, this parameter with the Gateway is not important, the gateway can receive any
 
         // 802.15.4-2006 (page 28)
         *.bitrate = default(250 kbps);
