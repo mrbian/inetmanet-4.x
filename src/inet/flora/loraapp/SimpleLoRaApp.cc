@@ -39,6 +39,16 @@ void SimpleLoRaApp::initialize(int stage)
            mobility->par("initialX").setDoubleValue(coordsValues.first);
            mobility->par("initialY").setDoubleValue(coordsValues.second);
         }
+
+        // Read configuration parameters
+        loRaTP = par("initialLoRaTP").doubleValue();
+        loRaCF = units::values::Hz(par("initialLoRaCF").doubleValue());
+        loRaSF = par("initialLoRaSF");
+        loRaBW = inet::units::values::Hz(par("initialLoRaBW").doubleValue());
+        loRaCR = par("initialLoRaCR");
+        loRaUseHeader = par("initialUseHeader");
+        evaluateADRinNode = par("evaluateADRinNode");
+        numberOfPacketsToSend = par("numberOfPacketsToSend");
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER) {
         bool isOperational;
@@ -58,18 +68,9 @@ void SimpleLoRaApp::initialize(int stage)
 
         sentPackets = 0;
         receivedADRCommands = 0;
-        numberOfPacketsToSend = par("numberOfPacketsToSend");
-
         LoRa_AppPacketSent = registerSignal("LoRa_AppPacketSent");
 
         //LoRa physical layer parameters
-        loRaTP = par("initialLoRaTP").doubleValue();
-        loRaCF = units::values::Hz(par("initialLoRaCF").doubleValue());
-        loRaSF = par("initialLoRaSF");
-        loRaBW = inet::units::values::Hz(par("initialLoRaBW").doubleValue());
-        loRaCR = par("initialLoRaCR");
-        loRaUseHeader = par("initialUseHeader");
-        evaluateADRinNode = par("evaluateADRinNode");
         sfVector.setName("SF Vector");
         tpVector.setName("TP Vector");
     }

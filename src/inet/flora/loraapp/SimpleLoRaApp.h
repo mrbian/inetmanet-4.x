@@ -73,12 +73,12 @@ class INET_API SimpleLoRaApp : public cSimpleModule, public ILifecycle
         SimpleLoRaApp() {}
         simsignal_t LoRa_AppPacketSent;
         //LoRa physical layer parameters
-        double loRaTP;
-        units::values::Hz loRaCF;
+        double loRaTP = -1;
+        units::values::Hz loRaCF = units::values::Hz(NaN);
         int loRaSF;
-        units::values::Hz loRaBW;
-        int loRaCR;
-        bool loRaUseHeader;
+        units::values::Hz loRaBW = units::values::Hz(NaN);
+        int loRaCR = -1;
+        bool loRaUseHeader = false;
 };
 
 }
