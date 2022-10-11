@@ -50,6 +50,14 @@ void LoRaReceiver::initialize(int stage)
         numCollisions = 0;
         rcvBelowSensitivity = 0;
     }
+    else if (stage == INITSTAGE_PHYSICAL_LAYER) {
+        if(iAmGateway == false) {
+            auto node = getContainingNode(this);
+            auto loRaApp = check_and_cast<SimpleLoRaApp *>(node->getSubmodule("SimpleLoRaApp"));
+            setCenterFrequency(loRaApp->loRaCF);
+            setBandwidth(loRaApp->loRaBW);
+        }
+    }
 }
 
 void LoRaReceiver::finish()
@@ -61,8 +69,10 @@ void LoRaReceiver::finish()
 
 bool LoRaReceiver::computeIsReceptionPossible(const IListening *listening, const ITransmission *transmission) const
 {
+    const LoRaTransmission *loRaTransmission = dynamic_cast<const LoRaTransmission *>(transmission);
+    if (loRaTransmission == nullptr) // it is not a lora transmission reject it
+        return false;
     //here we can check compatibility of LoRaTx parameters (or beeing a gateway)
-    const LoRaTransmission *loRaTransmission = check_and_cast<const LoRaTransmission *>(transmission);
     auto *loRaApp = check_and_cast<flora::SimpleLoRaApp *>(getParentModule()->getParentModule()->getSubmodule("SimpleLoRaApp"));
     if(iAmGateway || (loRaTransmission->getLoRaCF() == loRaApp->loRaCF && loRaTransmission->getLoRaBW() == loRaApp->loRaBW && loRaTransmission->getLoRaSF() == loRaApp->loRaSF))
         return true;
@@ -72,9 +82,14 @@ bool LoRaReceiver::computeIsReceptionPossible(const IListening *listening, const
 
 bool LoRaReceiver::computeIsReceptionPossible(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part) const
 {
+
+    const LoRaReception *loRaReception = dynamic_cast<const LoRaReception *>(reception);
+    if (loRaReception == nullptr) // it is not a lora reception
+        return false;
+
     //here we can check compatibility of LoRaTx parameters (or beeing a gateway) and reception above sensitivity level
     const LoRaBandListening *loRaListening = check_and_cast<const LoRaBandListening *>(listening);
-    const LoRaReception *loRaReception = check_and_cast<const LoRaReception *>(reception);
+
     if (iAmGateway == false && (loRaListening->getLoRaCF() != loRaReception->getLoRaCF() || loRaListening->getLoRaBW() != loRaReception->getLoRaBW() || loRaListening->getLoRaSF() != loRaReception->getLoRaSF())) {
         return false;
     } else {
@@ -91,6 +106,10 @@ bool LoRaReceiver::computeIsReceptionPossible(const IListening *listening, const
 
 bool LoRaReceiver::computeIsReceptionAttempted(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part, const IInterference *interference) const
 {
+    const auto loRaReception = dynamic_cast<const LoRaReception *>(reception);
+    if (loRaReception == nullptr)
+        return false; // a non lora packet, ignore it
+
     if(isPacketCollided(reception, part, interference))
     {
         auto packet = reception->getTransmission()->getPacket();
@@ -127,7 +146,8 @@ bool LoRaReceiver::isPacketCollided(const IReception *reception, IRadioSignal::S
     //auto radio = reception->getReceiver();
     //auto radioMedium = radio->getMedium();
     auto interferingReceptions = interference->getInterferingReceptions();
-    const LoRaReception *loRaReception = check_and_cast<const LoRaReception *>(reception);
+    const auto loRaReception = check_and_cast<const LoRaReception *>(reception);
+
     simtime_t m_x = (loRaReception->getStartTime() + loRaReception->getEndTime())/2;
     simtime_t d_x = (loRaReception->getEndTime() - loRaReception->getStartTime())/2;
     EV << "Czas transmisji to " << loRaReception->getEndTime() - loRaReception->getStartTime() << endl;
@@ -137,6 +157,7 @@ bool LoRaReceiver::isPacketCollided(const IReception *reception, IRadioSignal::S
     double signalRSSI_dBm = math::mW2dBmW(signalRSSI_mw);
     EV << signalRSSI_mw << endl;
     EV << signalRSSI_dBm << endl;
+
     int receptionSF = loRaReception->getLoRaSF();
     for (auto interferingReception : *interferingReceptions) {
         bool overlap = false;
@@ -152,8 +173,7 @@ bool LoRaReceiver::isPacketCollided(const IReception *reception, IRadioSignal::S
             overlap = true;
         }
 
-        if(loRaReception->getLoRaCF() == loRaInterference->getLoRaCF())
-        {
+        if(loRaReception->getLoRaCF() == loRaInterference->getLoRaCF()) {
             frequencyCollision = true;
         }
 
@@ -267,7 +287,7 @@ const IListening *LoRaReceiver::createListening(const IRadio *radio, const simti
         auto loRaApp = check_and_cast<SimpleLoRaApp *>(node->getSubmodule("SimpleLoRaApp"));
         return new LoRaBandListening(radio, startTime, endTime, startPosition, endPosition, loRaApp->loRaCF, loRaApp->loRaBW, loRaApp->loRaSF);
     }
-    else return new LoRaBandListening(radio, startTime, endTime, startPosition, endPosition, LoRaCF, LoRaBW, LoRaSF);
+    else return new LoRaBandListening(radio, startTime, endTime, startPosition, endPosition, centerFrequency, bandwidth, LoRaSF);
 }
 
 const IListeningDecision *LoRaReceiver::computeListeningDecision(const IListening *listening, const IInterference *interference) const

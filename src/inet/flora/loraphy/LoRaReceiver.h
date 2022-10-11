@@ -47,9 +47,7 @@ class INET_API LoRaReceiver : public FlatReceiverBase
 {
 private:
     W LoRaTP;
-    Hz LoRaCF;
     int LoRaSF;
-    Hz LoRaBW;
     double LoRaCR;
 
     double snirThreshold;
@@ -101,11 +99,11 @@ public:
 
   bool isPacketCollided(const IReception *reception, IRadioSignal::SignalPart part, const IInterference *interference) const;
 
-  virtual void setLoRaTP(W newTP) { LoRaTP = newTP; };
-  virtual void setLoRaCF(Hz newCF) { LoRaCF = newCF; };
-  virtual void setLoRaSF(int newSF) { LoRaSF = newSF; };
-  virtual void setLoRaBW(Hz newBW) { LoRaBW = newBW; };
-  virtual void setLoRaCR(double newCR) { LoRaCR = newCR; };
+  virtual void setLoRaTP(W newTP) { LoRaTP = newTP; }
+  virtual void setLoRaCF(Hz newCF) { setCenterFrequency(newCF); }
+  virtual void setLoRaSF(int newSF) { LoRaSF = newSF; }
+  virtual void setLoRaBW(Hz newBW) { setBandwidth(newBW); }
+  virtual void setLoRaCR(double newCR) { LoRaCR = newCR; }
 
 };
 
