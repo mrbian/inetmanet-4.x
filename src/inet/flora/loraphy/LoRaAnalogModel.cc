@@ -138,7 +138,7 @@ const INoise *LoRaAnalogModel::computeNoise(const IListening *listening, const I
         const LoRaReception *loRaReception = check_and_cast<const LoRaReception *>(signalAnalogModel);
         Hz signalCarrierFrequency = loRaReception->getLoRaCF();
         Hz signalBandwidth = loRaReception->getLoRaBW();
-        if((commonCarrierFrequency == signalCarrierFrequency && commonBandwidth == signalBandwidth))
+        if((commonCarrierFrequency == signalCarrierFrequency && commonBandwidth >= signalBandwidth))
         {
             const IScalarSignal *scalarSignalAnalogModel = check_and_cast<const IScalarSignal *>(signalAnalogModel);
             W power = scalarSignalAnalogModel->getPower();
