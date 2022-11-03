@@ -40,7 +40,7 @@ class INET_API UdpBasicFlooding :  public ApplicationBase, public UdpSocket::ICa
 {
  public:
   enum ChooseDestAddrMode {
-      ONCE = 1, PER_BURST, PER_SEND
+      ONCE = 1, PER_SEND
   };
 
   protected:

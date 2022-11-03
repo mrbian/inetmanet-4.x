@@ -54,7 +54,7 @@ simsignal_t UdpBasicFlooding::outOfOrderPkSignal = registerSignal("outOfOrderPk"
 simsignal_t UdpBasicFlooding::dropPkSignal = registerSignal("dropPk");
 simsignal_t UdpBasicFlooding::floodPkSignal = registerSignal("floodPk");
 
-Register_Enum2(destAddrMode, "inet::ChooseDestAddrMode", (
+Register_Enum2(destAddrMode, "inet::UdpBasicFlooding::ChooseDestAddrMode", (
         "once", UdpBasicFlooding::ONCE,
         "perSend", UdpBasicFlooding::PER_SEND,
         nullptr
@@ -117,7 +117,7 @@ void UdpBasicFlooding::processConfigure()
     socket.setBroadcast(true);
 
     const char *addrModeStr = par("chooseDestAddrMode");
-    int addrMode = cEnum::get("inet::ChooseDestAddrMode")->lookup(addrModeStr);
+    int addrMode = cEnum::get("inet::UdpBasicFlooding::ChooseDestAddrMode")->lookup(addrModeStr);
     if (addrMode == -1)
         throw cRuntimeError("Invalid chooseDestAddrMode: '%s'", addrModeStr);
     chooseDestAddrMode = static_cast<ChooseDestAddrMode>(addrMode);
