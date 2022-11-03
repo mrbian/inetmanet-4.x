@@ -22,16 +22,15 @@ namespace inet {
 
 Define_Module(PaparazziMobility);
 
-EXECUTE_ON_STARTUP(
-        cEnum * e = cEnum::find("inet::PaparazziMobilityModels");
-        if (!e)
-            omnetpp::internal::enums.getInstance()->add(e = new cEnum("inet::PaparazziMobilityModels"));
-        e->insert(PaparazziMobility::WAYPOINT, "waypoint");
-        e->insert(PaparazziMobility::STAYAT, "stayat");
-        e->insert(PaparazziMobility::SCAN, "scan");
-        e->insert(PaparazziMobility::OVAL, "oval");
-        e->insert(PaparazziMobility::EIGHT, "eigth");
-        );
+
+Register_Enum2(PaparazziMobilityModels, "inet::PaparazziMobilityModels", (
+        "waypoint", PaparazziMobility::WAYPOINT,
+        "stayat", PaparazziMobility::STAYAT,
+        "scan", PaparazziMobility::SCAN,
+        "oval", PaparazziMobility::OVAL,
+        "eigth", PaparazziMobility::OVAL,
+        nullptr
+        ));
 
 PaparazziMobility::PaparazziMobility()
 {
