@@ -54,14 +54,11 @@ simsignal_t UdpBasicFlooding::outOfOrderPkSignal = registerSignal("outOfOrderPk"
 simsignal_t UdpBasicFlooding::dropPkSignal = registerSignal("dropPk");
 simsignal_t UdpBasicFlooding::floodPkSignal = registerSignal("floodPk");
 
-EXECUTE_ON_STARTUP(
-        cEnum * e = cEnum::find("inet::ChooseDestAddrMode");
-        if (!e)
-            omnetpp::internal::enums.getInstance()->add(e = new cEnum("inet::ChooseDestAddrMode"));
-        e->insert(UdpBasicFlooding::ONCE, "once");
-        e->insert(UdpBasicFlooding::PER_BURST, "perBurst");
-        e->insert(UdpBasicFlooding::PER_SEND, "perSend");
-        );
+Register_Enum2(destAddrMode, "inet::ChooseDestAddrMode", (
+        "once", UdpBasicFlooding::ONCE,
+        "perSend", UdpBasicFlooding::PER_SEND,
+        nullptr
+        ));
 
 UdpBasicFlooding::UdpBasicFlooding()
 {
@@ -119,6 +116,13 @@ void UdpBasicFlooding::processConfigure()
     socket.bind(localPort);
     socket.setBroadcast(true);
 
+    const char *addrModeStr = par("chooseDestAddrMode");
+    int addrMode = cEnum::get("inet::ChooseDestAddrMode")->lookup(addrModeStr);
+    if (addrMode == -1)
+        throw cRuntimeError("Invalid chooseDestAddrMode: '%s'", addrModeStr);
+    chooseDestAddrMode = static_cast<ChooseDestAddrMode>(addrMode);
+
+
     outputInterfaceMulticastBroadcast.clear();
     if (strcmp(par("outputInterfaceMulticastBroadcast").stringValue(),"") != 0)
     {
@@ -150,6 +154,7 @@ void UdpBasicFlooding::processConfigure()
         }
     }
     myId = this->getParentModule()->getId();
+
 }
 
 void UdpBasicFlooding::processStart()

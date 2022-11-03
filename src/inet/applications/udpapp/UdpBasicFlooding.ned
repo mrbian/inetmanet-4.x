@@ -133,6 +133,7 @@ simple UdpBasicFlooding like IApp
         string destAddresses = default(""); 
         bool isSource = default(false);
         bool flooding = default(false);
+        string chooseDestAddrMode @enum("once","perSend") = default("perSend"); // when to change the destination address
         volatile double delay  @unit(s) = default(uniform(0s,0.1s)); 
         @signal[sentPk](type=cPacket);
         @signal[rcvdPk](type=cPacket);
