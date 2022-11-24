@@ -125,7 +125,7 @@ void H_NETManager_Base::processSelfMessage (cMessage *msg){
 
         L3Address addr = rTable->getRouterIdAsGeneric();
         if (addr.isUnspecified())
-            throw cRuntimeError("");
+            throw cRuntimeError("addr.isUnspecified()");
 
         ipNode = addr.toIpv4().str(false);
 

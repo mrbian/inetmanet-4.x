@@ -24,14 +24,14 @@ const string AbstractUserGenerator::OUTPUT_DIRECTORY="results";
 
 
 AbstractUserGenerator::AbstractUserGenerator() {
-    name.empty();
+    name.clear();
     users_created_counter = -1;
-    behavior.empty();
-    distributionName.empty();
+    behavior.clear();
+    distributionName.clear();
     distributionParams.clear();
     vmSelect.clear();
     userJobSet.clear();
-    remoteFileSystemType.empty();
+    remoteFileSystemType.clear();
     userManagementPtr = nullptr;
     logName.clear();
     printResults = false;

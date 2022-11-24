@@ -967,7 +967,7 @@ void icancloud_Base::processCurrentRequestMessage() {
 
         const auto &sm = CHK(unqueuedMessage->peekAtFront<icancloud_Message>());
         if (sm == nullptr)
-            throw cRuntimeError("");
+            throw cRuntimeError("sm == nullptr");
         //sm = check_and_cast<icancloud_Message *>(unqueuedMessage);
         // Process
         processRequestMessage(unqueuedMessage);
