@@ -18,8 +18,9 @@
 #ifndef __INET_IEEE80211SCALARRECEIVERLOSS_H
 #define __INET_IEEE80211SCALARRECEIVERLOSS_H
 
-#include "inet/physicallayer/wireless/ieee80211/mode/Ieee80211ModeSet.h"
+#include "inet/physicallayer/wireless/common/contract/packetlevel/ISnir.h"
 #include "inet/physicallayer/wireless/ieee80211/packetlevel/Ieee80211ScalarReceiver.h"
+
 
 namespace inet {
 
@@ -35,6 +36,7 @@ class INET_API Ieee80211ScalarReceiverLoss : public Ieee80211ScalarReceiver
     virtual void initialize(int stage) override;
   public:
     Ieee80211ScalarReceiverLoss();
+    virtual bool computeIsReceptionSuccessful(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part, const IInterference *interference, const ISnir *snir) const override;
     virtual const IReceptionResult *computeReceptionResult(const IListening *listening, const IReception *reception, const IInterference *interference, const ISnir *snir, const std::vector<const IReceptionDecision *> *decisions) const override;
 
 };

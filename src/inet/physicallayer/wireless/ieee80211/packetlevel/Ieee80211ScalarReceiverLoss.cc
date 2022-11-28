@@ -141,11 +141,47 @@ Ieee80211ScalarReceiverLoss::Ieee80211ScalarReceiverLoss() :
 {
 }
 
+bool Ieee80211ScalarReceiverLoss::computeIsReceptionSuccessful(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part, const IInterference *interference, const ISnir *snir) const
+{
+    bool results = Ieee80211ScalarReceiver::computeIsReceptionSuccessful(listening, reception, part, interference, snir);
+#if 1
+    if (!results)
+        return results;
+
+    auto txNode = findContainingNode(check_and_cast<Radio *>(const_cast<IRadio *>(reception->getTransmission()->getTransmitter())));
+    auto rxNode = findContainingNode(check_and_cast<Radio *>(const_cast<IRadio *>(reception->getReceiver())));
+    int txId = txNode->getId();
+    int rxId = rxNode->getId();
+    auto uniLinkIt = uniLinks.find(txId);
+    auto lossLinkIt = lossLinks.find(txId);
+
+    if (uniLinkIt == uniLinks.end() && lossLinkIt == lossLinks.end())
+        return results;
+    if (uniLinkIt != uniLinks.end()) {
+        auto it = std::find(uniLinkIt->second.begin(), uniLinkIt->second.end(), rxId);
+        if (it != uniLinkIt->second.end()) {
+            results = false;
+        }
+    }
+
+    if (lossLinkIt != lossLinks.end()) {
+        auto it = std::find(lossLinkIt->second.begin(), lossLinkIt->second.end(), rxId);
+        if (it != lossLinkIt->second.end()) {
+            double pr = dblrand();
+            if (par("errorProb").doubleValue() > pr)
+                results = false;
+        }
+    }
+#endif
+    return results;
+}
+
 const IReceptionResult *Ieee80211ScalarReceiverLoss::computeReceptionResult(const IListening *listening, const IReception *reception, const IInterference *interference, const ISnir *snir, const std::vector<const IReceptionDecision *> *decisions) const
 {
 
     auto receptionResult = Ieee80211ScalarReceiver::computeReceptionResult(listening, reception, interference, snir, decisions);
 
+#if 0
     auto txNode = findContainingNode(check_and_cast<Radio *>(const_cast<IRadio *>(reception->getTransmission()->getTransmitter())));
     auto rxNode = findContainingNode(check_and_cast<Radio *>(const_cast<IRadio *>(reception->getReceiver())));
 
@@ -179,7 +215,7 @@ const IReceptionResult *Ieee80211ScalarReceiverLoss::computeReceptionResult(cons
                 packet->setBitError(true);
         }
     }
-
+#endif
     return receptionResult;
 }
 
