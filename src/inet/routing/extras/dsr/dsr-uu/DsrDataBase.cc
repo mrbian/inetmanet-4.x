@@ -647,7 +647,7 @@ void DsrDataBase::run(const L3Address &target)
             itHeap = itHeap3;
         }
         int numeq = equal.size()-1;
-        int val = numeq > 0?getEnvir()->getRNG(0)->intRand(numeq):0;
+        int val = numeq > 0?getActiveSimulationOrEnvir()->getRNG(0)->intRand(numeq):0;
         itHeap = equal[val];
         equal.clear();
 
