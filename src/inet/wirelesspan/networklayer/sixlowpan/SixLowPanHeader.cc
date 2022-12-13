@@ -317,7 +317,7 @@ B SixLowPanIphc::getSerializedSize() const {
         }
     }
 
-    for (int i = 0; i < this->getExtensionHeaderArraySize(); i++) {
+    for (int i = 0; i < (int)this->getExtensionHeaderArraySize(); i++) {
         auto extHeader = this->getExtensionHeader(i);
         serializedSize += extHeader->getByteLength();
     }
