@@ -39,10 +39,7 @@ class INET_API Ieee802154UwbIrMode
     static const short shortSFD[8];
     /**@brief Maximum size of message that is accepted by the Phy layer (in bytes). */
     static const int MaxPSDULength = 128;
-    // TODO change to non-static, because it depends on the mode
-    static const int maxS = 20000;
-    static short s_array[maxS];
-    static int last_s;
+
     static const Ieee802154UwbIrMode cfg_mandatory_4M;
     static const Ieee802154UwbIrMode cfg_mandatory_16M;
 
@@ -85,6 +82,11 @@ class INET_API Ieee802154UwbIrMode
     double preambleLength;
     Hz centerFrequency;
     Hz bandwidth;
+
+    const std::vector<short> s_values = make_s();
+
+  private:
+    std::vector<short> make_s() const;
 
   public:
     int s(int n) const;

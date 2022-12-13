@@ -8,11 +8,12 @@
 package inet.linklayer.ieee80211.mac.contract;
 
 //
-// Interface for MPDU aggregation policies.
+// Interface for originator Block ACK agreement policies.
 //
-moduleinterface IMpduAggregationPolicy
+moduleinterface IOriginatorBlockAckAgreementPolicy
 {
     parameters:
+        string originatorAckPolicyModule;
         @display("i=block/control");
 }
 

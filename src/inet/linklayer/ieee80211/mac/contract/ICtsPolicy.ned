@@ -8,11 +8,13 @@
 package inet.linklayer.ieee80211.mac.contract;
 
 //
-// Interface for MPDU aggregation policies.
+// Interface for CTS policies.
 //
-moduleinterface IMpduAggregationPolicy
+moduleinterface ICtsPolicy
 {
     parameters:
+        string rxModule;
+        string rateSelectionModule;
         @display("i=block/control");
 }
 

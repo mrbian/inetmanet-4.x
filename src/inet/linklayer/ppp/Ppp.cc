@@ -75,7 +75,7 @@ void Ppp::configureNetworkInterface()
     networkInterface->setCarrier(connected);
 
     // generate a link-layer address to be used as interface token for IPv6
-    InterfaceToken token(0, getSimulation()->getUniqueNumber(), 64);
+    InterfaceToken token(0, getActiveSimulationOrEnvir()->getUniqueNumber(), 64);
     networkInterface->setInterfaceToken(token);
 
     // MTU: typical values are 576 (Internet de facto), 1500 (Ethernet-friendly),
@@ -93,7 +93,7 @@ void Ppp::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, 
 
     MacProtocolBase::receiveSignal(source, signalID, obj, details);
 
-    if (getSimulation()->getSimulationStage() == CTX_CLEANUP)
+    if (getSimulation()->getSimulationStage() == STAGE(CLEANUP))
         return;
 
     if (signalID == POST_MODEL_CHANGE) {

@@ -8,11 +8,13 @@
 package inet.linklayer.ieee80211.mac.contract;
 
 //
-// Interface for MPDU aggregation policies.
+// Interface for recipient ACK policies. This policy chooses between
+// no ACK, normal ACK and Block ACK for received frames.
 //
-moduleinterface IMpduAggregationPolicy
+moduleinterface IRecipientAckPolicy
 {
     parameters:
+        string rateSelectionModule;
         @display("i=block/control");
 }
 

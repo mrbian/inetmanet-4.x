@@ -7,7 +7,13 @@
 
 package inet.linklayer.ieee80211.mac.recipient;
 
-simple QosCtsPolicy
+import inet.linklayer.ieee80211.mac.contract.ICtsPolicy;
+
+
+//
+// Implements the default CTS policy for QoS stations.
+//
+simple QosCtsPolicy like ICtsPolicy
 {
     parameters:
         string rxModule;

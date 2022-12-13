@@ -7,7 +7,13 @@
 
 package inet.linklayer.ieee80211.mac.recipient;
 
-simple CtsPolicy
+import inet.linklayer.ieee80211.mac.contract.ICtsPolicy;
+
+
+//
+// Implements the default CTS policy.
+//
+simple CtsPolicy like ICtsPolicy
 {
     parameters:
         string rxModule;

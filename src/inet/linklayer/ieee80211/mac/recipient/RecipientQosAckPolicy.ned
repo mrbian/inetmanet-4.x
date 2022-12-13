@@ -7,7 +7,13 @@
 
 package inet.linklayer.ieee80211.mac.recipient;
 
-simple RecipientQosAckPolicy
+import inet.linklayer.ieee80211.mac.contract.IRecipientQosAckPolicy;
+
+
+//
+// Implements the default recipient ACK policy for QoS stations.
+//
+simple RecipientQosAckPolicy like IRecipientQosAckPolicy
 {
     parameters:
         string rateSelectionModule;
