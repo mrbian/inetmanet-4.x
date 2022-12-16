@@ -13,9 +13,12 @@ void DriftingOscillatorBase::initialize(int stage)
 {
     OscillatorBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        nominalTickLength = par("nominalTickLength");
+        double nominalTickLengthAsDouble = par("nominalTickLength");
+        nominalTickLength = nominalTickLengthAsDouble;
         if (nominalTickLength == 0)
             nominalTickLength.setRaw(1);
+        else if (std::abs(nominalTickLength.dbl() - nominalTickLengthAsDouble) / nominalTickLengthAsDouble > 1E-15)
+            throw cRuntimeError("The nominalTickLength parameter value %lg cannot be accurately represented with the current simulation time precision, conversion result: %s", nominalTickLengthAsDouble, nominalTickLength.ustr().c_str());
         inverseDriftRate = invertDriftRate(driftRate);
         origin = simTime();
         simtime_t currentTickLength = getCurrentTickLength();
@@ -116,7 +119,7 @@ std::string DriftingOscillatorBase::resolveDirective(char directive) const
 {
     switch (directive) {
         case 'c':
-            return getCurrentTickLength().str() + " s";
+            return std::to_string(getCurrentTickLength()) + " s";
         case 'd':
             return std::to_string((int64_t)(driftRate * 1E+6)) + " ppm";
         default:

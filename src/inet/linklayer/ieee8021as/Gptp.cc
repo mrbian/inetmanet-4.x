@@ -380,17 +380,23 @@ void Gptp::synchronize()
     clocktime_t newTime = peerSentTimeSync + peerDelay + correctionField + residenceTime;
 
     ASSERT(gptpNodeType != MASTER_NODE);
-    check_and_cast<SettableClock *>(clock.get())->setClockTime(newTime);
 
-    // TODO computeGmRateRatio:
-    gmRateRatio = (origNow - newLocalTimeAtTimeSync) / (syncIngressTimestamp - receivedTimeSync);
-    gmRateRatio = 1.0 / gmRateRatio;
+    // TODO validate the following expression with the standard
+    if (oldPeerSentTimeSync == -1)
+        gmRateRatio = 1;
+    else
+        gmRateRatio = (peerSentTimeSync - oldPeerSentTimeSync) / (origNow - newLocalTimeAtTimeSync) ;
 
+    auto settableClock = check_and_cast<SettableClock *>(clock.get());
+    settableClock->setClockTime(newTime, gmRateRatio * settableClock->getOscillatorCompensationFactor(), true);
+
+    oldPeerSentTimeSync = peerSentTimeSync;
     oldLocalTimeAtTimeSync = origNow;
     newLocalTimeAtTimeSync = clock->getClockTime();
     receivedTimeSync = syncIngressTimestamp;
 
     // adjust local timestamps, too
+    pdelayRespEventIngressTimestamp += newLocalTimeAtTimeSync - oldLocalTimeAtTimeSync;
     pdelayReqEventEgressTimestamp += newLocalTimeAtTimeSync - oldLocalTimeAtTimeSync;
 
     /************** Rate ratio calculation *************************************

@@ -17,6 +17,7 @@ class INET_API SettableClock : public OscillatorBasedClock, public IScriptable
 {
   protected:
     OverdueClockEventHandlingMode defaultOverdueClockEventHandlingMode = UNSPECIFIED;
+    double oscillatorCompensationFactor = 1.0;
 
   protected:
     virtual void initialize(int stage) override;
@@ -28,7 +29,13 @@ class INET_API SettableClock : public OscillatorBasedClock, public IScriptable
     virtual void processCommand(const cXMLElement& node) override;
 
   public:
-    virtual void setClockTime(clocktime_t time, bool resetOscillator = true);
+    virtual double getOscillatorCompensationFactor() const override { return oscillatorCompensationFactor; }
+
+    /**
+     * Sets the clock time immediately to the given value. Greater than 1 oscillator
+     * compensation factor means the clock measures time faster.
+     */
+    virtual void setClockTime(clocktime_t time, double oscillatorCompensationFactor, bool resetOscillator);
 };
 
 } // namespace inet
