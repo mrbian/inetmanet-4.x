@@ -5,8 +5,8 @@
 //
 
 
-#ifndef __INET_ETHERNETCUTTHROUGHSINK_H
-#define __INET_ETHERNETCUTTHROUGHSINK_H
+#ifndef __INET_CUTTHROUGHSINK_H
+#define __INET_CUTTHROUGHSINK_H
 
 #include "inet/protocolelement/common/PacketStreamer.h"
 
@@ -14,7 +14,7 @@ namespace inet {
 
 using namespace inet::queueing;
 
-class INET_API EthernetCutthroughSink : public PacketStreamer
+class INET_API CutthroughSink : public PacketStreamer
 {
   protected:
     virtual void endStreaming() override;

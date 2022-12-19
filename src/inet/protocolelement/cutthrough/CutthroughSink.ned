@@ -5,13 +5,13 @@
 //
 
 
-package inet.linklayer.ethernet.modular;
+package inet.protocolelement.cutthrough;
 
 import inet.protocolelement.common.PacketStreamer;
 
-simple EthernetCutthroughSink extends PacketStreamer
+simple CutthroughSink extends PacketStreamer
 {
     parameters:
-        @class(EthernetCutthroughSink);
+        @class(CutthroughSink);
         @display("i=block/routing");
 }
