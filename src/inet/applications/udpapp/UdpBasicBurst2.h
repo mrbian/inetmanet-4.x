@@ -35,16 +35,16 @@ namespace inet {
 class INET_API UdpBasicBurst2 : public UdpBasicBurst
 {
 
-    static int numStatics;
-    static int numMobiles;
+    uint64_t &numStatics = SIMULATION_SHARED_COUNTER(numStatics);
+    uint64_t &numMobiles = SIMULATION_SHARED_COUNTER(numMobiles);
 
-    static std::vector<L3Address> staticNodes;
-    static int packetStatic;
-    static int packetMob;
-    static int packetStaticRec;
-    static int packetMobRec;
-    static int stablePaths;
-    static cHistogram * delay;
+    std::vector<L3Address> &staticNodes = SIMULATION_SHARED_VARIABLE(staticNodes);
+    uint64_t &packetStatic  = SIMULATION_SHARED_COUNTER(packetStatic);
+    uint64_t &packetMob = SIMULATION_SHARED_COUNTER(packetMob);
+    uint64_t &packetStaticRec = SIMULATION_SHARED_COUNTER(packetStaticRec);;
+    uint64_t &packetMobRec = SIMULATION_SHARED_COUNTER(packetMobRec);;
+    uint64_t &stablePaths = SIMULATION_SHARED_COUNTER(stablePaths);;
+    cHistogram &delayHist  = SIMULATION_SHARED_VARIABLE(delayHist);
     bool isStatic = false;
 
 
@@ -57,7 +57,6 @@ class INET_API UdpBasicBurst2 : public UdpBasicBurst
 
   public:
     UdpBasicBurst2() {}
-    virtual ~UdpBasicBurst2() {if (delay != nullptr) {delete delay; delay = nullptr;}}
 
 };
 

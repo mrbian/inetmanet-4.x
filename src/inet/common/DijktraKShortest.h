@@ -62,8 +62,6 @@ public:
 protected:
     typedef std::map<NodeId,Kroutes> MapRoutes;
     MapRoutes kRoutesMap;
-
-
     class SetElem
     {
     public:

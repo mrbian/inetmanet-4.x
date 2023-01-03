@@ -146,7 +146,7 @@ class AODVUU : public ManetRoutingBase
     AodvRtTableMap aodvRtTableMap;
 
     // this static map simulate the exchange of seq num by the proactive protocol.
-    static std::map<L3Address,u_int32_t *> mapSeqNum;
+    std::map<L3Address,u_int32_t *> &mapSeqNum = SIMULATION_SHARED_VARIABLE(mapSeqNum);
 
 
   private:
@@ -229,8 +229,8 @@ class AODVUU : public ManetRoutingBase
     virtual bool isThisRrepPrevSent(Ptr<const AODV_msg>);
     virtual bool getDestAddressRreq(Packet *msg,PacketDestOrigin &orgDest,RREQInfo &rreqInfo);
   public:
-    static int  log_file_fd;
-    static bool log_file_fd_init;
+    int  &log_file_fd = SIMULATION_SHARED_VARIABLE(log_file_fd, -1);
+    bool &log_file_fd_init = SIMULATION_SHARED_VARIABLE(log_file_fd_init, false);
     AODVUU() { progname = nullptr; isRoot = false; is_init = false; log_file_fd_init = false; sendMessageEvent = new cMessage("AodvUU-sendMessageEvent"); mapSeqNum.clear(); /*&messageEvent;*/storeRreq = false;}
     ~AODVUU();
 
@@ -401,29 +401,29 @@ class AODVUU : public ManetRoutingBase
 //  inline int ifindex2devindex(unsigned int ifindex);
     int ifindex2devindex(unsigned int ifindex);
 #ifdef AODV_GLOBAL_STATISTISTIC
-    static bool iswrite;
-    static int totalSend;
-    static int totalRreqSend;
-    static int totalRreqRec;
-    static int totalRrepSend;
-    static int totalRrepRec;
-    static int totalRrepAckSend;
-    static int totalRrepAckRec;
-    static int totalRerrSend;
-    static int totalRerrRec;
-    static int totalLocalRep;
+    bool &iswrite = SIMULATION_SHARED_VARIABLE(iswrite, false);
+    uint64_t &totalSend = SIMULATION_SHARED_COUNTER(totalSend);
+    uint64_t &totalRreqSend = SIMULATION_SHARED_COUNTER(totalRreqSend);
+    uint64_t &totalRreqRec = SIMULATION_SHARED_COUNTER(totalRreqRec);
+    uint64_t &totalRrepSend = SIMULATION_SHARED_COUNTER(totalRrepSend);
+    uint64_t &totalRrepRec = SIMULATION_SHARED_COUNTER(totalRrepRec);
+    uint64_t &totalRrepAckSend = SIMULATION_SHARED_COUNTER(totalRrepAckSend);
+    uint64_t &totalRrepAckRec = SIMULATION_SHARED_COUNTER(totalRrepAckRec);
+    uint64_t &totalRerrSend = SIMULATION_SHARED_COUNTER(totalRerrSend);
+    uint64_t &totalRerrRec = SIMULATION_SHARED_COUNTER(totalRerrRec);
+    uint64_t &totalLocalRep = SIMULATION_SHARED_COUNTER(totalLocalRep);
 #else
     bool iswrite;
-    int totalSend;
-    int totalRreqSend;
-    int totalRreqRec;
-    int totalRrepSend;
-    int totalRrepRec;
-    int totalRrepAckSend;
-    int totalRrepAckRec;
-    int totalRerrSend;
-    int totalRerrRec;
-    int totalLocalRep;
+    uint64_t totalSend = 0;
+    uint64_t totalRreqSend = 0;
+    uint64_t totalRreqRec = 0;
+    uint64_t totalRrepSend = 0;
+    uint64_t totalRrepRec = 0;
+    uint64_t totalRrepAckSend = 0;
+    uint64_t totalRrepAckRec = 0;
+    uint64_t totalRerrSend = 0;
+    uint64_t totalRerrRec = 0;
+    uint64_t totalLocalRep = 0;
 #endif
 
     // used for break link notification

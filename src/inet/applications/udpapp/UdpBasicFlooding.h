@@ -67,7 +67,7 @@ class INET_API UdpBasicFlooding :  public ApplicationBase, public UdpSocket::ICa
     bool haveSleepDuration;
     std::vector<int> outputInterfaceMulticastBroadcast;
 
-    static int counter; // counter for generating a global number for each packet
+    uint64_t &counter =  SIMULATION_SHARED_COUNTER(counter); // counter for generating a global number for each packet
 
     int numSent = 0;
     int numReceived = 0;

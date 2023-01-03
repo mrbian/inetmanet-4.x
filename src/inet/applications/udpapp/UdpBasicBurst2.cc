@@ -38,31 +38,12 @@ namespace inet {
 Define_Module(UdpBasicBurst2);
 
 
-int UdpBasicBurst2::numStatics = 0;
-int UdpBasicBurst2::numMobiles = 0;
-std::vector<L3Address> UdpBasicBurst2::staticNodes;
-int UdpBasicBurst2::packetStatic = 0;
-int UdpBasicBurst2::packetMob = 0;
-int UdpBasicBurst2::packetStaticRec = 0;
-int UdpBasicBurst2::packetMobRec = 0;
-cHistogram * UdpBasicBurst2::delay = nullptr;
-int UdpBasicBurst2::stablePaths = 0;
-
 void UdpBasicBurst2::initialize(int stage)
 {
     UdpBasicBurst::initialize(stage);
 
     if (stage == INITSTAGE_LOCAL) {
 
-        numStatics = 0;
-        numMobiles = 0;
-        staticNodes.clear();
-        packetStatic = 0;
-        packetMob = 0;
-        packetStaticRec = 0;
-        packetMobRec = 0;
-        stablePaths = 0;
-        delay = nullptr;
     }
     else if (stage == INITSTAGE_APPLICATION_LAYER) {
         auto node = getContainingNode(this);
@@ -72,8 +53,6 @@ void UdpBasicBurst2::initialize(int stage)
             numStatics++;
             staticNodes.push_back(L3AddressResolver().addressOf(node));
             isStatic = true;
-            if (delay == nullptr)
-                delay = new cHistogram("Global delay");
         }
         else {
             isStatic = false;
@@ -142,8 +121,8 @@ void UdpBasicBurst2::processPacket(Packet *pk)
         packetStaticRec++;
     else
         packetMobRec++;
-    if (delay != nullptr)
-        delay->collect(simTime() - pk->getTimestamp());
+
+    delayHist.collect(simTime() - pk->getTimestamp());
 
 
     auto tag = pk->findTag<RouteTraceTag>();
@@ -261,14 +240,10 @@ void UdpBasicBurst2::finish()
 
     }
     if (packetStaticRec + packetMobRec > 0) {
-          recordScalar("Global no stable paths", packetStaticRec + packetMobRec - stablePaths);
+       recordScalar("Global no stable paths", packetStaticRec + packetMobRec - stablePaths);
     }
 
-    if (delay != nullptr) {
-        delay->record();
-        delete delay;
-        delay = nullptr;
-    }
+    delayHist.record();
 
     if ((packetStaticRec + packetMobRec)  > 0) {
         recordScalar("Global pkt total rec", (packetStaticRec + packetMobRec));

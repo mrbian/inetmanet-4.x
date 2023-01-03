@@ -123,6 +123,8 @@ void DijkstraKshortest::initMinAndMax()
 {
     CostVector defaulCost;
     Cost costData;
+    minimumCost.clear();
+    maximumCost.clear();
     costData.metric = aditiveMin;
     costData.value = 0;
     minimumCost.push_back(costData);
@@ -154,6 +156,9 @@ void DijkstraKshortest::initMinAndMaxWs()
 {
    CostVector defaulCost;
    Cost costData;
+   minimumCost.clear();
+   maximumCost.clear();
+
    costData.metric=aditiveMin;
    costData.value=0;
    minimumCost.push_back(costData);
@@ -175,6 +180,9 @@ void DijkstraKshortest::initMinAndMaxSw()
 
     CostVector defaulCost;
     Cost costData;
+    minimumCost.clear();
+    maximumCost.clear();
+
     costData.metric=aditiveMin;
     costData.value=10e100;
     maximumCost.push_back(costData);

@@ -48,8 +48,8 @@ cplusplus(SixLowPanDispatch) {{
     virtual L3Address getDestinationAddress() const override {throw cRuntimeError("Method not implemented"); return L3Address();}
     virtual void setDestinationAddress(const L3Address& address)  override {throw cRuntimeError("Method not implemented");}
     virtual bool isFragment() const override {throw cRuntimeError("Method not implemented"); return false; }
-    virtual const Protocol *getProtocol() const override { return ProtocolGroup::ipprotocol.findProtocol(getProtocolId()); }
-    virtual void setProtocol(const Protocol *protocol) override { setProtocolId(static_cast<IpProtocolId>(ProtocolGroup::ipprotocol.getProtocolNumber(protocol))); }
+    virtual const Protocol *getProtocol() const override { return ProtocolGroup::getIpProtocolGroup()->getProtocolNumber(getProtocolId()); }
+    virtual void setProtocol(const Protocol *protocol) override { setProtocolId(static_cast<IpProtocolId>(ProtocolGroup::getIpProtocolGroup()->getProtocolNumber(protocol))); }
     
     virtual B getSerializedSize() const {return B(1);}
     virtual void adjustHeaderSize() {this->setChunkLength(this->getSerializedSize());}

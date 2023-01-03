@@ -889,7 +889,7 @@ void DSRUU::packetFailed(const Packet *pktAux)
     PacketDissector::PduTreeBuilder pduTreeBuilder;
     auto packetProtocolTag = ipDgram->findTag<PacketProtocolTag>();
     auto protocol = packetProtocolTag != nullptr ? packetProtocolTag->getProtocol() : nullptr;
-    PacketDissector packetDissector(ProtocolDissectorRegistry::globalRegistry, pduTreeBuilder);
+    PacketDissector packetDissector(ProtocolDissectorRegistry::getInstance(), pduTreeBuilder);
     packetDissector.dissectPacket(ipDgram, protocol);
 
     auto& protocolDataUnit = pduTreeBuilder.getTopLevelPdu();
@@ -1048,7 +1048,7 @@ void DSRUU::tap(Packet *p)
     if (protocol == nullptr)
         throw cRuntimeError("Protocl not found");
 
-    IpProtocolId transportProtocol = (IpProtocolId)ProtocolGroup::ipprotocol.getProtocolNumber(protocol);
+    IpProtocolId transportProtocol = (IpProtocolId)ProtocolGroup::getIpProtocolGroup()->getProtocolNumber(protocol);
 
 
     if (transportProtocol != ipHeader->getProtocolId())

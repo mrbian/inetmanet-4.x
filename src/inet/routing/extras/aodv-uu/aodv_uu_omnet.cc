@@ -65,24 +65,6 @@ Define_Module(AODVUU);
 
 /* Constructor for the AODVUU routing agent */
 
-bool AODVUU::log_file_fd_init=false;
-int AODVUU::log_file_fd = -1;
-
-#ifdef AODV_GLOBAL_STATISTISTIC
-bool AODVUU::iswrite = false;
-int AODVUU::totalSend=0;
-int AODVUU::totalRreqSend=0;
-int AODVUU::totalRreqRec=0;
-int AODVUU::totalRrepSend=0;
-int AODVUU::totalRrepRec=0;
-int AODVUU::totalRrepAckSend=0;
-int AODVUU::totalRrepAckRec=0;
-int AODVUU::totalRerrSend=0;
-int AODVUU::totalRerrRec=0;
-int AODVUU::totalLocalRep =0;
-#endif
-std::map<L3Address,u_int32_t *> AODVUU::mapSeqNum;
-
 static std::ostream& operator<<(std::ostream& out, const q_pkt& e)
 {
     out << "Dest :" << e.dest_addr.S_addr.str() << " -- Pkt: " << e.p->str();
@@ -108,20 +90,6 @@ void NS_CLASS initialize(int stage)
         RREP_SIZE = (getAddressSize()*2)+12;
         RREQ_SIZE = 16+(getAddressSize()*2);
 
-
-#ifndef AODV_GLOBAL_STATISTISTIC
-        iswrite = false;
-        totalSend=0;
-        totalRreqSend=0;
-        totalRreqRec=0;
-        totalRrepSend=0;
-        totalRrepRec=0;
-        totalRrepAckSend=0;
-        totalRrepAckRec=0;
-        totalRerrSend=0;
-        totalRerrRec=0;
-        totalLocalRep=0;
-#endif
         log_to_file = 0;
         hello_jittering = 0;
         optimized_hellos = 0;
@@ -412,7 +380,7 @@ static bool checkHeaderType(const Packet *pkt) {
     PacketDissector::PduTreeBuilder pduTreeBuilder;
     auto packetProtocolTag = pkt->findTag<PacketProtocolTag>();
     auto protocol = packetProtocolTag != nullptr ? packetProtocolTag->getProtocol() : nullptr;
-    PacketDissector packetDissector(ProtocolDissectorRegistry::globalRegistry, pduTreeBuilder);
+    PacketDissector packetDissector(ProtocolDissectorRegistry::getInstance(), pduTreeBuilder);
     packetDissector.dissectPacket(const_cast<Packet *>(pkt), protocol);
 
     auto& protocolDataUnit = pduTreeBuilder.getTopLevelPdu();
@@ -539,7 +507,7 @@ void NS_CLASS packetFailed(const Packet *dgram)
     PacketDissector::PduTreeBuilder pduTreeBuilder;
     auto packetProtocolTag = dgram->findTag<PacketProtocolTag>();
     auto protocol = packetProtocolTag != nullptr ? packetProtocolTag->getProtocol() : nullptr;
-    PacketDissector packetDissector(ProtocolDissectorRegistry::globalRegistry, pduTreeBuilder);
+    PacketDissector packetDissector(ProtocolDissectorRegistry::getInstance(), pduTreeBuilder);
     packetDissector.dissectPacket(const_cast<Packet *> (dgram), protocol);
 
     auto& protocolDataUnit = pduTreeBuilder.getTopLevelPdu();

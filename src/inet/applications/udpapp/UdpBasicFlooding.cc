@@ -46,8 +46,6 @@ namespace inet {
 
 Define_Module(UdpBasicFlooding);
 
-int UdpBasicFlooding::counter;
-
 simsignal_t UdpBasicFlooding::sentPkSignal = registerSignal("sentPk");
 simsignal_t UdpBasicFlooding::rcvdPkSignal = registerSignal("rcvdPk");
 simsignal_t UdpBasicFlooding::outOfOrderPkSignal = registerSignal("outOfOrderPk");
@@ -76,13 +74,6 @@ void UdpBasicFlooding::initialize(int stage)
     ApplicationBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL)
     {
-        counter = 0;
-        numSent = 0;
-        numReceived = 0;
-        numDeleted = 0;
-        numDuplicated = 0;
-        numFlood = 0;
-
         delayLimit = par("delayLimit");
         startTime = par("startTime");
         stopTime = par("stopTime");
