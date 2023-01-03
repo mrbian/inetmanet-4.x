@@ -169,7 +169,7 @@ Packet *UdpBasicFlooding::createPacket()
     if (!isSource)
         throw cRuntimeError("This module is not configured like sorce, cannot create packets");
     char msgName[32];
-    sprintf(msgName, "UDPBasicAppData-%d", counter++);
+    sprintf(msgName, "UDPBasicAppData-%llu", counter++);
     long msgByteLength = *messageLengthPar;
     Packet *pk = new Packet(msgName);
     const auto& payload = makeShared<ApplicationPacket>();
