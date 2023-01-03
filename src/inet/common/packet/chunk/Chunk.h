@@ -334,9 +334,6 @@ class INET_API Chunk : public cObject, public SharedBase<Chunk>, public IPrintab
         BackwardIterator& operator=(const BackwardIterator& other) { position = other.position; index = other.index; CHUNK_CHECK_IMPLEMENTATION(isCorrect()); return *this; }
     };
 
-  public:
-    static int nextId;
-
   protected:
     /**
      * The id is automatically assigned sequentially during construction.
@@ -356,8 +353,8 @@ class INET_API Chunk : public cObject, public SharedBase<Chunk>, public IPrintab
     //@{
     int getBinDumpNumLines() const;
     int getHexDumpNumLines() const;
-    const char *getBinDumpLine(int index);
-    const char *getHexDumpLine(int index);
+    std::string getBinDumpLine(int index);
+    std::string getHexDumpLine(int index);
     const SharingRegionTagSet::RegionTag<TagBase>& _getTag(int index) const { return regionTags.getRegionTag(index); }
     //@}
 
@@ -420,6 +417,8 @@ class INET_API Chunk : public cObject, public SharedBase<Chunk>, public IPrintab
         }
         return chunk;
     }
+
+    static uint64_t getNextId();
 
   public:
     /** @name Constructors, destructors and duplication related functions */

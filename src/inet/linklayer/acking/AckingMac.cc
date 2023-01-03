@@ -211,7 +211,7 @@ void AckingMac::encapsulate(Packet *packet)
         macHeader->setSrcModuleId(-1);
     else
         macHeader->setSrcModuleId(getId());
-    macHeader->setNetworkProtocol(ProtocolGroup::ethertype.getProtocolNumber(packet->getTag<PacketProtocolTag>()->getProtocol()));
+    macHeader->setNetworkProtocol(ProtocolGroup::getEthertypeProtocolGroup()->getProtocolNumber(packet->getTag<PacketProtocolTag>()->getProtocol()));
     packet->insertAtFront(macHeader);
     auto macAddressInd = packet->addTagIfAbsent<MacAddressInd>();
     macAddressInd->setSrcAddress(macHeader->getSrc());
@@ -253,7 +253,7 @@ void AckingMac::decapsulate(Packet *packet)
     macAddressInd->setSrcAddress(macHeader->getSrc());
     macAddressInd->setDestAddress(macHeader->getDest());
     packet->addTagIfAbsent<InterfaceInd>()->setInterfaceId(networkInterface->getInterfaceId());
-    auto payloadProtocol = ProtocolGroup::ethertype.getProtocol(macHeader->getNetworkProtocol());
+    auto payloadProtocol = ProtocolGroup::getEthertypeProtocolGroup()->getProtocol(macHeader->getNetworkProtocol());
     packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(payloadProtocol);
     packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(payloadProtocol);
 }

@@ -11,11 +11,10 @@
 
 namespace inet {
 
-int Chunk::nextId = 0;
 const b Chunk::unspecifiedLength = b(-std::numeric_limits<int64_t>::max());
 
 Chunk::Chunk() :
-    id(nextId++),
+    id(getNextId()),
     flags(0)
 {
 }
@@ -23,7 +22,7 @@ Chunk::Chunk() :
 Chunk::Chunk(const Chunk& other) :
     cObject(other),
     SharedBase<Chunk>(other),
-    id(nextId++),
+    id(getNextId()),
     flags(other.flags & ~CF_IMMUTABLE),
     regionTags(other.regionTags)
 {
@@ -49,6 +48,13 @@ void Chunk::parsimUnpack(cCommBuffer *buffer)
     regionTags.parsimUnpack(buffer);
 }
 
+uint64_t Chunk::getNextId()
+{
+    static int handle = cSimulationOrSharedDataManager::registerSharedCounterName("inet::Chunk::nextId");
+    uint64_t& nextId = getSimulationOrSharedDataManager()->getSharedCounter(handle);
+    return nextId++;
+}
+
 void Chunk::handleChange()
 {
     checkMutable();
@@ -64,12 +70,10 @@ int Chunk::getHexDumpNumLines() const
     return ((b(getChunkLength()).get() + 7) / 8 + 15) / 16;
 }
 
-static std::string asStringValue;
-
-const char *Chunk::getBinDumpLine(int index)
+std::string Chunk::getBinDumpLine(int index)
 {
-    asStringValue = "";
     try {
+        std::string result;
         int offset = index * 32;
         int length = std::min(32, (int)b(getChunkLength()).get() - offset);
         MemoryOutputStream outputStream;
@@ -78,20 +82,20 @@ const char *Chunk::getBinDumpLine(int index)
         outputStream.copyData(bits);
         for (int i = 0; i < length; i++) {
             if (i != 0 && i % 4 == 0)
-                asStringValue += " ";
-            asStringValue += (bits[i] ? "1" : "0");
+                result += " ";
+            result += (bits[i] ? "1" : "0");
         }
+        return result;
     }
     catch (cRuntimeError& e) {
-        asStringValue = e.what();
+        return e.what();
     }
-    return asStringValue.c_str();
 }
 
-const char *Chunk::getHexDumpLine(int index)
+std::string Chunk::getHexDumpLine(int index)
 {
-    asStringValue = "";
     try {
+        std::string result;
         int offset = index * 8 * 16;
         int length = std::min(8 * 16, (int)b(getChunkLength()).get() - offset);
         MemoryOutputStream outputStream;
@@ -102,15 +106,15 @@ const char *Chunk::getHexDumpLine(int index)
         char tmp[3] = "  ";
         for (size_t i = 0; i < bytes.size(); i++) {
             if (i != 0)
-                asStringValue += " ";
+                result += " ";
             sprintf(tmp, "%02X", bytes[i]);
-            asStringValue += tmp;
+            result += tmp;
         }
+        return result;
     }
     catch (cRuntimeError& e) {
-        asStringValue = e.what();
+        return e.what();
     }
-    return asStringValue.c_str();
 }
 
 const Ptr<Chunk> Chunk::convertChunk(const std::type_info& typeInfo, const Ptr<Chunk>& chunk, b offset, b length, int flags)
@@ -181,7 +185,7 @@ void Chunk::serialize(MemoryOutputStream& stream, const Ptr<const Chunk>& chunk,
     CHUNK_CHECK_USAGE(length >= b(-1), "length is invalid");
     CHUNK_CHECK_USAGE(b(0) <= offset && offset <= chunk->getChunkLength(), "offset is out of range");
     const Chunk *chunkPointer = chunk.get();
-    auto serializer = ChunkSerializerRegistry::globalRegistry.getSerializer(typeid(*chunkPointer));
+    auto serializer = ChunkSerializerRegistry::getInstance().getSerializer(typeid(*chunkPointer));
 #if CHUNK_CHECK_IMPLEMENTATION_ENABLED
     auto startPosition = stream.getLength();
 #endif
@@ -195,7 +199,7 @@ void Chunk::serialize(MemoryOutputStream& stream, const Ptr<const Chunk>& chunk,
 
 const Ptr<Chunk> Chunk::deserialize(MemoryInputStream& stream, const std::type_info& typeInfo)
 {
-    auto serializer = ChunkSerializerRegistry::globalRegistry.getSerializer(typeInfo);
+    auto serializer = ChunkSerializerRegistry::getInstance().getSerializer(typeInfo);
 #if CHUNK_CHECK_IMPLEMENTATION_ENABLED
     auto startPosition = B(stream.getPosition());
 #endif

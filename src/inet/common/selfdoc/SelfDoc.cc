@@ -16,22 +16,13 @@
 
 namespace inet {
 
-SelfDoc globalSelfDoc;
+OPP_THREAD_LOCAL SelfDoc globalSelfDoc;
 
 Register_PerRunConfigOption(CFGID_GENERATE_SELFDOC, "generate-selfdoc", CFG_BOOL, "false", "Enable/disable the generate SelfDoc file");
 
-bool SelfDoc::generateSelfdoc = false;
+OPP_THREAD_LOCAL bool SelfDoc::generateSelfdoc = false;
 
-namespace {
-class LocalLifecycleListener : public cISimulationLifecycleListener {
-    virtual void lifecycleEvent(SimulationLifecycleEventType eventType, cObject *details) {
-        if (eventType == LF_PRE_NETWORK_SETUP)
-            SelfDoc::generateSelfdoc = cSimulation::getActiveEnvir()->getConfig()->getAsBool(CFGID_GENERATE_SELFDOC);
-    }
-} listener;
-}
-
-EXECUTE_ON_STARTUP(getActiveSimulationOrEnvir()->addLifecycleListener(&listener));
+EXECUTE_PRE_NETWORK_SETUP(SelfDoc::generateSelfdoc = cSimulation::getActiveEnvir()->getConfig()->getAsBool(CFGID_GENERATE_SELFDOC));
 
 
 SelfDoc::~SelfDoc() noexcept(false)

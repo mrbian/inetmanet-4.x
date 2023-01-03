@@ -59,7 +59,7 @@ void Packet::selfDoc(const char * packetAction, const char *typeName)
 
 Packet::Packet(const char *name, short kind) :
     cPacket(name, kind),
-    content(EmptyChunk::singleton),
+    content(makeShared<EmptyChunk>()),
     frontIterator(Chunk::ForwardIterator(b(0), 0)),
     backIterator(Chunk::BackwardIterator(b(0), 0)),
     totalLength(b(0))
@@ -96,7 +96,7 @@ Packet::Packet(const Packet& other) :
 const ChunkTemporarySharedPtr *Packet::getDissection() const
 {
     PacketDissector::ChunkBuilder builder;
-    PacketDissector packetDissector(ProtocolDissectorRegistry::globalRegistry, builder);
+    PacketDissector packetDissector(ProtocolDissectorRegistry::getInstance(), builder);
     packetDissector.dissectPacket(const_cast<Packet *>(this));
     return new ChunkTemporarySharedPtr(builder.getContent());
 }
@@ -190,7 +190,7 @@ void Packet::insertAt(const Ptr<const Chunk>& chunk, b offset)
     CHUNK_CHECK_USAGE(chunk->getChunkLength() > b(0), "chunk is empty");
     CHUNK_CHECK_USAGE(b(0) <= offset && offset <= totalLength, "offset is out of range");
     constPtrCast<Chunk>(chunk)->markImmutable();
-    if (content == EmptyChunk::singleton)
+    if (content->getChunkType() == Chunk::CT_EMPTY)
         content = chunk;
     else if (offset == b(0) && content->canInsertAtFront(chunk)) {
         const auto& newContent = makeExclusivelyOwnedMutableChunk(content);
@@ -241,7 +241,7 @@ void Packet::eraseAt(b offset, b length)
     CHUNK_CHECK_USAGE(b(0) <= offset && offset <= totalLength, "offset is out of range");
     CHUNK_CHECK_USAGE(b(-1) <= length && offset + length <= totalLength, "length is invalid");
     if (content->getChunkLength() == length) {
-        content = EmptyChunk::singleton;
+        content = makeShared<EmptyChunk>();
         regionTags.clearTags(b(0), length);
     }
     else if (offset == b(0) && content->canRemoveAtFront(length)) {
@@ -325,7 +325,7 @@ const char *Packet::getFullName() const
             suffix = ":start";
         else
             suffix = ":progress";
-        static std::set<std::string> pool;
+        static OPP_THREAD_LOCAL std::set<std::string> pool;
         std::string fullname = std::string(getName()) + suffix;
         auto it = pool.insert(fullname).first;
         return it->c_str();

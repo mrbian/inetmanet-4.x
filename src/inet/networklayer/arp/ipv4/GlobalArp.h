@@ -28,9 +28,6 @@ namespace inet {
 class INET_API GlobalArp : public OperationalBase, public IArp, public cListener
 {
   public:
-    class ArpCacheEntry;
-    typedef std::map<L3Address, ArpCacheEntry *> ArpCache;
-
     // L3Address -> MacAddress
     class INET_API ArpCacheEntry {
       public:
@@ -42,8 +39,8 @@ class INET_API GlobalArp : public OperationalBase, public IArp, public cListener
     ModuleRefByPar<IInterfaceTable> interfaceTable;
     L3Address::AddressType addressType = static_cast<L3Address::AddressType>(-1);
 
-    static ArpCache globalArpCache;
-    static int globalArpCacheRefCnt;
+    typedef std::map<L3Address, ArpCacheEntry *> ArpCache;
+    ArpCache& globalArpCache = SIMULATION_SHARED_VARIABLE(globalArpCache);
 
   protected:
     void ensureCacheEntry(const L3Address& address, const NetworkInterface *networkInterface);
