@@ -526,7 +526,11 @@ void ManetRoutingBase::sendToIpOnIface(Packet *msg, int srcPort, const L3Address
         return;
     }
 
-    msg->addTagIfAbsent<InterfaceReq>()->setInterfaceId(ie->getInterfaceId());
+    if (ie != nullptr)
+        msg->addTagIfAbsent<InterfaceReq>()->setInterfaceId(ie->getInterfaceId());
+    else
+        throw cRuntimeError("Invalid output interface, the routing protocol needs a default output interface");
+
     msg->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::manet);
     // if delay
     if (delay > 0) {
