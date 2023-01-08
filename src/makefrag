@@ -19,12 +19,12 @@ ifeq ($(PLATFORM),win32)
   #
   LDFLAGS += -lws2_32
   DEFINES += -DINET_EXPORT
-else
-     ifeq ($(INET_WITH_ICANCLOUD),yes)
-        LIBS += -lz
-   endif
 endif
 
+#WITH_ICANCLOUD := $(shell (cd .. && $(FEATURETOOL) -q isenabled iCanCloud && echo enabled) )
+#ifdef WITH_ICANCLOUD
+#    LDFLAGS += -lz
+#endif
 #
 # TCP implementation using the lwIP stack
 #
