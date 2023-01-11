@@ -8,28 +8,21 @@
 #ifndef __INET_PACKETDELAYER_H
 #define __INET_PACKETDELAYER_H
 
-#include "inet/common/IProtocolRegistrationListener.h"
-#include "inet/common/clock/ClockUserModuleMixin.h"
-#include "inet/queueing/base/PacketPusherBase.h"
+#include "inet/queueing/base/PacketDelayerBase.h"
 
 namespace inet {
 
-extern template class ClockUserModuleMixin<queueing::PacketPusherBase>;
-
 namespace queueing {
 
-class INET_API PacketDelayer : public ClockUserModuleMixin<PacketPusherBase>, public TransparentProtocolRegistrationListener
+class INET_API PacketDelayer : public PacketDelayerBase
 {
   protected:
-    virtual void handleMessage(cMessage *message) override;
+    cPar *delayParameter = nullptr;
+    cPar *bitrateParameter = nullptr;
 
-    virtual cGate *getRegistrationForwardingGate(cGate *gate) override;
-
-  public:
-    virtual void pushPacket(Packet *packet, cGate *gate) override;
-
-    virtual void handleCanPushPacketChanged(cGate *gate) override;
-    virtual void handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful) override;
+  protected:
+    virtual void initialize(int stage) override;
+    virtual clocktime_t computeDelay(Packet *packet) const override;
 };
 
 } // namespace queueing
