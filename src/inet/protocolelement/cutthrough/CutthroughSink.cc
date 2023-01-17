@@ -17,8 +17,9 @@ Define_Module(CutthroughSink);
 void CutthroughSink::endStreaming()
 {
     if (auto cutthroughTag = streamedPacket->findTag<CutthroughTag>()) {
-        auto cutthroughBuffer = streamedPacket->removeDataAt<StreamBufferChunk>(cutthroughTag->getCutthroughPosition());
+        auto cutthroughBuffer = streamedPacket->removeAt<StreamBufferChunk>(cutthroughTag->getCutthroughPosition());
         streamedPacket->insertAtBack(cutthroughBuffer->getStreamData());
+        streamedPacket->removeTag<CutthroughTag>();
     }
     PacketStreamer::endStreaming();
 }

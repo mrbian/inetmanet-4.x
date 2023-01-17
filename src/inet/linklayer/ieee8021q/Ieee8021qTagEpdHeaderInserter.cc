@@ -10,6 +10,7 @@
 #include "inet/common/IProtocolRegistrationListener.h"
 #include "inet/common/ProtocolGroup.h"
 #include "inet/common/ProtocolTag_m.h"
+#include "inet/common/ProtocolUtils.h"
 #include "inet/linklayer/common/DropEligibleTag_m.h"
 #include "inet/linklayer/common/PcpTag_m.h"
 #include "inet/linklayer/common/UserPriorityTag_m.h"
@@ -58,7 +59,7 @@ void Ieee8021qTagEpdHeaderInserter::processPacket(Packet *packet)
     auto pcpReq = packet->removeTagIfPresent<PcpReq>();
     auto pcp = pcpReq != nullptr ? pcpReq->getPcp() : defaultPcp;
     if (pcp != -1) {
-        EV_INFO << "Setting PCP" << EV_FIELD(vid, pcp) << EV_ENDL;
+        EV_INFO << "Setting PCP" << EV_FIELD(pcp, pcp) << EV_ENDL;
         header->setPcp(pcp);
         packet->addTagIfAbsent<PcpInd>()->setPcp(pcp);
     }
@@ -88,16 +89,8 @@ void Ieee8021qTagEpdHeaderInserter::processPacket(Packet *packet)
     packet->insertAtFront(header);
     packetProtocolTag->setProtocol(qtagProtocol);
     packetProtocolTag->setFrontOffset(b(0));
-    const Protocol *dispatchProtocol = nullptr;
-    if (auto encapsulationProtocolReq = packet->findTagForUpdate<EncapsulationProtocolReq>()) {
-        dispatchProtocol = encapsulationProtocolReq->getProtocol(0);
-        encapsulationProtocolReq->eraseProtocol(0);
-    }
-    else if (nextProtocol != nullptr)
-        dispatchProtocol = nextProtocol;
-    else
-        dispatchProtocol = &Protocol::ethernetMac;
-    packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(dispatchProtocol);
+    removeDispatchProtocol(packet, qtagProtocol);
+    setDispatchProtocol(packet, nextProtocol != nullptr ? nextProtocol : &Protocol::ethernetMac);
 }
 
 } // namespace inet

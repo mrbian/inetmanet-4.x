@@ -2,6 +2,7 @@
 doc/src/showcases
 doc/src/tutorials
 src/Makefile
+debug/makefile
 *_m.h
 *_m.cc
 *_sm.h
@@ -52,6 +53,7 @@ python/inet/test/fingerprint/all_fingerprints.json
 *.pdf
 *.ilg
 *.ind
+*.mk
 *.synctex.gz
 .buildlog*
 compile_commands.json

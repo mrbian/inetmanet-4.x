@@ -30,10 +30,10 @@ void EthernetCutthroughSource::handleMessage(cMessage *message)
     if (message == cutthroughTimer) {
         auto cutthroughPacket = streamedPacket->dup();
         b cutthroughPosition = getCutthroughSwitchingHeaderSize(cutthroughPacket);
-        auto cutthroughData = cutthroughPacket->removeDataAt(cutthroughPosition, cutthroughPacket->getDataLength() - cutthroughPosition - ETHER_FCS_BYTES);
+        auto cutthroughData = cutthroughPacket->removeAt(cutthroughPosition, cutthroughPacket->getDataLength() - cutthroughPosition - ETHER_FCS_BYTES);
         cutthroughData->markImmutable();
         cutthroughBuffer = makeShared<StreamBufferChunk>(cutthroughData, simTime(), datarate);
-        cutthroughPacket->insertDataAt(cutthroughBuffer, cutthroughPosition);
+        cutthroughPacket->insertAt(cutthroughBuffer, cutthroughPosition);
         cutthroughPacket->addTag<CutthroughTag>()->setCutthroughPosition(cutthroughPosition);
         EV_INFO << "Sending cut-through packet" << EV_FIELD(packet, *cutthroughPacket) << EV_ENDL;
         pushOrSendPacket(cutthroughPacket, outputGate, consumer);
@@ -48,35 +48,39 @@ b EthernetCutthroughSource::getCutthroughSwitchingHeaderSize(Packet *packet) con
     if (cutthroughSwitchingHeaderSize != b(0))
         return cutthroughSwitchingHeaderSize;
     else {
-        EthernetCutthroughHeaderSizeCallback callback;
+        EthernetCutthroughDissectorCallback callback;
         PacketDissector packetDissector(ProtocolDissectorRegistry::getInstance(), callback);
         packetDissector.dissectPacket(packet);
         return callback.cutthroughSwitchingHeaderSize - ETHER_FCS_BYTES;
     }
 }
 
-bool EthernetCutthroughSource::EthernetCutthroughHeaderSizeCallback::shouldDissectProtocolDataUnit(const Protocol *protocol)
+bool EthernetCutthroughSource::EthernetCutthroughDissectorCallback::shouldDissectProtocolDataUnit(const Protocol *protocol)
 {
     return protocol == &Protocol::ethernetPhy || protocol == &Protocol::ethernetMac ||
            protocol == &Protocol::ieee8021qCTag || protocol == &Protocol::ieee8021qSTag || protocol == &Protocol::ieee8021rTag;
 }
 
-void EthernetCutthroughSource::EthernetCutthroughHeaderSizeCallback::visitChunk(const Ptr<const Chunk>& chunk, const Protocol *protocol)
+void EthernetCutthroughSource::EthernetCutthroughDissectorCallback::visitChunk(const Ptr<const Chunk>& chunk, const Protocol *protocol)
 {
     if (protocol == &Protocol::ethernetPhy || protocol == &Protocol::ethernetMac ||
         protocol == &Protocol::ieee8021qCTag || protocol == &Protocol::ieee8021qSTag || protocol == &Protocol::ieee8021rTag)
     {
         cutthroughSwitchingHeaderSize += chunk->getChunkLength();
     }
+    else
+        payloadProtocol = protocol;
 }
 
 void EthernetCutthroughSource::pushPacketStart(Packet *packet, cGate *gate, bps datarate)
 {
     PacketDestreamer::pushPacketStart(packet, gate, datarate);
-    b cutthroughPosition = getCutthroughSwitchingHeaderSize(packet);
-    simtime_t delay = s(cutthroughPosition / datarate).get();
-    scheduleAt(simTime() + delay, cutthroughTimer);
-    updateDisplayString();
+    if (!cutthroughInProgress && isEligibleForCutthrough(packet)) {
+        b cutthroughPosition = getCutthroughSwitchingHeaderSize(packet);
+        simtime_t delay = s(cutthroughPosition / datarate).get();
+        scheduleAt(simTime() + delay, cutthroughTimer);
+        updateDisplayString();
+    }
 }
 
 void EthernetCutthroughSource::pushPacketEnd(Packet *packet, cGate *gate)
@@ -86,19 +90,27 @@ void EthernetCutthroughSource::pushPacketEnd(Packet *packet, cGate *gate)
         take(packet);
         delete streamedPacket;
         streamedPacket = nullptr;
-        numProcessedPackets++;
-        processedTotalLength += packet->getTotalLength();
         cutthroughInProgress = false;
         b cutthroughPosition = getCutthroughSwitchingHeaderSize(packet);
-        auto cutthroughData = packet->removeDataAt(cutthroughPosition, packet->getDataLength() - cutthroughPosition - ETHER_FCS_BYTES);
+        auto cutthroughData = packet->removeAt(cutthroughPosition, packet->getDataLength() - cutthroughPosition - ETHER_FCS_BYTES);
         cutthroughData->markImmutable();
         cutthroughBuffer->setStreamData(cutthroughData);
         cutthroughBuffer = nullptr;
+        numProcessedPackets++;
+        processedTotalLength += packet->getTotalLength();
         delete packet;
         updateDisplayString();
     }
     else
         PacketDestreamer::pushPacketEnd(packet, gate);
+}
+
+bool EthernetCutthroughSource::isEligibleForCutthrough(Packet *packet) const
+{
+    EthernetCutthroughDissectorCallback callback;
+    PacketDissector packetDissector(ProtocolDissectorRegistry::getInstance(), callback);
+    packetDissector.dissectPacket(packet);
+    return callback.payloadProtocol != &Protocol::gptp;
 }
 
 } // namespace inet
