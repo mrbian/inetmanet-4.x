@@ -36,25 +36,25 @@ class INET_API SimpleLoRaApp : public cSimpleModule, public ILifecycle
 {
     protected:
         virtual void initialize(int stage) override;
-        void finish() override;
+        virtual void finish() override;
         virtual int numInitStages() const override { return NUM_INIT_STAGES; }
         virtual void handleMessage(cMessage *msg) override;
         virtual bool handleOperationStage(LifecycleOperation *operation, IDoneCallback *doneCallback) override;
 
-        void handleMessageFromLowerLayer(cMessage *msg);
+        virtual void handleMessageFromLowerLayer(cMessage *msg);
         std::pair<double,double> generateUniformCircleCoordinates(double radius, double gatewayX, double gatewayY);
-        void sendJoinRequest();
-        void sendDownMgmtPacket();
+        virtual void sendJoinRequest();
+        //virtual void sendDownMgmtPacket();
 
-        int numberOfPacketsToSend;
-        int sentPackets;
-        int receivedADRCommands;
-        int lastSentMeasurement;
+        int numberOfPacketsToSend = 0;
+        int sentPackets = 0;
+        int receivedADRCommands = 0;
+        int lastSentMeasurement = 0;
         simtime_t timeToFirstPacket;
         simtime_t timeToNextPacket;
 
-        cMessage *configureLoRaParameters;
-        cMessage *sendMeasurements;
+        cMessage *configureLoRaParameters = nullptr;
+        cMessage *sendMeasurements = nullptr;
 
         //history of sent packets;
         cOutVector sfVector;

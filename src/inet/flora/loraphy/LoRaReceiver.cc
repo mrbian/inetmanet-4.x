@@ -14,7 +14,6 @@
 // 
 
 #include "inet/flora/loraphy/LoRaReceiver.h"
-
 #include "inet/flora/loraapp/SimpleLoRaApp.h"
 #include "inet/flora/loraphy/LoRaPhyPreamble_m.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandNoiseBase.h"
@@ -50,12 +49,34 @@ void LoRaReceiver::initialize(int stage)
         numCollisions = 0;
         rcvBelowSensitivity = 0;
     }
+    else if (stage == INITSTAGE_PHYSICAL_ENVIRONMENT) {
+        SimpleLoRaApp * loRaAppAux = nullptr;
+        auto node = getContainingNode(this);
+        auto names = node->getSubmoduleNames();
+        for (const auto &elem : names) {
+            auto mod = node->getSubmodule(elem.c_str());
+            loRaAppAux = dynamic_cast<SimpleLoRaApp *>(mod);
+            if (loRaAppAux) { // SimpleLoRaApp found
+                loraApp = loRaAppAux;
+                break;
+            }
+        }
+    }
     else if (stage == INITSTAGE_PHYSICAL_LAYER) {
         if(iAmGateway == false) {
-            auto node = getContainingNode(this);
-            auto loRaApp = check_and_cast<SimpleLoRaApp *>(node->getSubmodule("SimpleLoRaApp"));
-            setCenterFrequency(loRaApp->loRaCF);
-            setBandwidth(loRaApp->loRaBW);
+            auto loRaAppAux = dynamic_cast<SimpleLoRaApp *>(loraApp);
+            if (loRaAppAux) { // SimpleLoRaApp found
+                setCenterFrequency(loRaAppAux->loRaCF);
+                setBandwidth(loRaAppAux->loRaBW);
+                loraApp = loRaAppAux;
+            }
+            else {
+#ifdef CHECKLORAAPP
+                throw cRuntimeError("SimpleLoRaApp not found");
+#else
+                EV << "SimpleLoRaApp not found";
+#endif
+            }
         }
     }
 }
@@ -281,13 +302,18 @@ bool LoRaReceiver::computeIsReceptionSuccessful(const IListening *listening, con
 
 const IListening *LoRaReceiver::createListening(const IRadio *radio, const simtime_t startTime, const simtime_t endTime, const Coord &startPosition, const Coord &endPosition) const
 {
-    if(iAmGateway == false)
-    {
-        auto node = getContainingNode(this);
-        auto loRaApp = check_and_cast<SimpleLoRaApp *>(node->getSubmodule("SimpleLoRaApp"));
-        return new LoRaBandListening(radio, startTime, endTime, startPosition, endPosition, loRaApp->loRaCF, loRaApp->loRaBW, loRaApp->loRaSF);
+    if(iAmGateway == false) {
+        if (loraApp) {
+            auto loRaApp = check_and_cast<SimpleLoRaApp *>(loraApp);
+            return new LoRaBandListening(radio, startTime, endTime, startPosition, endPosition, loRaApp->loRaCF, loRaApp->loRaBW, loRaApp->loRaSF);
+        }
+#ifdef CHECKLORAAPP
+        throw cRuntimeError("SimpleLoRaApp not found");
+#else
+        EV << "SimpleLoRaApp not found";
+#endif
     }
-    else return new LoRaBandListening(radio, startTime, endTime, startPosition, endPosition, centerFrequency, bandwidth, LoRaSF);
+    return new LoRaBandListening(radio, startTime, endTime, startPosition, endPosition, centerFrequency, bandwidth, LoRaSF);
 }
 
 const IListeningDecision *LoRaReceiver::computeListeningDecision(const IListening *listening, const IInterference *interference) const

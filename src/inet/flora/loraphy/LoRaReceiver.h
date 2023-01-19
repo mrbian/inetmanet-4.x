@@ -16,7 +16,6 @@
 #ifndef LORAPHY_LORARECEIVER_H_
 #define LORAPHY_LORARECEIVER_H_
 
-#include "inet/flora/loraapp/SimpleLoRaApp.h"
 #include "inet/flora/lorabase/LoRaGWMac.h"
 #include "inet/flora/lorabase/LoRaMac.h"
 #include "inet/flora/lorabase/LoRaRadio.h"
@@ -54,6 +53,7 @@ private:
 
     bool iAmGateway;
     bool alohaChannelModel;
+    cModule *loraApp = nullptr;
 
     simsignal_t LoRaReceptionCollision;
 
