@@ -48,8 +48,6 @@ void LoRaReceiver::initialize(int stage)
         LoRaReceptionCollision = registerSignal("LoRaReceptionCollision");
         numCollisions = 0;
         rcvBelowSensitivity = 0;
-    }
-    else if (stage == INITSTAGE_PHYSICAL_ENVIRONMENT) {
         SimpleLoRaApp * loRaAppAux = nullptr;
         auto node = getContainingNode(this);
         auto names = node->getSubmoduleNames();
@@ -68,7 +66,6 @@ void LoRaReceiver::initialize(int stage)
             if (loRaAppAux) { // SimpleLoRaApp found
                 setCenterFrequency(loRaAppAux->loRaCF);
                 setBandwidth(loRaAppAux->loRaBW);
-                loraApp = loRaAppAux;
             }
             else {
 #ifdef CHECKLORAAPP
