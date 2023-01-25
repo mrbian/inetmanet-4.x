@@ -126,66 +126,48 @@ const IReception *LoRaAnalogModel::computeReception(const IRadio *receiverRadio,
 const INoise *LoRaAnalogModel::computeNoise(const IListening *listening, const IInterference *interference) const
 {
     const LoRaBandListening *bandListening = check_and_cast<const LoRaBandListening *>(listening);
-    Hz commonCarrierFrequency = bandListening->getLoRaCF();
+    Hz commonCenterFrequency = bandListening->getLoRaCF();
     Hz commonBandwidth = bandListening->getLoRaBW();
     simtime_t noiseStartTime = SimTime::getMaxTime();
     simtime_t noiseEndTime = 0;
-    std::map<simtime_t, W> *powerChanges = new std::map<simtime_t, W>();
+    std::map<simtime_t, W> powerChanges;
+    powerChanges[math::getLowerBound<simtime_t>()] = W(0);
+    powerChanges[math::getUpperBound<simtime_t>()] = W(0);
     const std::vector<const IReception *> *interferingReceptions = interference->getInterferingReceptions();
     for (auto reception : *interferingReceptions) {
         const ISignalAnalogModel *signalAnalogModel = reception->getAnalogModel();
         const INarrowbandSignal *narrowbandSignalAnalogModel = check_and_cast<const INarrowbandSignal *>(signalAnalogModel);
         const LoRaReception *loRaReception = check_and_cast<const LoRaReception *>(signalAnalogModel);
-        Hz signalCarrierFrequency = loRaReception->getLoRaCF();
+        Hz signalCenterFrequency = loRaReception->getLoRaCF();
         Hz signalBandwidth = loRaReception->getLoRaBW();
-        if((commonCarrierFrequency == signalCarrierFrequency && commonBandwidth >= signalBandwidth))
-        {
-            const IScalarSignal *scalarSignalAnalogModel = check_and_cast<const IScalarSignal *>(signalAnalogModel);
-            W power = scalarSignalAnalogModel->getPower();
-            simtime_t startTime = reception->getStartTime();
-            simtime_t endTime = reception->getEndTime();
-            if (startTime < noiseStartTime)
-                noiseStartTime = startTime;
-            if (endTime > noiseEndTime)
-                noiseEndTime = endTime;
-            std::map<simtime_t, W>::iterator itStartTime = powerChanges->find(startTime);
-            if (itStartTime != powerChanges->end())
-                itStartTime->second += power;
-            else
-                powerChanges->insert(std::pair<simtime_t, W>(startTime, power));
-            std::map<simtime_t, W>::iterator itEndTime = powerChanges->find(endTime);
-            if (itEndTime != powerChanges->end())
-                itEndTime->second -= power;
-            else
-                powerChanges->insert(std::pair<simtime_t, W>(endTime, -power));
-        }
-        else if (areOverlappingBands(commonCarrierFrequency, commonBandwidth, narrowbandSignalAnalogModel->getCenterFrequency(), narrowbandSignalAnalogModel->getBandwidth()))
-            throw cRuntimeError("Overlapping bands are not supported");
+        if (commonCenterFrequency == signalCenterFrequency && commonBandwidth >= signalBandwidth)
+            addReception(reception, noiseStartTime, noiseEndTime, powerChanges);
+        else if (!ignorePartialInterference && areOverlappingBands(commonCenterFrequency, commonBandwidth, narrowbandSignalAnalogModel->getCenterFrequency(), narrowbandSignalAnalogModel->getBandwidth()))
+            throw cRuntimeError("Partially interfering signals are not supported by ScalarAnalogModel, enable ignorePartialInterference to avoid this error!");
     }
-
+    EV_TRACE << "Noise power begin " << endl;
     simtime_t startTime = listening->getStartTime();
     simtime_t endTime = listening->getEndTime();
-    std::map<simtime_t, W> *backgroundNoisePowerChanges = new std::map<simtime_t, W>();
+    std::map<simtime_t, W> backgroundNoisePowerChanges;
     const W noisePower = getBackgroundNoisePower(bandListening);
-    backgroundNoisePowerChanges->insert(std::pair<simtime_t, W>(startTime, noisePower));
-    backgroundNoisePowerChanges->insert(std::pair<simtime_t, W>(endTime, -noisePower));
-
-    for (const auto & backgroundNoisePowerChange : *backgroundNoisePowerChanges) {
-        std::map<simtime_t, W>::iterator jt = powerChanges->find(backgroundNoisePowerChange.first);
-        if (jt != powerChanges->end())
-            jt->second += backgroundNoisePowerChange.second;
+    backgroundNoisePowerChanges.insert(std::pair<simtime_t, W>(startTime, noisePower));
+    backgroundNoisePowerChanges.insert(std::pair<simtime_t, W>(endTime, -noisePower));
+    for (const auto & background : backgroundNoisePowerChanges) {
+        auto jt = powerChanges.find(background.first);
+        if (jt != powerChanges.end())
+            jt->second += background.second;
         else
-            powerChanges->insert(std::pair<simtime_t, W>(backgroundNoisePowerChange.first, backgroundNoisePowerChange.second));
+            powerChanges.insert(std::pair<simtime_t, W>(background.first, background.second));
     }
-
-    EV_TRACE << "Noise power begin " << endl;
-    W noise = W(0);
-    for (std::map<simtime_t, W>::const_iterator it = powerChanges->begin(); it != powerChanges->end(); it++) {
-        noise += it->second;
-        EV_TRACE << "Noise at " << it->first << " = " << noise << endl;
+    W power = W(0);
+    for (auto & it : powerChanges) {
+        power += it.second;
+        it.second = power;
+        EV_TRACE << "Noise at " << it.first << " = " << power << endl;
     }
     EV_TRACE << "Noise power end" << endl;
-    return new ScalarNoise(noiseStartTime, noiseEndTime, commonCarrierFrequency, commonBandwidth, powerChanges);
+    const auto& powerFunction = makeShared<math::Interpolated1DFunction<W, simtime_t>>(powerChanges, &math::LeftInterpolator<simtime_t, W>::singleton);
+    return new ScalarNoise(noiseStartTime, noiseEndTime, commonCenterFrequency, commonBandwidth, powerFunction);
 }
 
 const ISnir *LoRaAnalogModel::computeSNIR(const IReception *reception, const INoise *noise) const
