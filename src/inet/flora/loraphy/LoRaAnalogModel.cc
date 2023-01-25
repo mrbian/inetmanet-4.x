@@ -145,20 +145,16 @@ const INoise *LoRaAnalogModel::computeNoise(const IListening *listening, const I
         else if (!ignorePartialInterference && areOverlappingBands(commonCenterFrequency, commonBandwidth, narrowbandSignalAnalogModel->getCenterFrequency(), narrowbandSignalAnalogModel->getBandwidth()))
             throw cRuntimeError("Partially interfering signals are not supported by ScalarAnalogModel, enable ignorePartialInterference to avoid this error!");
     }
+
     EV_TRACE << "Noise power begin " << endl;
     simtime_t startTime = listening->getStartTime();
     simtime_t endTime = listening->getEndTime();
+
     std::map<simtime_t, W> backgroundNoisePowerChanges;
     const W noisePower = getBackgroundNoisePower(bandListening);
-    backgroundNoisePowerChanges.insert(std::pair<simtime_t, W>(startTime, noisePower));
-    backgroundNoisePowerChanges.insert(std::pair<simtime_t, W>(endTime, -noisePower));
-    for (const auto & background : backgroundNoisePowerChanges) {
-        auto jt = powerChanges.find(background.first);
-        if (jt != powerChanges.end())
-            jt->second += background.second;
-        else
-            powerChanges.insert(std::pair<simtime_t, W>(background.first, background.second));
-    }
+    const auto& powerFunctionNoise = makeShared<math::Boxcar1DFunction<W, simtime_t>>(startTime, endTime, noisePower);
+    ScalarNoise backgroundNoise(startTime, endTime, commonCenterFrequency, commonBandwidth, powerFunctionNoise);
+    addNoise(&backgroundNoise, noiseStartTime, noiseEndTime, powerChanges);
     W power = W(0);
     for (auto & it : powerChanges) {
         power += it.second;
