@@ -47,7 +47,7 @@ double DimensionalSnir::computeMin() const
     EV_TRACE << "SNIR begin " << endl;
     EV_TRACE << *snir << endl;
     EV_TRACE << "SNIR end" << endl;
-    double minSNIR = snir->getMin(Interval<simsec, Hz>(startPoint, endPoint, 0b1, 0b0, 0b0));
+    double minSNIR = snir->getMin(Interval<simsec, Hz>(startPoint, endPoint, 0b11, 0b00, 0b00));
     EV_DEBUG << "Computing minimum SNIR" << EV_FIELD(startPoint) << EV_FIELD(endPoint) << EV_FIELD(minSNIR) << endl;
     return minSNIR;
 }
@@ -72,7 +72,7 @@ double DimensionalSnir::computeMax() const
     EV_TRACE << "SNIR begin " << endl;
     EV_TRACE << *snir << endl;
     EV_TRACE << "SNIR end" << endl;
-    double maxSNIR = snir->getMax(Interval<simsec, Hz>(startPoint, endPoint, 0b1, 0b0, 0b0));
+    double maxSNIR = snir->getMax(Interval<simsec, Hz>(startPoint, endPoint, 0b11, 0b00, 0b00));
     EV_DEBUG << "Computing maximum SNIR" << EV_FIELD(startPoint) << EV_FIELD(endPoint) << EV_FIELD(maxSNIR) << endl;
     return maxSNIR;
 }
@@ -97,7 +97,7 @@ double DimensionalSnir::computeMean() const
     EV_TRACE << "SNIR begin " << endl;
     EV_TRACE << *snir << endl;
     EV_TRACE << "SNIR end" << endl;
-    double meanSNIR = snir->getMean(Interval<simsec, Hz>(startPoint, endPoint, 0b1, 0b0, 0b0));
+    double meanSNIR = snir->getMean(Interval<simsec, Hz>(startPoint, endPoint, 0b11, 0b00, 0b00));
     EV_DEBUG << "Computing mean SNIR" << EV_FIELD(startPoint) << EV_FIELD(endPoint) << EV_FIELD(meanSNIR) << endl;
     return meanSNIR;
 }
@@ -121,6 +121,15 @@ double DimensionalSnir::getMean() const
     if (std::isnan(meanSNIR))
         meanSNIR = computeMean();
     return meanSNIR;
+}
+
+const Ptr<const IFunction<double, Domain<simsec, Hz>>> DimensionalSnir::getSnir() const
+{
+    const DimensionalNoise *dimensionalNoise = check_and_cast<const DimensionalNoise *>(noise);
+    const DimensionalReception *dimensionalReception = check_and_cast<const DimensionalReception *>(reception);
+    auto noisePower = dimensionalNoise->getPower();
+    auto receptionPower = dimensionalReception->getPower();
+    return receptionPower->divide(noisePower);
 }
 
 } // namespace physicallayer
