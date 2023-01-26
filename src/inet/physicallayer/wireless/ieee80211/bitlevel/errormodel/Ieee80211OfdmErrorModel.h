@@ -20,6 +20,7 @@ namespace physicallayer {
 class INET_API Ieee80211OfdmErrorModel : public Ieee80211NistErrorModel, public ILayeredErrorModel
 {
   protected:
+    const char *symbolCorruptionMode = nullptr;
     double signalSymbolErrorRate;
     double dataSymbolErrorRate;
     double signalBitErrorRate;
@@ -28,7 +29,6 @@ class INET_API Ieee80211OfdmErrorModel : public Ieee80211NistErrorModel, public 
   protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     virtual void initialize(int stage) override;
-    virtual Ieee80211OfdmSymbol *corruptOfdmSymbol(const Ieee80211OfdmSymbol *symbol, const MqamModulationBase *modulation, double snir) const;
     virtual void corruptBits(BitVector *bits, double ber, int begin, int end) const;
 
   public:
@@ -37,6 +37,9 @@ class INET_API Ieee80211OfdmErrorModel : public Ieee80211NistErrorModel, public 
     virtual const IReceptionSymbolModel *computeSymbolModel(const LayeredTransmission *transmission, const ISnir *snir) const override;
     virtual const IReceptionSampleModel *computeSampleModel(const LayeredTransmission *transmission, const ISnir *snir) const override;
     virtual std::ostream& printToStream(std::ostream& stream, int level, int evFlags = 0) const override;
+
+    // TODO: don't pass in symbolErrorRate - it's not needed for vectorial corruption mode
+    virtual const ApskSymbol *computeReceivedSymbol(const ApskModulationBase *modulation, const ApskSymbol *transmittedSymbol, double snir, double symbolErrorRate) const;
 };
 
 } /* namespace physicallayer */
