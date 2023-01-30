@@ -93,19 +93,25 @@ void JobQueue::removeJob (int index){
 void JobQueue::move_job_from_to (int initPos, int dstPos){
 
 	//Define...
-		vector<jobBase*>::iterator it;
-		jobBase* job;
+		//vector<jobBase*>::iterator it;
+		jobBase* job = nullptr;
 
 	//Init ..
 
-		it = idQueue.begin();
-
+		auto it = idQueue.begin();
+		if (initPos >= idQueue.size())
+		    return;
+		job = idQueue[initPos];
 	// Begin ..
 
 		if (initPos != dstPos){
 
-			it += dstPos + 1;
-
+		    if (dstPos >= idQueue.size()) {
+		        it = idQueue.end();
+		    }
+		    else {
+		        it += dstPos + 1;
+		    }
 			idQueue.insert(it,job);
 			removeJob(initPos);
 		}
