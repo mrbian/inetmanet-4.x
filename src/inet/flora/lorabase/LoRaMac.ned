@@ -24,7 +24,7 @@ import inet.linklayer.csmaca.CsmaCaMac;
 module LoRaMac extends CsmaCaMac
 {
     parameters:
-        bitrate = 250bps;
+        bitrate = default(250kbps);
         @class(LoRaMac);
         gates:
         	input upperMgmtIn;

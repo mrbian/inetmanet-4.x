@@ -32,7 +32,7 @@ class LoRaMac : public MacProtocolBase, public IMacProtocol, public queueing::IA
     //@{
     MacAddress address;
     bool useAck = true;
-    double bitrate = NaN;
+    bps bitrate = bps(NaN);
     int headerLength = -1;
     int ackLength = -1;
     simtime_t ackTimeout = -1;

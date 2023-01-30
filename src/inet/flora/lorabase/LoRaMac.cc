@@ -58,6 +58,7 @@ void LoRaMac::initialize(int stage)
         ackLength = par("ackLength");
         ackTimeout = par("ackTimeout");
         retryLimit = par("retryLimit");
+        bitrate = bps(par("bitrate"));
 
         waitDelay1Time = 1;
         listening1Time = 1;
@@ -146,7 +147,7 @@ void LoRaMac::configureNetworkInterface()
     //NetworkInterface *e = new NetworkInterface(this);
 
     // data rate
-    networkInterface->setDatarate(bitrate);
+    networkInterface->setDatarate(bitrate.get());
     networkInterface->setMacAddress(address);
 
     // capabilities
