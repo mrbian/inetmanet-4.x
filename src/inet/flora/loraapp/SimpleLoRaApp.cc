@@ -56,11 +56,16 @@ void SimpleLoRaApp::initialize(int stage)
         isOperational = (!nodeStatus) || nodeStatus->getState() == NodeStatus::UP;
         if (!isOperational)
             throw cRuntimeError("This module doesn't support starting in node DOWN state");
+        unsigned int maxTry = 100;
         do {
+
             timeToFirstPacket = par("timeToFirstPacket");
             EV << "Wylosowalem czas :" << timeToFirstPacket << endl;
+            maxTry--;
+            if (maxTry == 0)
+                throw cRuntimeError("time to first packet packet must be grater than %f, check timeToFirstPacket parameter", par("minTimeToFirstPacket").doubleValue());
             //if(timeToNextPacket < 5) error("Time to next packet must be grater than 3");
-        } while(timeToFirstPacket <= 5);
+        } while(timeToFirstPacket < par("minTimeToFirstPacket").doubleValue());
 
         //timeToFirstPacket = par("timeToFirstPacket");
         sendMeasurements = new cMessage("sendMeasurements");

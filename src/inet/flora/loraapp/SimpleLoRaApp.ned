@@ -34,6 +34,7 @@ simple SimpleLoRaApp
         bool initialUseHeader = default(true);
         bool evaluateADRinNode = default(false);
         int dataSize @unit(B) = default(10B);
+        double minTimeToFirstPacket @unit(s)= default(5s);
     	@class(SimpleLoRaApp);
     gates:
         output appOut @labels(LoRaAppPacket/down);
