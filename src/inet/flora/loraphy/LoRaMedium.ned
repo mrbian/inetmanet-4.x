@@ -20,6 +20,7 @@ import inet.physicallayer.wireless.common.medium.RadioMedium;
 module LoRaMedium extends RadioMedium
 {
     parameters:
+        mediumLimitCache.typename = default("LoRaMediumCache");
         propagation.typename = default("ConstantSpeedPropagation");
         analogModel.typename = default("LoRaAnalogModel");
         //backgroundNoiseType = default("LoRaBackgroundNoise");
