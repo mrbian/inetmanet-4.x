@@ -57,6 +57,7 @@ std::ostream& LoRaTransmitter::printToStream(std::ostream& stream, int level, in
     return FlatTransmitterBase::printToStream(stream, level, evFlags);
 }
 
+#if 0
 const ITransmission *LoRaTransmitter::createTransmission(const IRadio *transmitter, const Packet *macFrame, const simtime_t startTime) const
 {
 //    TransmissionBase *controlInfo = dynamic_cast<TransmissionBase *>(macFrame->getControlInfo());
@@ -65,16 +66,14 @@ const ITransmission *LoRaTransmitter::createTransmission(const IRadio *transmitt
 //    const LoRaMacFrame *frame = check_and_cast<const LoRaMacFrame *>(macFrame);
     EV << macFrame->getDetailStringRepresentation(evFlags) << endl;
     const auto &frame = macFrame->peekAtFront<LoRaPhyPreamble>();
-
     int nPreamble = 8;
     simtime_t Tsym = (pow(2, frame->getSpreadFactor()))/(frame->getBandwidth().get()/1000);
     simtime_t Tpreamble = (nPreamble + 4.25) * Tsym / 1000;
-
     //preambleDuration = Tpreamble;
+    int payloadSymbNb = 8;
     int payloadBytes = 0;
     if(iAmGateway) payloadBytes = 15;
     else payloadBytes = 20;
-    int payloadSymbNb = 8;
     payloadSymbNb += std::ceil((8*payloadBytes - 4*frame->getSpreadFactor() + 28 + 16 - 20*0)/(4*(frame->getSpreadFactor()-2*0)))*(frame->getCodeRendundance() + 4);
     if(payloadSymbNb < 8) payloadSymbNb = 8;
     simtime_t Theader = 0.5 * (8+payloadSymbNb) * Tsym / 1000;
@@ -110,6 +109,58 @@ const ITransmission *LoRaTransmitter::createTransmission(const IRadio *transmitt
             frame->getBandwidth(),
             frame->getCodeRendundance());
 }
+
+#else
+const ITransmission *LoRaTransmitter::createTransmission(const IRadio *transmitter, const Packet *macFrame, const simtime_t startTime) const
+{
+//    TransmissionBase *controlInfo = dynamic_cast<TransmissionBase *>(macFrame->getControlInfo());
+    //W transmissionPower = controlInfo && !std::isnan(controlInfo->getPower().get()) ? controlInfo->getPower() : power;
+    const_cast<LoRaTransmitter* >(this)->emit(LoRaTransmissionCreated, true);
+//    const LoRaMacFrame *frame = check_and_cast<const LoRaMacFrame *>(macFrame);
+    EV << macFrame->getDetailStringRepresentation(evFlags) << endl;
+    const auto &frame = macFrame->peekAtFront<LoRaPhyPreamble>();
+    auto payloadSize = macFrame->getTotalLength() - frame->getChunkLength();
+
+    double rateCode = 4.0/(4.0+frame->getCodeRendundance());
+    bps tbitrate =  bps(frame->getSpreadFactor() * rateCode / (pow(2,frame->getSpreadFactor())/frame->getBandwidth().get()));
+    simtime_t Tpreamble = frame->getChunkLength().get()/tbitrate.get();
+    simtime_t Theader = SimTime::ZERO;
+    simtime_t Tpayload = payloadSize.get()/tbitrate.get();
+    double pre = Tpreamble.dbl();
+    double pay = Tpayload.dbl();
+
+    const simtime_t duration = Tpreamble + Theader + Tpayload;
+    double dur = duration.dbl();
+    const simtime_t endTime = startTime + duration;
+    IMobility *mobility = transmitter->getAntenna()->getMobility();
+    const Coord startPosition = mobility->getCurrentPosition();
+    const Coord endPosition = mobility->getCurrentPosition();
+    const Quaternion startOrientation = mobility->getCurrentAngularPosition();
+    const Quaternion endOrientation = mobility->getCurrentAngularPosition();
+    W transmissionPower = computeTransmissionPower(macFrame);
+
+    if(!iAmGateway) {
+        LoRaRadio *radio = check_and_cast<LoRaRadio *>(getParentModule());
+        radio->setCurrentTxPower(transmissionPower.get());
+    }
+    return new LoRaTransmission(transmitter,
+            macFrame,
+            startTime,
+            endTime,
+            Tpreamble,
+            Theader,
+            Tpayload,
+            startPosition,
+            endPosition,
+            startOrientation,
+            endOrientation,
+            transmissionPower,
+            frame->getCenterFrequency(),
+            frame->getSpreadFactor(),
+            frame->getBandwidth(),
+            frame->getCodeRendundance());
+}
+#endif
 
 }
 
