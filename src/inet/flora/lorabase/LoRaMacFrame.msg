@@ -25,9 +25,16 @@ import inet.linklayer.common.MacAddress;
 
 namespace inet::flora;
 
+enum LoraMacHeaderType {
+    LORA_DATA = 1;
+    LORA_ACK = 2;
+};
+
+
 class LoRaMacFrame extends FieldsChunk {
     MacAddress transmitterAddress;
     MacAddress receiverAddress;
+    LoraMacHeaderType type = LORA_DATA;
 
     int sequenceNumber;
     double LoRaTP;
