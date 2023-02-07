@@ -37,6 +37,13 @@ void CsmaCaMacLora::initialize(int stage)
     }
 }
 
+bps CsmaCaMacLora::computeBitRate(Packet *pkt) {
+    auto tag = pkt->getTag<LoRaTag>();
+    double rateCode = 4.0/(4.0+tag->getCodeRendundance());
+    bps tbitrate =  bps(tag->getSpreadFactor() * rateCode / (pow(2,tag->getSpreadFactor())/tag->getBandwidth().get()));
+    return tbitrate;
+}
+
 bool CsmaCaMacLora::isAck(Packet *frame)
 {
     const auto& macHeader = frame->peekAtFront<LoRaMacFrame>();

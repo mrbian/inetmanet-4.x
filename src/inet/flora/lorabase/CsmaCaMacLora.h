@@ -32,13 +32,13 @@ protected:
      * @name Construction functions
      */
     //@{
-    virtual ~CsmaCaMacLora();
+    //virtual ~CsmaCaMacLora();
 
     //@}
   protected:
     virtual void initialize(int stage) override;
     virtual void handleUpperPacket(Packet *packet) override;
-    virtual void computeBitRate();
+    virtual bps computeBitRate(Packet *packet);
     virtual void encapsulate(Packet *frame) override;
     virtual void decapsulate(Packet *frame)  override;
     virtual bool isForUs(Packet *frame) override;
