@@ -44,6 +44,8 @@ protected:
     virtual bool isForUs(Packet *frame) override;
     virtual bool isBroadcast(Packet *frame) override;
     virtual bool isAck(Packet *frame) override;
+    virtual void generateBackoffPeriod() override;
+    virtual bool isFcsOk(Packet *frame) override;
 
 };
 

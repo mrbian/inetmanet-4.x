@@ -27,13 +27,38 @@ Define_Module(CsmaCaMacLora);
 /****************************************************************
  * Initialization functions.
  */
+
+void CsmaCaMacLora::generateBackoffPeriod()
+{
+    ASSERT(0 <= retryCounter && retryCounter <= retryLimit);
+    EV << "generating backoff slot number for retry: " << retryCounter << endl;
+    int cw;
+    if (getCurrentTransmission()->peekAtFront<LoRaMacFrame>()->getReceiverAddress().isMulticast())
+        cw = cwMulticast;
+    else
+        cw = std::min(cwMax, (cwMin + 1) * (1 << retryCounter) - 1);
+    int slots = intrand(cw + 1);
+    EV << "generated backoff slot number: " << slots << " , cw: " << cw << endl;
+    backoffPeriod = slots * slotTime;
+    ASSERT(backoffPeriod >= 0);
+    EV << "backoff period set to " << backoffPeriod << endl;
+}
+
+bool CsmaCaMacLora::isFcsOk(Packet *frame)
+{
+    if (frame->hasBitError() || !frame->peekData()->isCorrect())
+        return false;
+    else
+        return true;
+}
+
+
 void CsmaCaMacLora::initialize(int stage)
 {
     CsmaCaMac::initialize(stage);
     if (stage == INITSTAGE_LINK_LAYER) {
         // subscribe for the information of the carrier sense
        // search the bit app module to read the paramters.
-
     }
 }
 

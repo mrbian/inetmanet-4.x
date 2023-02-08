@@ -16,13 +16,22 @@
 package inet.flora.loraphy;
 
 import inet.physicallayer.wireless.common.pathloss.FreeSpacePathLoss;
+// default values from "Do LoRa Low-Power Wide-Area Networks Scale?"
+// Values from paper  "On the Coverage of LPWANs: Range Evaluation and Channel Attenuation Model for LoRa Technology"
+// Empirical
+// d0 = 1000m
+//                 boat      car
+//  PL_d0_db    126.43      128.95
+//   gamma       1.76       2.32
+//   sigma         8        7.8
 
 module LoRaLogNormalShadowing extends FreeSpacePathLoss
 {
     parameters:
         //parameters taken from paper LoRaSim
-        double d0 = default(40m) @unit(m);
-        double gamma = default(2.08);
-        double sigma = default(3.57);
+        double d0  @unit(m) = default(40m); // 1000, sigma boat 1.72, car 2.32, PL0 boat 126.43, 
+        double PL_d0_db = default(127.41); // Path loss intercept
+        double gamma = default(2.08);      // Path loss exponent
+        double sigma = default(3.57);    //     
         @class(LoRaLogNormalShadowing);
 }

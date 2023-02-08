@@ -48,7 +48,17 @@ import inet.linklayer.csmaca.CsmaCaMac;
 module CsmaCaMacLora extends CsmaCaMac
 {
     parameters:
+
+        sifsTime = default(1ns);
+        slotTime = default(1ns);
+        difsTime = default(sifsTime + 2 * slotTime);
+        cwMin = default(0); // minimum contention window
+        cwMax = default(0); // maximum contention window
+        bitrate = default(22kbps);
+        cwMulticast = default(cwMin); // multicast contention window
+        retryLimit = default(7); // maximum number of retries
         useAck = false; // Lora never send ACK, must be the upper layers.
+        ackTimeout = default(10ms); // measured from the end of data transmission; includes sifs, preamble, physical header, mac ack duration, 2x propagation time, by default assumes slot time > preamble + physical header + 2x propagation time
         @class(CsmaCaMacLora);
 }
 

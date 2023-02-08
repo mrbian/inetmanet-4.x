@@ -28,9 +28,10 @@ using namespace physicallayer;
 class INET_API LoRaLogNormalShadowing : public FreeSpacePathLoss
 {
   protected:
-    m d0;
-    double gamma;
-    double sigma;
+    m d0 = m(NaN);
+    double PL_d0_db = NaN;
+    double gamma = NaN;
+    double sigma = NaN;
 
   protected:
     virtual void initialize(int stage) override;
