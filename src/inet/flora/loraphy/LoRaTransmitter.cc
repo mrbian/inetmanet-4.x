@@ -126,11 +126,11 @@ const ITransmission *LoRaTransmitter::createTransmission(const IRadio *transmitt
     simtime_t Tpreamble = frame->getChunkLength().get()/tbitrate.get();
     simtime_t Theader = SimTime::ZERO;
     simtime_t Tpayload = payloadSize.get()/tbitrate.get();
-    double pre = Tpreamble.dbl();
-    double pay = Tpayload.dbl();
+    //double pre = Tpreamble.dbl();
+    //double pay = Tpayload.dbl();
 
     const simtime_t duration = Tpreamble + Theader + Tpayload;
-    double dur = duration.dbl();
+    //double dur = duration.dbl();
     const simtime_t endTime = startTime + duration;
     IMobility *mobility = transmitter->getAntenna()->getMobility();
     const Coord startPosition = mobility->getCurrentPosition();
