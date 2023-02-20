@@ -91,9 +91,11 @@ void EthernetSocketIo::setSocketOptions()
     const char *interface = par("interface");
     if (interface[0] != '\0') {
         auto interfaceTable = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-        auto networkInterface = interfaceTable->findInterfaceByName(interface);
+        networkInterface = interfaceTable->findInterfaceByName(interface);
         if (networkInterface == nullptr)
             throw cRuntimeError("Cannot find network interface");
+        if (!localAddress.isUnspecified())
+            networkInterface->addMulticastMacAddress(localAddress);
         socket.setNetworkInterface(networkInterface);
     }
 }
@@ -123,8 +125,8 @@ void EthernetSocketIo::handleStartOperation(LifecycleOperation *operation)
 {
     setSocketOptions();
     socket.setOutputGate(gate("socketOut"));
-// TODO breaks if there are queueing components between the application and the socket handling modules
-//    socket.bind(localAddress, remoteAddress, nullptr, true);
+    if (!localAddress.isUnspecified())
+        socket.bind(localAddress, remoteAddress, nullptr, true);
 }
 
 void EthernetSocketIo::handleStopOperation(LifecycleOperation *operation)
