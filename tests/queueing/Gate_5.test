@@ -1,9 +1,9 @@
 %description:
 
 In this test, packets are collected periodically by an active packet sink
-(ActivePacketSink). The packets pass through a periodic packet gate if it's
-open, otherwise packets are not generated. The packets are provided by a
-passive packet source (PassivePacketSource).
+(ActivePacketSink). The packets pass through a periodic packet gate and the
+gate is continuously closed. The packets are provided by a passive packet
+source (PassivePacketSource).
 
 %file: test.ned
 
@@ -36,32 +36,19 @@ sim-time-limit = 10s
 cmdenv-event-banners = false
 *.provider.packetLength = 1B
 *.collector.collectionInterval = 1s
-*.gate.durations = [1s, 2s]
+*.gate.initiallyOpen = false
+*.gate.durations = []
 
 %# remove formatting
 %subst: /\x1B\[[0-9;]*m//
 
 %subst: /\nRunning simulation\.\.\.\n//
 
-%contains-regex: stdout
-Providing packet, .*?provider-0.*?
-Passing through packet, .*?provider-0.*?
-Collecting packet, .*?provider-0.*?
-Providing packet, .*?provider-1.*?
-Passing through packet, .*?provider-1.*?
-Collecting packet, .*?provider-1.*?
-Closing gate.
-Opening gate.
-Providing packet, .*?provider-2.*?
-Passing through packet, .*?provider-2.*?
-Collecting packet, .*?provider-2.*?
-Closing gate.
-Opening gate.
-Providing packet, .*?provider-3.*?
-Passing through packet, .*?provider-3.*?
-Collecting packet, .*?provider-3.*?
-Closing gate.
-Opening gate.
-Providing packet, .*?provider-4.*?
-Passing through packet, .*?provider-4.*?
-Collecting packet, .*?provider-4.*?
+%not-contains-regex: stdout
+Providing packet, .*?provider.*?
+
+%not-contains-regex: stdout
+Passing through packet, .*?provider.*?
+
+%not-contains-regex: stdout
+Collecting packet, .*?provider.*?
