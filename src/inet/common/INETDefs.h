@@ -167,7 +167,7 @@ extern INET_API OPP_THREAD_LOCAL int evFlags;
 #define SIMULATION_SHARED_COUNTER(FIELD,...) \
         getSimulationOrSharedDataManager()->getSharedCounter((std::string(opp_typename(typeid(*this)))+"::"+#FIELD).c_str(), ## __VA_ARGS__)
 
-#define SIMTIME_DELTA SimTime(std::pow(10.0, SimTime().getScaleExp()))
+#define SIMTIME_DELTA SimTime().setRaw(1)
 
 } // namespace inet
 
