@@ -1,8 +1,7 @@
-Without starting the simulation which opens the TAP interfaces,
-they don't have IPv6 link local addresses and babel daemons don't work.
+To ensure that the babel daemon functions properly, it is necessary to start the simulation first, as this will open the TAP interfaces and assign IPv6 link local addresses.
 
-You can check that the babeld deamons work by looking for UDP packets
-send to port 6696.
+You can check that the babeld daemon works by looking for UDP packets
+sent to port 6696.
 
-sudo setcap cap_sys_admin+ep opp_run_release
-
+The CAP_SYS_ADMIN privilege is required for using network namespaces in INET.
+Make sure to read the README file in the showcases/emulation directory for more information.
