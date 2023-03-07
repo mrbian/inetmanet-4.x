@@ -47,12 +47,6 @@ namespace greencloudsimulator {
 
 Define_Module(UDPComputeNode);
 
-int UDPComputeNode::counter;
-int UDPComputeNode::recv_counter=0;
-
-double UDPComputeNode::totalEnergy = 0;
-int UDPComputeNode::task_completed=0;
-
 simsignal_t UDPComputeNode::sentPkSignal = SIMSIGNAL_NULL;
 simsignal_t UDPComputeNode::rcvdPkSignal = SIMSIGNAL_NULL;
 

@@ -50,10 +50,6 @@ namespace greencloudsimulator {
 
 Define_Module(UDPApplication);
 
-int UDPApplication::counter;
-int UDPApplication::recv_counter=0;
-int UDPApplication::task_generated=0;
-
 simsignal_t UDPApplication::sentPkSignal = SIMSIGNAL_NULL;
 simsignal_t UDPApplication::rcvdPkSignal = SIMSIGNAL_NULL;
 

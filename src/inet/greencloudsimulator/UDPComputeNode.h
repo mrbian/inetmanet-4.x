@@ -47,7 +47,7 @@ public:
     };
 private:
     simsignal_t esignal;
-    static double totalEnergy;
+    double &totalEnergy = SIMULATION_SHARED_VARIABLE(totalEnergy, 0);
     QueueType typeQ;
     double CPU_MIPS;
 
@@ -78,10 +78,10 @@ private:
     //Event event_;
     L3Address myAddr;
 
-    static int counter; // counter for generating a global number for each packet
-    static int mipsCounter;
-    static int recv_counter;
-    static int task_completed;
+    int &counter = SIMULATION_SHARED_VARIABLE(counter, 0); // counter for generating a global number for each packet
+    //int &mipsCounter = SIMULATION_SHARED_VARIABLE(mipsCounter, 0);
+    int &recv_counter = SIMULATION_SHARED_VARIABLE(recv_counter, 0);
+    int &task_completed = SIMULATION_SHARED_VARIABLE(task_completed, 0);
 
    // statistics
     int numSent;
