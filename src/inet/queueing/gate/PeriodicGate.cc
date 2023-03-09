@@ -23,8 +23,9 @@ void PeriodicGate::initialize(int stage)
         durations = check_and_cast<cValueArray *>(par("durations").objectValue());
         scheduleForAbsoluteTime = par("scheduleForAbsoluteTime");
         changeTimer = new ClockEvent("ChangeTimer");
-        changeTimer->setSchedulingPriority(par("changeTimerSchedulingPriority"));
         enableImplicitGuardBand = par("enableImplicitGuardBand");
+        openSchedulingPriority = par("openSchedulingPriority");
+        closeSchedulingPriority = par("closeSchedulingPriority");
     }
     else if (stage == INITSTAGE_QUEUEING)
         initializeGating();
@@ -33,14 +34,19 @@ void PeriodicGate::initialize(int stage)
 void PeriodicGate::handleParameterChange(const char *name)
 {
     if (name != nullptr) {
-        if (!strcmp(name, "offset"))
-            initialOffset = par("offset");
-        else if (!strcmp(name, "initiallyOpen"))
-            isOpen_ = par("initiallyOpen");
-        else if (!strcmp(name, "durations")) {
-            durations = check_and_cast<cValueArray *>(par("durations").objectValue());
-            initializeGating();
+        // NOTE: parameters are set from the gate schedule configurator modules
+        if (!initialized()) {
+            if (isGatingInitialized)
+                throw cRuntimeError("Cannot change parameter value, module is already initialized");
+            if (!strcmp(name, "offset"))
+                initialOffset = par("offset");
+            else if (!strcmp(name, "initiallyOpen"))
+                isOpen_ = par("initiallyOpen");
+            else if (!strcmp(name, "durations"))
+                durations = check_and_cast<cValueArray *>(par("durations").objectValue());
         }
+        else
+            throw cRuntimeError("Cannot change parameters after the module has been initialized.");
     }
 }
 
@@ -56,6 +62,7 @@ void PeriodicGate::handleMessage(cMessage *message)
 
 void PeriodicGate::initializeGating()
 {
+    ASSERT(!isGatingInitialized);
     if (durations->size() % 2 != 0)
         throw cRuntimeError("The duration parameter must contain an even number of values");
     index = 0;
@@ -75,6 +82,7 @@ void PeriodicGate::initializeGating()
             cancelClockEvent(changeTimer);
         scheduleChangeTimer();
     }
+    isGatingInitialized = true;
 }
 
 void PeriodicGate::scheduleChangeTimer()
@@ -89,6 +97,7 @@ void PeriodicGate::scheduleChangeTimer()
         index = (index + 1) % durations->size();
     }
     //std::cout << getFullPath() << " " << duration << std::endl;
+    changeTimer->setSchedulingPriority(isOpen_ ? closeSchedulingPriority : openSchedulingPriority);
     if (scheduleForAbsoluteTime)
         scheduleClockEventAt(getClockTime() + duration - offset, changeTimer);
     else
@@ -106,6 +115,7 @@ void PeriodicGate::processChangeTimer()
 
 bool PeriodicGate::canPacketFlowThrough(Packet *packet) const
 {
+    ASSERT(isOpen_);
     if (std::isnan(bitrate.get()))
         return PacketGateBase::canPacketFlowThrough(packet);
     else if (packet == nullptr)
@@ -114,9 +124,9 @@ bool PeriodicGate::canPacketFlowThrough(Packet *packet) const
         if (enableImplicitGuardBand) {
             clocktime_t flowEndTime = getClockTime() + s((packet->getDataLength() + extraLength) / bitrate).get() + SIMTIME_AS_CLOCKTIME(extraDuration);
             return !changeTimer->isScheduled() || flowEndTime <= getArrivalClockTime(changeTimer);
-        } else {
-            return isOpen_;
         }
+        else
+            return PacketGateBase::canPacketFlowThrough(packet);
     }
 }
 
