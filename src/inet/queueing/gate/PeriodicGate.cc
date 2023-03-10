@@ -18,7 +18,7 @@ void PeriodicGate::initialize(int stage)
 {
     ClockUserModuleMixin::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        isOpen_ = par("initiallyOpen");
+        initiallyOpen = par("initiallyOpen");
         initialOffset = par("offset");
         durations = check_and_cast<cValueArray *>(par("durations").objectValue());
         scheduleForAbsoluteTime = par("scheduleForAbsoluteTime");
@@ -33,21 +33,14 @@ void PeriodicGate::initialize(int stage)
 
 void PeriodicGate::handleParameterChange(const char *name)
 {
-    if (name != nullptr) {
-        // NOTE: parameters are set from the gate schedule configurator modules
-        if (!initialized()) {
-            if (isGatingInitialized)
-                throw cRuntimeError("Cannot change parameter value, module is already initialized");
-            if (!strcmp(name, "offset"))
-                initialOffset = par("offset");
-            else if (!strcmp(name, "initiallyOpen"))
-                isOpen_ = par("initiallyOpen");
-            else if (!strcmp(name, "durations"))
-                durations = check_and_cast<cValueArray *>(par("durations").objectValue());
-        }
-        else
-            throw cRuntimeError("Cannot change parameters after the module has been initialized.");
-    }
+    // NOTE: parameters are set from the gate schedule configurator modules
+    if (!strcmp(name, "offset"))
+        initialOffset = par("offset");
+    else if (!strcmp(name, "initiallyOpen"))
+        initiallyOpen = par("initiallyOpen");
+    else if (!strcmp(name, "durations"))
+        durations = check_and_cast<cValueArray *>(par("durations").objectValue());
+    initializeGating();
 }
 
 void PeriodicGate::handleMessage(cMessage *message)
@@ -62,11 +55,14 @@ void PeriodicGate::handleMessage(cMessage *message)
 
 void PeriodicGate::initializeGating()
 {
-    ASSERT(!isGatingInitialized);
     if (durations->size() % 2 != 0)
         throw cRuntimeError("The duration parameter must contain an even number of values");
+    clocktime_t totalDuration = 0;
+    for (int i = 0; i < durations->size(); i++)
+        totalDuration += durations->get(i).doubleValueInUnit("s");
     index = 0;
-    offset = initialOffset;
+    isOpen_ = initiallyOpen;
+    offset.setRaw(totalDuration != 0 ? initialOffset.raw() % totalDuration.raw() : 0);
     while (offset > 0) {
         clocktime_t duration = durations->get(index).doubleValueInUnit("s");
         if (offset > duration) {
@@ -77,12 +73,10 @@ void PeriodicGate::initializeGating()
         else
             break;
     }
-    if (index < (int)durations->size()) {
-        if (changeTimer->isScheduled())
-            cancelClockEvent(changeTimer);
+    if (changeTimer->isScheduled())
+        cancelClockEvent(changeTimer);
+    if (durations->size() > 0)
         scheduleChangeTimer();
-    }
-    isGatingInitialized = true;
 }
 
 void PeriodicGate::scheduleChangeTimer()

@@ -21,6 +21,7 @@ class INET_API PeriodicGate : public ClockUserModuleMixin<PacketGateBase>
 {
   protected:
     int index = 0;
+    bool initiallyOpen = false;
     clocktime_t initialOffset;
     clocktime_t offset;
     cValueArray *durations = nullptr;
@@ -29,7 +30,6 @@ class INET_API PeriodicGate : public ClockUserModuleMixin<PacketGateBase>
     int openSchedulingPriority = 0;
     int closeSchedulingPriority = 0;
 
-    bool isGatingInitialized = false;
     ClockEvent *changeTimer = nullptr;
 
   protected:

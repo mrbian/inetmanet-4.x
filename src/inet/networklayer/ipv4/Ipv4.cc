@@ -158,7 +158,7 @@ void Ipv4::handleRequest(Request *request)
         throw cRuntimeError("Request '%s' arrived without controlinfo", request->getName());
     else if (Ipv4SocketBindCommand *command = dynamic_cast<Ipv4SocketBindCommand *>(ctrl)) {
         int socketId = request->getTag<SocketReq>()->getSocketId();
-        SocketDescriptor *descriptor = new SocketDescriptor(socketId, command->getProtocol()->getId(), command->getLocalAddress());
+        SocketDescriptor *descriptor = new SocketDescriptor(socketId, command->getProtocol() ? command->getProtocol()->getId() : -1, command->getLocalAddress());
         socketIdToSocketDescriptor[socketId] = descriptor;
         delete request;
     }
@@ -375,6 +375,17 @@ void Ipv4::handlePacketFromHL(Packet *packet)
 {
     EV_INFO << "Received " << packet << " from upper layer.\n";
     emit(packetReceivedFromUpperSignal, packet);
+
+    auto socketReq = packet->findTag<SocketReq>();
+    if (socketReq != nullptr) {
+        int socketId = socketReq->getSocketId();
+        auto it = socketIdToSocketDescriptor.find(socketId);
+        if (it != socketIdToSocketDescriptor.end()) {
+            auto descriptor = it->second;
+            if (!packet->hasTag<L3AddressReq>())
+                packet->addTag<L3AddressReq>()->setDestAddress(descriptor->remoteAddress);
+        }
+    }
 
     // if no interface exists, do not send datagram
     if (ift->getNumInterfaces() == 0) {
@@ -741,7 +752,7 @@ void Ipv4::reassembleAndDeliverFinish(Packet *packet)
     decapsulate(packet);
     bool hasSocket = false;
     for (const auto& elem : socketIdToSocketDescriptor) {
-        if (elem.second->protocolId == protocol->getId()
+        if ((elem.second->protocolId == -1 || elem.second->protocolId == protocol->getId())
             && (elem.second->localAddress.isUnspecified() || elem.second->localAddress == localAddress)
             && (elem.second->remoteAddress.isUnspecified() || elem.second->remoteAddress == remoteAddress))
         {
