@@ -23,7 +23,7 @@ void SimpleClockSynchronizer::initialize(int stage)
         slaveClock.reference(this, "slaveClockModule", true);
         synchronizationIntervalParameter = &par("synchronizationInterval");
         synchronizationClockTimeErrorParameter = &par("synchronizationClockTimeError");
-        synchronizationOscillatorCompensationFactorErrorParameter = &par("synchronizationOscillatorCompensationFactorError");
+        synchronizationOscillatorCompensationErrorParameter = &par("synchronizationOscillatorCompensationError");
     }
 }
 
@@ -42,20 +42,22 @@ void SimpleClockSynchronizer::handleStartOperation(LifecycleOperation *operation
     scheduleSynchronizationTimer();
 }
 
-static double getCurrentTickLength(IClock *clock)
+static double getCurrentRelativeTickLength(IClock *clock)
 {
     auto oscillatorBasedClock = check_and_cast<OscillatorBasedClock*>(clock);
     auto clockOscillator = oscillatorBasedClock->getOscillator();
     auto driftingOscillator = check_and_cast<const DriftingOscillatorBase *>(clockOscillator);
-    return driftingOscillator->getCurrentTickLength();
+    return driftingOscillator->getCurrentTickLength() / driftingOscillator->getNominalTickLength();
 }
 
 void SimpleClockSynchronizer::synchronizeSlaveClock()
 {
     auto masterOscillatorBasedClock = check_and_cast<OscillatorBasedClock*>(masterClock.get());
     auto clockTime = masterClock->getClockTime() + synchronizationClockTimeErrorParameter->doubleValue();
-    double oscillatorCompensationFactor = getCurrentTickLength(slaveClock.get()) / getCurrentTickLength(masterClock.get()) * masterOscillatorBasedClock->getOscillatorCompensationFactor() * synchronizationOscillatorCompensationFactorErrorParameter->doubleValue();
-    slaveClock->setClockTime(clockTime, oscillatorCompensationFactor, true);
+    ppm oscillatorCompensation = unit(getCurrentRelativeTickLength(slaveClock.get()) / getCurrentRelativeTickLength(masterClock.get())
+            * (1 + unit(masterOscillatorBasedClock->getOscillatorCompensation()).get())
+            * (1 + unit(ppm(synchronizationOscillatorCompensationErrorParameter->doubleValue())).get()) - 1);
+    slaveClock->setClockTime(clockTime, oscillatorCompensation, true);
 }
 
 void SimpleClockSynchronizer::scheduleSynchronizationTimer()
