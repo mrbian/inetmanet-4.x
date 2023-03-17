@@ -79,12 +79,12 @@ private:
 
     L3Address myAddr;
 
-    static int counter; // counter for generating a global number for each packet
-    static int mipsCounter;
-    static int recv_counter;
+    int &counter = SIMULATION_SHARED_VARIABLE(counter, 0); // counter for generating a global number for each packet
+    int &mipsCounter = SIMULATION_SHARED_VARIABLE(mipsCounter, 0);
+    int &recv_counter = SIMULATION_SHARED_VARIABLE(recv_counter, 0);
 
     // statistics
-     int numSent;
+    int numSent;
     int numReceived;
     std::string myId; // to store a unique id
 

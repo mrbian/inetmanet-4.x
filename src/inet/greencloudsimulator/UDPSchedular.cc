@@ -43,9 +43,6 @@ namespace greencloudsimulator {
 
 Define_Module(UDPSchedular);
 
-int UDPSchedular::counter;
-int UDPSchedular::recv_counter=0;
-
 simsignal_t UDPSchedular::sentPkSignal = SIMSIGNAL_NULL;
 simsignal_t UDPSchedular::rcvdPkSignal = SIMSIGNAL_NULL;
 
