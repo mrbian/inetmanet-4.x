@@ -368,9 +368,9 @@ class Olsr : public ManetRoutingBase
     Olsr_rtable     rtable_;
 
     typedef std::map<nsaddr_t,Olsr_rtable*> GlobalRtable;
-    static GlobalRtable globalRtable;
+    GlobalRtable &globalRtable = SIMULATION_SHARED_VARIABLE(globalRtable);
     typedef std::map<nsaddr_t,std::vector<nsaddr_t> > DistributionPath;
-    static DistributionPath distributionPath;
+    DistributionPath &distributionPath = SIMULATION_SHARED_VARIABLE(distributionPath);;
     bool computed = false;
     /// Internal state with all needed data structs.
 

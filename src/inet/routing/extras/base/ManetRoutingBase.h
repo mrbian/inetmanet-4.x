@@ -144,8 +144,8 @@ class INET_API ManetRoutingBase : public ApplicationBase, public UdpSocket::ICal
 
 
     RouteMap *routesVector = nullptr;
-    static bool createInternalStore;
-    static GlobalRouteMap *globalRouteMap;
+    bool &createInternalStore = SIMULATION_SHARED_VARIABLE(createInternalStore, false);
+    GlobalRouteMap*  &globalRouteMap = SIMULATION_SHARED_VARIABLE(globalRouteMap, nullptr);
 
     //IRoutingTable *inet_rt = nullptr;
     //IInterfaceTable *inet_ift = nullptr;
@@ -527,7 +527,7 @@ class INET_API ManetRoutingBase : public ApplicationBase, public UdpSocket::ICal
     virtual bool getAp(const L3Address& destination, L3Address& outAccesPointAddr) const;
     virtual bool isAp() const;
     //
-    static bool getRouteFromGlobal(const L3Address &src, const L3Address &dest, std::vector<L3Address> &route);
+    bool getRouteFromGlobal(const L3Address &src, const L3Address &dest, std::vector<L3Address> &route);
 
 
     // used for dimension the address size

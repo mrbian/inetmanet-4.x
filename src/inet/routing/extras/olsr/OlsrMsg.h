@@ -50,7 +50,7 @@ typedef L3Address nsaddr_t;
 class OlsrAddressSize
 {
     public:
-    static uint32_t ADDR_SIZE;
+      static uint32_t ADDR_SIZE;
 };
 
 /// Maximum number of messages per packet.

@@ -110,9 +110,6 @@ void createStdPointerMultiMapWatcher(const char *varname, std::multimap<KeyT,Val
 
 simsignal_t ManetRoutingBase::mobilityStateChangedSignal = registerSignal("mobilityStateChanged");
 
-ManetRoutingBase::GlobalRouteMap *ManetRoutingBase::globalRouteMap = nullptr;
-bool ManetRoutingBase::createInternalStore = false;
-
 void ManetTimer::removeTimer()
 {
     removeQueueTimer();

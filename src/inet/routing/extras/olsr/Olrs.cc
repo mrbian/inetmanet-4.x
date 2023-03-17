@@ -75,8 +75,7 @@ std::ostream& operator<<(std::ostream& os, const Olsr_rt_entry& e)
 
 
 uint32_t OlsrAddressSize::ADDR_SIZE = ADDR_SIZE_DEFAULT;
-Olsr::GlobalRtable Olsr::globalRtable;
-Olsr::DistributionPath Olsr::distributionPath;
+
 
 /********** Timers **********/
 
