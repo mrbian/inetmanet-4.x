@@ -24,6 +24,8 @@ def compare_test_results(result1, result2, accuracy=0.01):
 ############################
 # TSN frame replication test
 
+# Observed result
+# 0.6578411405295316
 def compute_frame_replication_success_rate_from_simulation_results(**kwargs):
     filter_expression = """type =~ scalar AND ((module =~ "*.destination.udp" AND name =~ packetReceived:count) OR (module =~ "*.source.udp" AND name =~ packetSent:count))"""
     df = read_result_files(inet_project.get_full_path("tests/validation/tsn/framereplication/results/*.sca"), filter_expression=filter_expression)
@@ -71,10 +73,10 @@ def compute_tsn_framereplication_validation_test_results(test_accuracy=0.01, **k
     pa2 = compute_frame_replication_success_rate_analytically2()
     test_result1 = compare_test_results(ps, pa1, test_accuracy)
     test_result2 = compare_test_results(ps, pa2, test_accuracy)
-    return TestTaskResult(None, bool_result=test_result1 and test_result2)
+    return TestTaskResult(task=TestTask(), bool_result=test_result1 and test_result2)
 
 def get_tsn_framereplication_simulation_test_task(**kwargs):
-    simulation_task = get_simulation_tasks(inet_project, working_directory_filter="tests/validation/tsn/framereplication", sim_time_limit="0.1s", **kwargs).tasks[0]
+    simulation_task = get_simulation_tasks(inet_project, working_directory_filter="tests/validation/tsn/framereplication", sim_time_limit="0.2s", **kwargs).tasks[0]
     return ValidationTestTask(simulation_task, compute_tsn_framereplication_validation_test_results, **kwargs)
 
 def run_tsn_framereplication_validation_test(test_accuracy=0.01, **kwargs):
@@ -83,6 +85,17 @@ def run_tsn_framereplication_validation_test(test_accuracy=0.01, **kwargs):
 ###################################################
 # TSN traffic shaping asynchronous shaper ICCT test
 
+# Observed result
+# name                      max
+# module
+# Flow 1, CDT            505.16
+# Flow 2, Class A       1579.72
+# Flow 3, Class B       3371.72
+# Flow 4, Class A        932.04
+# Flow 5, Class B       2162.12
+# Flow 6, Class A        585.16
+# Flow 7, Class B       1963.24
+# Flow 8, Best Effort  34913.16
 def compute_asynchronousshaper_icct_endtoend_delay_from_simulation_results(**kwargs):
     filter_expression = """type =~ scalar AND name =~ meanBitLifeTimePerPacket:histogram:max"""
     df = read_result_files(inet_project.get_full_path("tests/validation/tsn/trafficshaping/asynchronousshaper/icct/results/*.sca"), filter_expression=filter_expression, include_fields_as_scalars=True)
@@ -111,7 +124,7 @@ def compute_tsn_trafficshaping_asynchronousshaper_icct_validation_test_results(*
     df1 = compute_asynchronousshaper_icct_endtoend_delay_from_simulation_results(**kwargs)
     df2 = compute_asynchronousshaper_icct_endtoend_delay_alternatively()
     test_result = (df1["max"] < df2["max"]).all()
-    return TestTaskResult(None, bool_result=test_result)
+    return TestTaskResult(task=TestTask(), bool_result=test_result)
 
 def get_tsn_trafficshaping_asynchronousshaper_icct_simulation_test_task(**kwargs):
     simulation_task = get_simulation_tasks(inet_project, working_directory_filter="tests/validation/tsn/trafficshaping/asynchronousshaper/icct", sim_time_limit="0.1s", **kwargs).tasks[0]
@@ -123,6 +136,12 @@ def run_tsn_trafficshaping_asynchronousshaper_icct_validation_test(**kwargs):
 ########################################################
 # TSN traffic shaping asynchronous shaper Core4INET test
 
+# Observed result
+# name          max        mean      min      stddev
+# module
+# Critical  375.780  298.477239  252.900   36.668923
+# High      307.260  161.309427   60.900   73.625945
+# Medium    535.939  247.258720   88.259  106.588325
 def compute_asynchronousshaper_core4inet_endtoend_delay_from_simulation_results(**kwargs):
     filter_expression = """type =~ scalar AND (name =~ meanBitLifeTimePerPacket:histogram:min OR name =~ meanBitLifeTimePerPacket:histogram:max OR name =~ meanBitLifeTimePerPacket:histogram:mean OR name =~ meanBitLifeTimePerPacket:histogram:stddev)"""
     df = read_result_files(inet_project.get_full_path("tests/validation/tsn/trafficshaping/asynchronousshaper/core4inet/results/*.sca"), filter_expression=filter_expression, include_fields_as_scalars=True)
@@ -136,6 +155,8 @@ def compute_asynchronousshaper_core4inet_endtoend_delay_from_simulation_results(
     df = pd.pivot_table(df, index="module", columns="name", values="value")
     return df * 1000000
 
+# Observed result
+# 2.0
 def compute_asynchronousshaper_core4inet_max_queuelength_from_simulation_results(**kwargs):
     filter_expression = """type =~ scalar AND module =~ \"*.switch.eth[4].macLayer.queue.queue[5..7]\" AND name =~ queueLength:max"""
     df = read_result_files(inet_project.get_full_path("tests/validation/tsn/trafficshaping/asynchronousshaper/core4inet/results/*.sca"), filter_expression=filter_expression, include_fields_as_scalars=True)
@@ -170,7 +191,7 @@ def compute_tsn_trafficshaping_asynchronousshaper_core4inet_validation_test_resu
                   numpy.allclose(df1["max"], df2["max"], rtol=test_accuracy, atol=0) and \
                   numpy.allclose(df1["mean"], df2["mean"], rtol=test_accuracy * 7, atol=0) and \
                   numpy.allclose(df1["stddev"], df2["stddev"], rtol=test_accuracy * 30, atol=0)
-    return TestTaskResult(None, bool_result=test_result)
+    return TestTaskResult(task=TestTask(), bool_result=test_result)
 
 def get_tsn_trafficshaping_asynchronousshaper_core4inet_validation_test_task(**kwargs):
     simulation_task = get_simulation_tasks(inet_project, working_directory_filter="tests/validation/tsn/trafficshaping/asynchronousshaper/core4inet", sim_time_limit="1s", **kwargs).tasks[0]
@@ -182,6 +203,12 @@ def run_tsn_trafficshaping_asynchronousshaper_core4inet_validation_test(test_acc
 ##############################################
 # TSN traffic shaping credit-based shaper test
 
+# Observed result
+# name          max        mean      min      stddev
+# module
+# Critical  375.780  298.477239  252.900   36.668923
+# High      307.260  161.309427   60.900   73.625945
+# Medium    535.939  247.258720   88.259  106.588325
 def compute_creditbasedshaper_endtoend_delay_from_simulation_results(**kwargs):
     filter_expression = """type =~ scalar AND (name =~ meanBitLifeTimePerPacket:histogram:min OR name =~ meanBitLifeTimePerPacket:histogram:max OR name =~ meanBitLifeTimePerPacket:histogram:mean OR name =~ meanBitLifeTimePerPacket:histogram:stddev)"""
     df = read_result_files(inet_project.get_full_path("tests/validation/tsn/trafficshaping/creditbasedshaper/results/*.sca"), filter_expression=filter_expression, include_fields_as_scalars=True)
@@ -195,6 +222,8 @@ def compute_creditbasedshaper_endtoend_delay_from_simulation_results(**kwargs):
     df = pd.pivot_table(df, index="module", columns="name", values="value")
     return df * 1000000
 
+# Observed result
+# 2.0
 def compute_creditbasedshaper_max_queuelength_from_simulation_results(**kwargs):
     filter_expression = """type =~ scalar AND module =~ \"*.switch.eth[4].macLayer.queue.queue[5..7]\" AND name =~ queueLength:max"""
     df = read_result_files(inet_project.get_full_path("tests/validation/tsn/trafficshaping/creditbasedshaper/results/*.sca"), filter_expression=filter_expression, include_fields_as_scalars=True)
@@ -229,7 +258,7 @@ def compute_tsn_trafficshaping_creditbasedshaper_validation_test_results(test_ac
                   numpy.allclose(df1["max"], df2["max"], rtol=test_accuracy, atol=0) and \
                   numpy.allclose(df1["mean"], df2["mean"], rtol=test_accuracy * 7, atol=0) and \
                   numpy.allclose(df1["stddev"], df2["stddev"], rtol=test_accuracy * 30, atol=0)
-    return TestTaskResult(None, bool_result=test_result)
+    return TestTaskResult(task=TestTask(), bool_result=test_result)
 
 def get_tsn_trafficshaping_creditbasedshaper_validation_test_task(**kwargs):
     simulation_task = get_simulation_tasks(inet_project, working_directory_filter="tests/validation/tsn/trafficshaping/creditbasedshaper", sim_time_limit="1s", **kwargs).tasks[0]
