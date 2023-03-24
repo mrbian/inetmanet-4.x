@@ -1,11 +1,9 @@
 #!/bin/env bash
 
-# This script runs the "other tests" job on GitHub.
+# This script runs the "more tests" job on GitHub.
 #
 # The following environment variables must be set when invoked:
-#    TESTDIR                - must be the name of a subfolder in the tests directory
-#                             in which all tests can be run simply as: ./runtest
-#                             (such as: module, packet, queueing, unit, ...)
+#    SCRIPTNAME             - must be the name of a test script in the bin/ folder
 #
 #    GITHUB_WORKSPACE       - this is provided by GitHub, most likely has
 #                             the value "/home/runner/work/inet/inet"
@@ -16,6 +14,25 @@ set -e # make the script exit with error if any executed command exits with erro
 # this is where the cloned INET repo is mounted into the container
 cd $GITHUB_WORKSPACE
 
+echo "::group::Installing pip"
+apt install -y python3-pip
+echo "::endgroup::"
+
+echo "::group::Installing Python packages"
+python3 -m pip install matplotlib numpy pandas scipy ipython cppyy sewar dask distributed IPython sqlalchemy optimparallel
+echo "::endgroup::"
+
+mkdir /root/workspace
+export WORKSPACE_ROOT=/root/workspace
+
+# NOTE: `ln -s` can't be used here because it confuses both
+# OMNeT++ and INET when they are sometimes resolved to real paths.
+cp -r /root/omnetpp-6.0.1-linux /root/workspace/omnetpp
+cp -r $GITHUB_WORKSPACE /root/workspace/inet
+
+. /root/workspace/omnetpp/setenv -f
+
+cd /root/workspace/inet
 . setenv -f
 
 echo "::group::Enable all features"
@@ -30,12 +47,11 @@ echo "::group::Make message headers"
 make -C src msgheaders smheaders
 echo "::endgroup::"
 
-echo "::group::Run $TESTDIR tests"
-cd tests/$TESTDIR
+echo "::group::Run $SCRIPTNAME"
 # This is a magical "process substitution" for piping stderr into tee...
 # Source: https://stackoverflow.com/a/692407/635587
  # the "| cat" is there to hide the exit code temporarily
-./runtest > >(tee runtest.out) 2> >(tee runtest.err >&2) | cat
+$SCRIPTNAME > >(tee runtest.out) 2> >(tee runtest.err >&2) | cat
 #        ^---- Everything from here on is only needed to make the pretty GitHub annotations. ----v
 EXITCODE="${PIPESTATUS[0]}"
 echo "::endgroup::"

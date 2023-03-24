@@ -49,11 +49,16 @@ class INET_API CreditBasedGate : public PacketGateBase, public cListener
 
     virtual void processPacket(Packet *packet) override;
     virtual bool hasAvailablePacket() const { return provider->canPullSomePacket(inputGate->getPathStartGate()); }
+    virtual void updateCurrentState();
+
+    virtual void setCurrentCredit(double value);
     virtual void updateCurrentCredit();
-    virtual void updateCurrentCreditGainRate();
     virtual void emitCurrentCredit();
+
+    virtual void setCurrentCreditGainRate(double value);
+    virtual void updateCurrentCreditGainRate();
+
     virtual void scheduleChangeTimer();
-    virtual void processChangeTimer();
 
   public:
     virtual ~CreditBasedGate() { cancelAndDelete(changeTimer); }

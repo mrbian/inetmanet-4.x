@@ -32,9 +32,8 @@ void CreditBasedGate::initialize(int stage)
         minCredit = par("minCredit");
         maxCredit = par("maxCredit");
         accumulateCreditInGuardBand = par("accumulateCreditInGuardBand");
-        displayStringTextFormat = par("displayStringTextFormat");
-        currentCredit = par("initialCredit");
-        currentCreditGainRate = idleCreditGainRate;
+        setCurrentCredit(par("initialCredit"));
+        setCurrentCreditGainRate(idleCreditGainRate);
         lastCurrentCreditEmitted = currentCredit;
         lastCurrentCreditEmittedTime = simTime();
         isOpen_ = currentCredit >= transmitCreditLimit;
@@ -50,13 +49,13 @@ void CreditBasedGate::initialize(int stage)
         module->subscribe(transmissionEndedSignal, this);
         module->subscribe(interpacketGapEndedSignal, this);
         changeTimer = new cMessage("ChangeTimer");
+        WATCH(isTransmitting);
+        WATCH(isInterpacketGap);
         WATCH(currentCredit);
         WATCH(currentCreditGainRate);
     }
     else if (stage == INITSTAGE_QUEUEING) {
-        updateCurrentCredit();
-        updateCurrentCreditGainRate();
-        emitCurrentCredit();
+        updateCurrentState();
         scheduleChangeTimer();
     }
     else if (stage == INITSTAGE_LAST)
@@ -67,14 +66,12 @@ void CreditBasedGate::handleMessage(cMessage *message)
 {
     if (message == changeTimer) {
         // 1. timer is executed when currentCredit reaches transmitCreditLimit with currentCreditGainRate
-        currentCredit = transmitCreditLimit;
+        setCurrentCredit(transmitCreditLimit);
         // 2. notify listeners and update lastCurrentCreditEmitted
         emitCurrentCredit();
-        // 3. open/close gate and allow consumer to pull packet if necessary
-        processChangeTimer();
-        // 4. update currentCreditGainRate to know the slope when the timer is rescheduled
+        // 3. update currentCreditGainRate to know the slope when the timer is rescheduled
         updateCurrentCreditGainRate();
-        // 5. reschedule change timer based on currentCredit and currentCreditGainRate
+        // 4. reschedule change timer when currentCredit reaches transmitCreditLimit
         scheduleChangeTimer();
     }
     else
@@ -83,9 +80,7 @@ void CreditBasedGate::handleMessage(cMessage *message)
 
 void CreditBasedGate::finish()
 {
-    updateCurrentCredit();
-    updateCurrentCreditGainRate();
-    emitCurrentCredit();
+    updateCurrentState();
 }
 
 void CreditBasedGate::refreshDisplay() const
@@ -102,12 +97,13 @@ void CreditBasedGate::scheduleChangeTimer()
     if (currentCreditGainRate == 0)
         cancelEvent(changeTimer);
     else {
-        double changeTime = (transmitCreditLimit - currentCredit) / currentCreditGainRate;
-        if (changeTime < 0)
+        simtime_t now = simTime();
+        simtime_t changeTime = now + (transmitCreditLimit - currentCredit) / currentCreditGainRate;
+        EV_TRACE << "Scheduling change timer to " << changeTime << std::endl;
+        if (changeTime <= now)
             cancelEvent(changeTimer);
-        else if (changeTime > 0 || (isOpen_ ? currentCreditGainRate < 0 : currentCreditGainRate > 0))
-            // NOTE: schedule for future or for now if credit change direction and gate state requires
-            rescheduleAfter(changeTime, changeTimer);
+        else
+            rescheduleAt(changeTime, changeTimer);
     }
 }
 
@@ -117,18 +113,34 @@ void CreditBasedGate::processPacket(Packet *packet)
     packet->addTag<CreditGateTag>()->setId(getId());
 }
 
-void CreditBasedGate::processChangeTimer()
+void CreditBasedGate::updateCurrentState()
 {
-    if (isOpen_)
-        close();
-    else
-        open();
+    updateCurrentCredit();
+    updateCurrentCreditGainRate();
+    emitCurrentCredit();
+}
+
+void CreditBasedGate::setCurrentCredit(double value)
+{
+    if (currentCredit != value) {
+        EV_TRACE << "Setting currentCredit to " << value << std::endl;
+        currentCredit = value;
+        if (currentCredit >= transmitCreditLimit) {
+            if (isClosed())
+                open();
+        }
+        else {
+            if (isOpen())
+                close();
+        }
+    }
 }
 
 void CreditBasedGate::updateCurrentCredit()
 {
-    currentCredit = lastCurrentCreditEmitted + currentCreditGainRate * (simTime() - lastCurrentCreditEmittedTime).dbl();
-    currentCredit = std::max(minCredit, std::min(maxCredit, currentCredit));
+    double value = lastCurrentCreditEmitted + currentCreditGainRate * (simTime() - lastCurrentCreditEmittedTime).dbl();
+    value = std::max(minCredit, std::min(maxCredit, value));
+    setCurrentCredit(value);
 }
 
 void CreditBasedGate::emitCurrentCredit()
@@ -141,26 +153,32 @@ void CreditBasedGate::emitCurrentCredit()
     }
 }
 
+void CreditBasedGate::setCurrentCreditGainRate(double value)
+{
+    if (currentCreditGainRate != value) {
+        EV_TRACE << "Setting currentCreditGainRate to " << currentCreditGainRate << std::endl;
+        currentCreditGainRate = value;
+    }
+}
+
 void CreditBasedGate::updateCurrentCreditGainRate()
 {
     if (isTransmitting || isInterpacketGap)
-        currentCreditGainRate = -transmitCreditSpendRate;
+        setCurrentCreditGainRate(-transmitCreditSpendRate);
     else if (periodicGate != nullptr && (periodicGate->isClosed() || (!accumulateCreditInGuardBand && periodicGate->isInGuardBand())))
-        currentCreditGainRate = 0;
+        setCurrentCreditGainRate(0);
     else if (currentCredit < 0 || hasAvailablePacket())
-        currentCreditGainRate = idleCreditGainRate;
+        setCurrentCreditGainRate(idleCreditGainRate);
     else
-        currentCreditGainRate = 0;
+        setCurrentCreditGainRate(0);
 }
 
 void CreditBasedGate::receiveSignal(cComponent *source, simsignal_t simsignal, bool value, cObject *details)
 {
     Enter_Method("%s", cComponent::getSignalName(simsignal));
     if (simsignal == gateStateChangedSignal || simsignal == PeriodicGate::guardBandStateChangedSignal) {
-        // 1. update currentCreditGainRate and notify listeners about currentCredit change
-        updateCurrentCredit();
-        updateCurrentCreditGainRate();
-        emitCurrentCredit();
+        // 1. update current state because some time may have elapsed since last update
+        updateCurrentState();
         // 2. reschedule change timer when currentCredit reaches transmitCreditLimit
         scheduleChangeTimer();
     }
@@ -172,16 +190,20 @@ void CreditBasedGate::receiveSignal(cComponent *source, simsignal_t simsignal, d
 {
     Enter_Method("%s", cComponent::getSignalName(simsignal));
     if (simsignal == interpacketGapEndedSignal) {
+        // NOTE: this signal also comes for other packets not in our traffic category
         if (isInterpacketGap) {
+            // 1. update current state because some time may have elapsed since last update
+            updateCurrentState();
+            // 2. update isInterpacketGap state
             isInterpacketGap = false;
-            // 1. immediately set currentCredit to 0 if there are no packets to transmit
-            if (!hasAvailablePacket())
-                currentCredit = std::min(transmitCreditLimit, currentCredit);
-            // 2. update currentCreditGainRate and notify listeners about currentCredit change
-            updateCurrentCredit();
-            updateCurrentCreditGainRate();
-            emitCurrentCredit();
-            // 3. reschedule change timer when currentCredit reaches transmitCreditLimit
+            // 3. immediately set currentCredit to 0 if there are no packets to transmit
+            if (!hasAvailablePacket()) {
+                setCurrentCredit(std::min(transmitCreditLimit, currentCredit));
+                emitCurrentCredit();
+            }
+            // 4. update current state because some input has been changed
+            updateCurrentState();
+            // 5. reschedule change timer when currentCredit reaches transmitCreditLimit
             scheduleChangeTimer();
         }
     }
@@ -198,23 +220,20 @@ void CreditBasedGate::receiveSignal(cComponent *source, simsignal_t simsignal, c
         auto packet = check_and_cast<Packet *>(signal->getEncapsulatedPacket());
         auto creditGateTag = packet->findTag<CreditGateTag>();
         if (creditGateTag != nullptr && creditGateTag->getId() == getId()) {
-            // 1. update currentCredit and currentCreditGainRate because some time may have elapsed
-            updateCurrentCredit();
-            updateCurrentCreditGainRate();
-            emitCurrentCredit();
-            // 2. update transmitting state
+            // 1. update current state because some time may have elapsed since last update
+            updateCurrentState();
+            // 2. update isTransmitting state
             if (simsignal == transmissionStartedSignal)
                 isTransmitting = true;
             else if (simsignal == transmissionEndedSignal) {
                 isTransmitting = false;
+                // NOTE: mark interpacket gap only for our own transmissions
                 isInterpacketGap = true;
             }
             else
                 throw cRuntimeError("Unknown signal");
-            // 3. update currentCreditGainRate and notify listeners about currentCredit change
-            updateCurrentCredit();
-            updateCurrentCreditGainRate();
-            emitCurrentCredit();
+            // 3. update current state because some input has been changed
+            updateCurrentState();
             // 4. reschedule change timer when currentCredit reaches transmitCreditLimit
             scheduleChangeTimer();
         }
@@ -227,12 +246,9 @@ void CreditBasedGate::receiveSignal(cComponent *source, simsignal_t simsignal, c
 void CreditBasedGate::handleCanPullPacketChanged(cGate *gate)
 {
     Enter_Method("handleCanPullPacketChanged");
-    // 1. update currentCredit and currentCreditGainRate
-    updateCurrentCredit();
-    updateCurrentCreditGainRate();
-    // 2. notify listeners about currentCredit change
-    emitCurrentCredit();
-    // 3. reschedule change timer when currentCredit reaches transmitCreditLimit
+    // 1. update current state because some time may have elapsed since last update
+    updateCurrentState();
+    // 2. reschedule change timer when currentCredit reaches transmitCreditLimit
     scheduleChangeTimer();
     PacketGateBase::handleCanPullPacketChanged(gate);
 }
