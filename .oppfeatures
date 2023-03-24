@@ -1581,6 +1581,7 @@
         labels = ""
         nedPackages = "
                        inet.routing.extras
+                       inet.node.dsr
                       "
         extraSourceFolders = ""
         compileFlags = "-DINET_WITH_EXTRAMANETROUTING"
