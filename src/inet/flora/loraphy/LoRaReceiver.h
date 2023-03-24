@@ -70,13 +70,15 @@ private:
     long numCollisions;
     long rcvBelowSensitivity;
 
+    W getSensitivityBwSf(const Hz &, const int &) const;
+
 public:
   LoRaReceiver();
 
   void initialize(int stage) override;
   void finish() override;
   virtual W getMinInterferencePower() const override { return W(NaN); }
-  virtual W getMinReceptionPower() const override { return W(NaN); }
+  virtual W getMinReceptionPower() const override;// { return W(NaN); }
 
   virtual bool computeIsReceptionPossible(const IListening *listening, const ITransmission *transmission) const override;
 

@@ -68,11 +68,7 @@ void LoRaReceiver::initialize(int stage)
                 setBandwidth(loRaAppAux->loRaBW);
             }
             else {
-#ifdef CHECKLORAAPP
-                throw cRuntimeError("SimpleLoRaApp not found");
-#else
-                EV << "SimpleLoRaApp not found";
-#endif
+                throw cRuntimeError("This node is not a Gateway and app module of type SimpleLoRaApp not found");
             }
         }
     }
@@ -91,8 +87,9 @@ bool LoRaReceiver::computeIsReceptionPossible(const IListening *listening, const
     if (loRaTransmission == nullptr) // it is not a lora transmission reject it
         return false;
     //here we can check compatibility of LoRaTx parameters (or beeing a gateway)
-    auto *loRaApp = check_and_cast<flora::SimpleLoRaApp *>(getParentModule()->getParentModule()->getSubmodule("SimpleLoRaApp"));
-    if(iAmGateway || (loRaTransmission->getLoRaCF() == loRaApp->loRaCF && loRaTransmission->getLoRaBW() == loRaApp->loRaBW && loRaTransmission->getLoRaSF() == loRaApp->loRaSF))
+    auto loRaAppAux = dynamic_cast<SimpleLoRaApp *>(loraApp);
+    //auto *loRaApp = check_and_cast<flora::SimpleLoRaApp *>(getParentModule()->getParentModule()->getSubmodule("SimpleLoRaApp"));
+    if(iAmGateway || (loRaTransmission->getLoRaCF() == loRaAppAux->loRaCF && loRaTransmission->getLoRaBW() == loRaAppAux->loRaBW && loRaTransmission->getLoRaSF() == loRaAppAux->loRaSF))
         return true;
     else
         return false;
@@ -327,69 +324,76 @@ const IListeningDecision *LoRaReceiver::computeListeningDecision(const IListenin
     return new ListeningDecision(listening, isListeningPossible);
 }
 
+
+W LoRaReceiver::getSensitivityBwSf(const Hz &bandwidth, const int &Sf) const
+{
+    W sensitivity = mW(math::dBmW2mW(-126.5));
+    switch (Sf) {
+    case 6:
+        if(bandwidth == Hz(125000))
+            sensitivity = mW(math::dBmW2mW(-121));
+        else if(bandwidth == Hz(250000))
+            sensitivity = mW(math::dBmW2mW(-118));
+        else if(bandwidth == Hz(500000))
+            sensitivity = mW(math::dBmW2mW(-111));
+        break;
+    case 7:
+        if(bandwidth == Hz(125000))
+            sensitivity = mW(math::dBmW2mW(-124));
+        else if(bandwidth == Hz(250000))
+            sensitivity = mW(math::dBmW2mW(-122));
+        else if(bandwidth == Hz(500000))
+            sensitivity = mW(math::dBmW2mW(-116));
+        break;
+    case 8:
+        if(bandwidth == Hz(125000))
+            sensitivity = mW(math::dBmW2mW(-127));
+        else if(bandwidth == Hz(250000))
+            sensitivity = mW(math::dBmW2mW(-125));
+        else if(bandwidth == Hz(500000))
+            sensitivity = mW(math::dBmW2mW(-119));
+        break;
+    case 9:
+        if(bandwidth == Hz(125000))
+            sensitivity = mW(math::dBmW2mW(-130));
+        else if(bandwidth == Hz(250000))
+            sensitivity = mW(math::dBmW2mW(-128));
+        else if(bandwidth == Hz(500000))
+            sensitivity = mW(math::dBmW2mW(-122));
+        break;
+    case 10:
+        if(bandwidth == Hz(125000))
+            sensitivity = mW(math::dBmW2mW(-133));
+        else if(bandwidth == Hz(250000))
+            sensitivity = mW(math::dBmW2mW(-130));
+        else if(bandwidth == Hz(500000))
+            sensitivity = mW(math::dBmW2mW(-125));
+        break;
+    case 11:
+        if(bandwidth == Hz(125000))
+            sensitivity = mW(math::dBmW2mW(-135));
+        else if(bandwidth == Hz(250000))
+            sensitivity = mW(math::dBmW2mW(-132));
+        else if(bandwidth == Hz(500000))
+            sensitivity = mW(math::dBmW2mW(-128));
+        break;
+    case 12:
+        if(bandwidth == Hz(125000))
+            sensitivity = mW(math::dBmW2mW(-137));
+        else if(bandwidth == Hz(250000))
+            sensitivity = mW(math::dBmW2mW(-135));
+        else if(bandwidth == Hz(500000))
+            sensitivity = mW(math::dBmW2mW(-129));
+        break;
+    }
+    return sensitivity;
+}
+
 W LoRaReceiver::getSensitivity(const LoRaReception *reception) const
 {
     //function returns sensitivity -- according to LoRa documentation, it changes with LoRa parameters
     //Sensitivity values from Semtech SX1272/73 datasheet, table 10, Rev 3.1, March 2017
-    W sensitivity = mW(math::dBmW2mW(-126.5));
-    switch (reception->getLoRaSF()) {
-    case 6:
-        if(reception->getLoRaBW() == Hz(125000))
-            sensitivity = mW(math::dBmW2mW(-121));
-        else if(reception->getLoRaBW() == Hz(250000))
-            sensitivity = mW(math::dBmW2mW(-118));
-        else if(reception->getLoRaBW() == Hz(500000))
-            sensitivity = mW(math::dBmW2mW(-111));
-        break;
-    case 7:
-        if(reception->getLoRaBW() == Hz(125000))
-            sensitivity = mW(math::dBmW2mW(-124));
-        else if(reception->getLoRaBW() == Hz(250000))
-            sensitivity = mW(math::dBmW2mW(-122));
-        else if(reception->getLoRaBW() == Hz(500000))
-            sensitivity = mW(math::dBmW2mW(-116));
-        break;
-    case 8:
-        if(reception->getLoRaBW() == Hz(125000))
-            sensitivity = mW(math::dBmW2mW(-127));
-        else if(reception->getLoRaBW() == Hz(250000))
-            sensitivity = mW(math::dBmW2mW(-125));
-        else if(reception->getLoRaBW() == Hz(500000))
-            sensitivity = mW(math::dBmW2mW(-119));
-        break;
-    case 9:
-        if(reception->getLoRaBW() == Hz(125000))
-            sensitivity = mW(math::dBmW2mW(-130));
-        else if(reception->getLoRaBW() == Hz(250000))
-            sensitivity = mW(math::dBmW2mW(-128));
-        else if(reception->getLoRaBW() == Hz(500000))
-            sensitivity = mW(math::dBmW2mW(-122));
-        break;
-    case 10:
-        if(reception->getLoRaBW() == Hz(125000))
-            sensitivity = mW(math::dBmW2mW(-133));
-        else if(reception->getLoRaBW() == Hz(250000))
-            sensitivity = mW(math::dBmW2mW(-130));
-        else if(reception->getLoRaBW() == Hz(500000))
-            sensitivity = mW(math::dBmW2mW(-125));
-        break;
-    case 11:
-        if(reception->getLoRaBW() == Hz(125000))
-            sensitivity = mW(math::dBmW2mW(-135));
-        else if(reception->getLoRaBW() == Hz(250000))
-            sensitivity = mW(math::dBmW2mW(-132));
-        else if(reception->getLoRaBW() == Hz(500000))
-            sensitivity = mW(math::dBmW2mW(-128));
-        break;
-    case 12:
-        if(reception->getLoRaBW() == Hz(125000))
-            sensitivity = mW(math::dBmW2mW(-137));
-        else if(reception->getLoRaBW() == Hz(250000))
-            sensitivity = mW(math::dBmW2mW(-135));
-        else if(reception->getLoRaBW() == Hz(500000))
-            sensitivity = mW(math::dBmW2mW(-129));
-        break;
-    }
+    W sensitivity = getSensitivityBwSf(reception->getLoRaBW(), reception->getLoRaSF());
 #if 0
     if(reception->getLoRaSF() == 6)
     {
@@ -436,6 +440,15 @@ W LoRaReceiver::getSensitivity(const LoRaReception *reception) const
     }
 #endif
     return sensitivity;
+}
+
+W LoRaReceiver::getMinReceptionPower() const
+{
+    if(iAmGateway) {
+        return mW(math::dBmW2mW(-137));
+    }
+    auto loRaAppAux = dynamic_cast<SimpleLoRaApp *>(loraApp);
+    return getSensitivityBwSf(loRaAppAux->loRaBW, loRaAppAux->loRaSF);
 }
 
 }
