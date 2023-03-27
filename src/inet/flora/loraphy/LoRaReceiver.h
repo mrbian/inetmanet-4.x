@@ -45,14 +45,14 @@ class INET_API LoRaReceiver : public FlatReceiverBase
 
 {
 private:
-    W LoRaTP;
-    int LoRaSF;
-    double LoRaCR;
+    W LoRaTP = W(NaN);
+    int LoRaSF = std::numeric_limits<long>::quiet_NaN();
+    double LoRaCR = NaN;
 
-    double snirThreshold;
+    double snirThreshold = 0;
 
-    bool iAmGateway;
-    bool alohaChannelModel;
+    bool iAmGateway = false;
+    bool alohaChannelModel = false;
     cModule *loraApp = nullptr;
 
     simsignal_t LoRaReceptionCollision;
@@ -67,8 +67,8 @@ private:
     };
 
     //statistics
-    long numCollisions;
-    long rcvBelowSensitivity;
+    long numCollisions = 0;
+    long rcvBelowSensitivity = 0;
 
     W getSensitivityBwSf(const Hz &, const int &) const;
 

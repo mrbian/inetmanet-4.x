@@ -138,8 +138,8 @@ bool LoRaReceiver::computeIsReceptionAttempted(const IListening *listening, cons
             rec = loraMac->getReceiverAddress();
 
         if (iAmGateway == false) {
-            auto *macLayer = check_and_cast<flora::LoRaMac *>(getParentModule()->getParentModule()->getSubmodule("mac"));
-            if (rec == macLayer->getAddress()) {
+            auto macLayer = dynamic_cast<flora::LoRaMac *>(getParentModule()->getParentModule()->getSubmodule("mac"));
+            if (macLayer && rec == macLayer->getAddress()) {
                 const_cast<LoRaReceiver* >(this)->numCollisions++;
             }
             //EV << "Node: Extracted macFrame = " << loraMacFrame->getReceiverAddress() << ", node address = " << macLayer->getAddress() << std::endl;
