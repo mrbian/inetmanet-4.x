@@ -28,6 +28,8 @@
 #include "inet/routing/base/RoutingProtocolBase.h"
 
 namespace inet {
+namespace wirelesspan {
+namespace routing {
 
 class INET_API LeachBS : public RoutingProtocolBase {
 private:
@@ -56,6 +58,8 @@ protected:
     virtual void finish() override;
 };
 
+}
+}
 } /* namespace inet */
 
 #endif /* INET_ROUTING_LEACH_LEACHBS_H_ */

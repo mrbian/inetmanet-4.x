@@ -39,6 +39,7 @@ simple Leach like IManetRouting
         
         int numNodes = default(10);
         double clusterHeadPercentage = default(0.5);
+        @class("wirelesspan::routing::Leach");
     gates:
         input ipIn;
         output ipOut;

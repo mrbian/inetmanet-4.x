@@ -35,7 +35,7 @@ cplusplus {{
     typedef vector<BSObject> testList;
 }}
 
-namespace inet;
+namespace inet::wirelesspan::routing;
 
 enum LeachPktType {
     CH = 1;

@@ -23,6 +23,7 @@ simple LeachBS like IManetRouting
         @display("i=block/routing");
         string interfaceTableModule;   // The path to the InterfaceTable module
         string routingTableModule;
+        @class("wirelesspan::routing::LeachBS");
     gates:
         input ipIn;
         output ipOut;

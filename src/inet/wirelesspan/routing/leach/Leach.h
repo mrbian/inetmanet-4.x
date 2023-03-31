@@ -24,7 +24,8 @@ using namespace std;
 
 
 namespace inet {
-
+namespace wirelesspan {
+namespace routing {
 /**
  * DSDV protocol implementation.
  */
@@ -112,7 +113,8 @@ class INET_API Leach : public RoutingProtocolBase
     LeachState leachState = nch;
 };
 
-
+}
+}
 } // namespace inet
 
 #endif // ifndef __INET_DSDV_H
