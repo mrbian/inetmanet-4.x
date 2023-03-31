@@ -1,4 +1,4 @@
-name: Chart tests
+name: Statistical tests
 
 on:
   schedule:
@@ -52,12 +52,10 @@ jobs:
         run: |
           docker run -i --env MODE=debug --env GITHUB_WORKSPACE \
             -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE \
-            ghcr.io/inet-framework/ci-inet:6.0.1-230320 /bin/bash $GITHUB_WORKSPACE/_scripts/github/github-job-inet_run_chart-tests.sh
+            ghcr.io/inet-framework/ci-inet:6.0.1-230320 /bin/bash $GITHUB_WORKSPACE/_scripts/github/github-job-inet_run_statistical-tests.sh
       - uses: actions/upload-artifact@v3
         if: always() # even if the test failed, of course
         with:
-          name: chart-test-results
-          path: |
-            ${{ github.workspace }}/media/**/*_new.png
-            ${{ github.workspace }}/media/**/*_diff.png
+          name: statistical-test-results
+          path: ${{ github.workspace }}/statistics/**/*.diff
 
