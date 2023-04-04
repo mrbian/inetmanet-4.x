@@ -30,17 +30,17 @@ class StatisticalTestTask(SimulationTestTask):
         stored_results_directory = simulation_project.get_full_path(os.path.join("statistics", working_directory))
         scalars_match = False
         for current_scalar_result_file_name in glob.glob(os.path.join(current_results_directory, "*.sca")):
-            if re.search(config, current_scalar_result_file_name):
+            if re.search("/" + config + "-#", current_scalar_result_file_name):
                 logger.debug(f"Reading result file {current_scalar_result_file_name}")
                 current_df = read_result_files(current_scalar_result_file_name)
+                current_df = get_scalars(current_df)
+                if "runID" in current_df:
+                    current_df.drop("runID", axis=1,  inplace=True)
                 scalar_file_name = os.path.basename(current_scalar_result_file_name)
                 stored_scalar_result_file_name = os.path.join(stored_results_directory, scalar_file_name)
                 if os.path.isfile(stored_scalar_result_file_name):
                     logger.debug(f"Reading result file {stored_scalar_result_file_name}")
                     stored_df = read_result_files(stored_scalar_result_file_name)
-                    current_df = get_scalars(current_df)
-                    if "runID" in current_df:
-                        current_df.drop("runID", axis=1,  inplace=True)
                     stored_df = get_scalars(stored_df)
                     if "runID" in stored_df:
                         stored_df.drop("runID", axis=1,  inplace=True)
@@ -77,19 +77,18 @@ class StatisticalTestTask(SimulationTestTask):
         return self.task_result_class(task=self, simulation_task_result=simulation_task_result, result="PASS")
     
 def get_statistical_result_sim_time_limit(simulation_config, run=0):
-    if simulation_config.sim_time_limit:
+    simulation_project = simulation_config.simulation_project
+    correct_fingerprint_store = get_correct_fingerprint_store(simulation_project)
+    stored_fingerprint_entries = correct_fingerprint_store.filter_entries(ingredients=None, working_directory=simulation_config.working_directory, ini_file=simulation_config.ini_file, config=simulation_config.config, run=run)
+    if stored_fingerprint_entries:
+        selected_fingerprint_entry = select_fingerprint_entry_with_largest_sim_time_limit(stored_fingerprint_entries)
+        return selected_fingerprint_entry["sim_time_limit"]
+    elif simulation_config.sim_time_limit is not None:
         return simulation_config.sim_time_limit
     else:
-        simulation_project = simulation_config.simulation_project
-        correct_fingerprint_store = get_correct_fingerprint_store(simulation_project)
-        stored_fingerprint_entries = correct_fingerprint_store.filter_entries(ingredients=None, working_directory=simulation_config.working_directory, ini_file=simulation_config.ini_file, config=simulation_config.config, run=run)
-        if stored_fingerprint_entries:
-            selected_fingerprint_entry = select_fingerprint_entry_with_largest_sim_time_limit(stored_fingerprint_entries)
-            return selected_fingerprint_entry["sim_time_limit"]
-        else:
-            # NOTE: 0s means running the simulations indefinitely, 1ps isn't really good either,
-            # because depending on the simtime precision it may be silently rounded to zero
-            return "1ps"
+        # NOTE: 0s means running the simulations indefinitely, 1ps isn't really good either,
+        # because depending on the simtime precision it may be silently rounded to zero
+        return "1ps"
 
 def get_statistical_test_tasks(sim_time_limit=get_statistical_result_sim_time_limit, **kwargs):
     # remove run=0 parameter and add the same to the github-job-inet_run_statistical-tests.sh

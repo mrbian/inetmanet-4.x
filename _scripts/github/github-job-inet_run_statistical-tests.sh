@@ -28,6 +28,12 @@ export WORKSPACE_ROOT=/root/workspace
 cp -r /root/omnetpp-6.0.1-linux /root/workspace/omnetpp
 cp -r $GITHUB_WORKSPACE /root/workspace/inet
 
+cd /root/workspace
+git clone https://github.com/ACassimiro/TSNsched
+cd /root/workspace/TSNsched
+git checkout 3f3bf663d196ec6c03e81a1e1392d4aefd158e3e
+export TSNSCHED_ROOT=/root/workspace/TSNsched
+
 . /root/workspace/omnetpp/setenv -f
 
 cd /root/workspace/inet
@@ -48,12 +54,11 @@ make -C src msgheaders smheaders
 echo "::endgroup::"
 
 echo "::group::Run tests"
-cd showcases
 # This is a magical "process substitution" for piping stderr into tee...
 # Source: https://stackoverflow.com/a/692407/635587
  # the "| cat" is there to hide the exit code temporarily
-inet_run_statistical_tests -m release > >(tee runtest.out) 2> >(tee runtest.err >&2) | cat
-#                                     ^---- Everything from here on is only needed to make the pretty GitHub annotations. ----v
+inet_run_statistical_tests -m release --exclude-filter /osg/ > >(tee runtest.out) 2> >(tee runtest.err >&2) | cat
+#                                                            ^---- Everything from here on is only needed to make the pretty GitHub annotations. ----v
 EXITCODE="${PIPESTATUS[0]}"
 echo "::endgroup::"
 
