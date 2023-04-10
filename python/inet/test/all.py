@@ -1,5 +1,6 @@
 import logging
 
+from inet.project.inet import *
 from inet.test.chart import *
 from inet.test.feature import *
 from inet.test.fingerprint import *
@@ -11,7 +12,7 @@ from inet.test.speed import *
 from inet.test.statistical import *
 from inet.test.validation import *
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 class PacketTestTask(TestTask):
     def __init__(self, simulation_project, name="packet test", task_result_class=TestTaskResult, **kwargs):
@@ -25,14 +26,14 @@ class PacketTestTask(TestTask):
         executable = "./runtest"
         working_directory = self.simulation_project.get_full_path("tests/packet")
         args = [executable, "-s"]
-        logger.debug(args)
+        _logger.debug(args)
         subprocess_result = subprocess.run(args, cwd=working_directory, capture_output=True, env=self.simulation_project.get_env())
         stdout = subprocess_result.stdout.decode("utf-8")
         match = re.search(r"Packet unit test: (\w+)", stdout)
         return self.task_result_class(self, result=match.group(1) if match and subprocess_result.returncode == 0 else "FAIL")
 
 def get_packet_test_tasks(filter=None, working_directory_filter=None, ini_file_filter=None, config_filter=None, run_filter=None, **kwargs):
-    if filter or working_directory_filter or ini_file_filter or config_filter or run_filter:
+    if filter or ini_file_filter or config_filter or run_filter:
         packet_test_tasks = []
     else:
         packet_test_tasks = [PacketTestTask(inet_project)]

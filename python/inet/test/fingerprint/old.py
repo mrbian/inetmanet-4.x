@@ -5,11 +5,15 @@ import logging
 import re
 import shlex
 
+from inet.test.fingerprint import *
+
 from inet.common import *
+from inet.project.inet import *
 from inet.simulation.project import *
+from inet.test.fingerprint.store import *
 from inet.test.fingerprint.task import *
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 def update_correct_fingerprints_from_csv(csv_file, correct_fingerprints, filter=None, exclude_filter=None, full_match=False):
     def commentRemover(csv_data):
@@ -31,25 +35,36 @@ def update_correct_fingerprints_from_csv(csv_file, correct_fingerprints, filter=
                 parser.add_argument("-c", "--config", default="General")
                 parser.add_argument("-r", "--run", default="0")
                 args = parser.parse_args(shlex.split(fields[1]))
-                fingerprints = map(lambda text: Fingerprint(text), fields[3].split(";"))
+                fingerprints = map(lambda text: Fingerprint.parse(text), fields[3].split(";"))
                 working_directory = fields[0] if fields[0] != "." else "tests/fingerprint"
                 if working_directory[0] == '/':
                     working_directory = working_directory[1:]
                 if working_directory[-1] == '/':
                     working_directory = working_directory[:-1]
-                logger.info("Updating correct fingerprint: " + working_directory + " -f " + args.ini_file + " -c " + args.config + " -r " + args.run)
+                _logger.info("Updating correct fingerprint: " + working_directory + " -f " + args.ini_file + " -c " + args.config + " -r " + args.run)
                 for fingerprint in fingerprints:
                     try:
+                        sim_time_limit = fields[2]
+                        if args.ini_file == "ethernet-bus-reconnect.ini":
+                            sim_time_limit = "5.2s"
+                        elif args.ini_file == "ethernet-hub-reconnect.ini":
+                            sim_time_limit = "5.2s"
+                        elif args.ini_file == "ethernet-hub.ini":
+                            sim_time_limit = "100s"
+                        elif args.ini_file == "ethernet-switch.ini":
+                            sim_time_limit = "10s"
+                        elif args.ini_file == "ethernet-twohosts.ini":
+                            sim_time_limit = "1000s"
                         correct_fingerprints.update_fingerprint(fingerprint.fingerprint,
                                                                 working_directory=working_directory,
                                                                 ini_file=args.ini_file,
                                                                 config=args.config,
-                                                                run=int(args.run),
-                                                                sim_time_limit=fields[2],
+                                                                run_number=int(args.run),
+                                                                sim_time_limit=sim_time_limit,
                                                                 ingredients=fingerprint.ingredients,
                                                                 test_result=fields[4])
                     except Exception as e:
-                        logger.warn("Failed to update correct fingerprint: " + str(e))
+                        _logger.warn("Failed to update correct fingerprint: " + str(e))
             else:
                 raise Exception(csv_file + " Line " + str(csvReader.line_num) + ": the 5th item must contain one of 'PASS', 'FAIL', 'ERROR'" + ": " + '"' + '", "'.join(fields) + '"')
         else:

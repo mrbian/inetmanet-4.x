@@ -1,8 +1,14 @@
+"""
+Provides abstractions for generic test tasks and their results.
+
+Please note that undocumented features are not supposed to be used by the user.
+"""
+
 import logging
 
 from inet.common import *
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 class AssertionResult:
     def __init__(self, check, result):
@@ -10,6 +16,10 @@ class AssertionResult:
         self.result = result
 
 class TestTaskResult(TaskResult):
+    """
+    Represents a test task result that is created when a test task is run.
+    """
+
     def __init__(self, task=None, result=None, expected_result="PASS", bool_result=None, assertion_results=None, possible_results=["PASS", "SKIP", "CANCEL", "FAIL", "ERROR"], possible_result_colors=[COLOR_GREEN, COLOR_CYAN, COLOR_CYAN, COLOR_YELLOW, COLOR_RED], **kwargs):
         super().__init__(task=task, result=result or ("PASS" if bool_result or bool_result is None else "FAIL"), expected_result=expected_result, possible_results=possible_results, possible_result_colors=possible_result_colors, **kwargs)
         self.locals = locals()
@@ -18,6 +28,10 @@ class TestTaskResult(TaskResult):
         self.assertion_results = assertion_results
 
 class MultipleTestTaskResults(MultipleTaskResults):
+    """
+    Represents multiple test task results that are created when multiple test tasks are run.
+    """
+
     def __init__(self, multiple_tasks=None, results=[], expected_result="PASS", possible_results=["PASS", "SKIP", "CANCEL", "FAIL", "ERROR"], possible_result_colors=[COLOR_GREEN, COLOR_CYAN, COLOR_CYAN, COLOR_YELLOW, COLOR_RED], **kwargs):
         super().__init__(multiple_tasks=multiple_tasks, results=results, expected_result=expected_result, possible_results=possible_results, possible_result_colors=possible_result_colors, **kwargs)
         self.locals = locals()
@@ -37,6 +51,10 @@ class MultipleTestTaskResults(MultipleTaskResults):
         return self.filter_results(result_filter="FAIL", exclude_expected_result_filter="FAIL" if exclude_expected else None)
 
 class TestTask(Task):
+    """
+    Represents a self-contained test task that can be run without additional parameters.
+    """
+
     def __init__(self, name="test", task_result_class=TestTaskResult, **kwargs):
         super().__init__(name=name, task_result_class=task_result_class, **kwargs)
         self.locals = locals()
@@ -47,6 +65,10 @@ class TestTask(Task):
         return self.task_result_class(self, result="PASS", reason="Test completed")
 
 class MultipleTestTasks(MultipleTasks):
+    """
+    Represents multiple test tasks that can be run together.
+    """
+
     def __init__(self, name="test", multiple_task_results_class=MultipleTestTaskResults, **kwargs):
         super().__init__(name=name, multiple_task_results_class=multiple_task_results_class, **kwargs)
         self.locals = locals()

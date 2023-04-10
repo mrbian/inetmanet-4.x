@@ -1,9 +1,9 @@
 import cppyy
 import re
 
+from omnetpp.runtime import *
+
 from inet.common import *
-from inet.simulation.cffi.inet import *
-from inet.simulation.cffi.omnetpp import *
 
 cppyy.cppdef("""
 #include "omnetpp/cevent.h"
@@ -34,7 +34,7 @@ void doit(cEvent *event) {
 
 cFunctionalEvent = cppyy.gbl.omnetpp.cFunctionalEvent
 
-class PythonEvent(cEvent):
+class PythonEvent(cppyy.gbl.omnetpp.cEvent):
     def __init__(self):
         super().__init__("")
 

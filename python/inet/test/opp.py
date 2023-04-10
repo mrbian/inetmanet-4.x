@@ -7,7 +7,7 @@ import subprocess
 from inet.simulation.project import *
 from inet.test.task import *
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 class OppTestTask(TestTask):
     def __init__(self, simulation_project, working_directory, test_file_name, **kwargs):
@@ -35,9 +35,11 @@ class OppTestTask(TestTask):
         else:
             return self.task_result_class(self, result="FAIL", reason=f"Non-zero exit code: {subprocess_result.returncode}")
 
-def get_opp_test_tasks(test_folder, simulation_project=default_project, filter=".*", full_match=False, **kwargs):
+def get_opp_test_tasks(test_folder, simulation_project=None, filter=".*", full_match=False, **kwargs):
     def create_test_task(test_file_name):
         return OppTestTask(simulation_project, simulation_project.get_full_path(test_folder), os.path.basename(test_file_name), task_result_class=TestTaskResult, **kwargs)
+    if simulation_project is None:
+        simulation_project = get_default_simulation_project()
     test_file_names = list(builtins.filter(lambda test_file_name: matches_filter(test_file_name, filter, None, full_match),
                                            glob.glob(os.path.join(simulation_project.get_full_path(test_folder), "*.test"))))
     test_tasks = list(map(create_test_task, test_file_names))
