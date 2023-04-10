@@ -228,6 +228,10 @@ class AODVUU : public ManetRoutingBase
     bool checkRrep;
     virtual bool isThisRrepPrevSent(Ptr<const AODV_msg>);
     virtual bool getDestAddressRreq(Packet *msg,PacketDestOrigin &orgDest,RREQInfo &rreqInfo);
+
+    bool configured = false;
+    virtual void start() override;
+
   public:
     int  &log_file_fd = SIMULATION_SHARED_VARIABLE(log_file_fd, -1);
     bool &log_file_fd_init = SIMULATION_SHARED_VARIABLE(log_file_fd_init, false);

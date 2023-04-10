@@ -47,6 +47,7 @@
 #include "inet/linklayer/common/MacAddressTag_m.h"
 #include "inet/common/packet/dissector/PacketDissector.h"
 #include "inet/networklayer/ipv4/Ipv4Header_m.h"
+#include "inet/common/lifecycle/NodeStatus.h"
 
 
 #include "inet/linklayer/common/InterfaceTag_m.h"
@@ -155,7 +156,7 @@ void NS_CLASS initialize(int stage)
             checkRrep = par("avoidDupRREP").boolValue();
 
         /* Initialize common manet routing protocol structures */
-        registerRoutingModule();
+
         if (llfeedback)
             linkLayerFeeback();
 
@@ -196,42 +197,11 @@ void NS_CLASS initialize(int stage)
 
         for (int i = 0; i < MAX_NR_INTERFACES; i++)
             DEV_NR(i).enabled=0;
+        auto node = getContainingNode(this);
+        auto nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
+        if ((!nodeStatus || nodeStatus->getState() == NodeStatus::UP))
+            start();
 
-        for (int i = 0; i <getNumInterfaces(); i++)
-        {
-            DEV_NR(i).ifindex = i;
-            dev_indices[i] = i;
-            strcpy(DEV_NR(i).ifname, getInterfaceEntry(i)->getInterfaceName());
-            if (!isInMacLayer())
-            {
-                auto ie = getInterfaceEntry(i);
-                auto ifaceData = ie->getProtocolData<Ipv4InterfaceData>();
-                DEV_NR(i).netmask.s_addr = L3Address(ifaceData->getIPAddress().getNetworkMask());
-                DEV_NR(i).ipaddr.s_addr = L3Address(ifaceData->getIPAddress());
-            }
-            else
-            {
-                DEV_NR(i).netmask.s_addr = L3Address(MacAddress::BROADCAST_ADDRESS);
-                DEV_NR(i).ipaddr.s_addr = L3Address(getInterfaceEntry(i)->getMacAddress());
-
-            }
-            if (getInterfaceEntry(i)->isLoopback())
-                continue;
-            if (isInMacLayer())
-            {
-                mapSeqNum[DEV_NR(i).ipaddr.s_addr] = &this_host.seqno;
-            }
-        }
-        /* Set network interface parameters */
-        for (int i=0; i < getNumWlanInterfaces(); i++)
-        {
-            DEV_NR(getWlanInterfaceIndex(i)).enabled = 1;
-            DEV_NR(getWlanInterfaceIndex(i)).sock = -1;
-            DEV_NR(getWlanInterfaceIndex(i)).broadcast.s_addr = L3Address(Ipv4Address(AODV_BROADCAST));
-        }
-
-        NS_DEV_NR = getWlanInterfaceIndexByAddress();
-        NS_IFINDEX = getWlanInterfaceIndexByAddress();
 #ifndef AODV_USE_STL
         list_t *lista_ptr;
         lista_ptr=&rreq_records;
@@ -256,30 +226,72 @@ void NS_CLASS initialize(int stage)
         costMobile = par("costMobile");
         useHover = par("useHover");
         proactive_rreq_timeout= par("proactiveRreqTimeout").intValue();
-
-        if (isRoot)
-        {
-            timer_init(&proactive_rreq_timer,&NS_CLASS rreq_proactive, nullptr);
-            timer_set_timeout(&proactive_rreq_timer, par("startRreqProactive").intValue());
-        }
-        if (!isInMacLayer())
-            registerHook();
-
-        propagateProactive = par("propagateProactive");
-        nodeName = getContainingNode(this)->getFullName();
-        aodv_socket_init();
-        rt_table_init();
-        packet_queue_init();
-        startAODVUUAgent();
-        WATCH_PTRVECTOR(PQ.pkQueue);
-
-        is_init=true;
-        // Initialize the timer
-        scheduleNextEvent();
         EV_INFO << "Aodv active"<< "\n";
     }
 }
 
+void NS_CLASS start()
+{
+    if (configured)
+        return;
+    configured = true;
+
+    registerRoutingModule();
+    for (int i = 0; i <getNumInterfaces(); i++)
+    {
+        DEV_NR(i).ifindex = i;
+        dev_indices[i] = i;
+        strcpy(DEV_NR(i).ifname, getInterfaceEntry(i)->getInterfaceName());
+        if (!isInMacLayer())
+        {
+            auto ie = getInterfaceEntry(i);
+            auto ifaceData = ie->getProtocolData<Ipv4InterfaceData>();
+            DEV_NR(i).netmask.s_addr = L3Address(ifaceData->getIPAddress().getNetworkMask());
+            DEV_NR(i).ipaddr.s_addr = L3Address(ifaceData->getIPAddress());
+        }
+        else
+        {
+            DEV_NR(i).netmask.s_addr = L3Address(MacAddress::BROADCAST_ADDRESS);
+            DEV_NR(i).ipaddr.s_addr = L3Address(getInterfaceEntry(i)->getMacAddress());
+
+        }
+        if (getInterfaceEntry(i)->isLoopback())
+            continue;
+        if (isInMacLayer())
+        {
+            mapSeqNum[DEV_NR(i).ipaddr.s_addr] = &this_host.seqno;
+        }
+    }
+    /* Set network interface parameters */
+    for (int i=0; i < getNumWlanInterfaces(); i++)
+    {
+        DEV_NR(getWlanInterfaceIndex(i)).enabled = 1;
+        DEV_NR(getWlanInterfaceIndex(i)).sock = -1;
+        DEV_NR(getWlanInterfaceIndex(i)).broadcast.s_addr = L3Address(Ipv4Address(AODV_BROADCAST));
+    }
+
+    NS_DEV_NR = getWlanInterfaceIndexByAddress();
+    NS_IFINDEX = getWlanInterfaceIndexByAddress();
+    if (isRoot)
+    {
+        timer_init(&proactive_rreq_timer,&NS_CLASS rreq_proactive, nullptr);
+        timer_set_timeout(&proactive_rreq_timer, par("startRreqProactive").intValue());
+    }
+    if (!isInMacLayer())
+        registerHook();
+
+    propagateProactive = par("propagateProactive");
+    nodeName = getContainingNode(this)->getFullName();
+    aodv_socket_init();
+    rt_table_init();
+    packet_queue_init();
+    startAODVUUAgent();
+    WATCH_PTRVECTOR(PQ.pkQueue);
+
+    is_init=true;
+    // Initialize the timer
+    scheduleNextEvent();
+}
 /* Destructor for the AODV-UU routing agent */
 NS_CLASS ~AODVUU()
 {
@@ -1941,6 +1953,7 @@ void NS_CLASS actualizeTablesWithCollaborative(const L3Address &dest)
 
 void NS_CLASS handleStartOperation(LifecycleOperation *operation)
 {
+    start();
     if (isRoot)
     {
         timer_init(&proactive_rreq_timer,&NS_CLASS rreq_proactive, nullptr);

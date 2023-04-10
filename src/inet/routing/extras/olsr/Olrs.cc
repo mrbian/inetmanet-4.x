@@ -40,7 +40,7 @@
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/networklayer/common/L3Tools.h"
 #include "inet/networklayer/ipv4/Ipv4InterfaceData.h"
-
+#include "inet/common/lifecycle/NodeStatus.h"
 
 namespace inet {
 namespace inetmanet {
@@ -462,7 +462,7 @@ void Olsr::initialize(int stage)
         msg_seq_ = OLSR_MAX_SEQ_NUM;
         ansn_ = OLSR_MAX_SEQ_NUM;
 
-        registerRoutingModule();
+
 
         useIndex = par("UseIndex");
 
@@ -475,22 +475,10 @@ void Olsr::initialize(int stage)
         midTimer = new Olsr_MidTimer(); ///< Timer for sending MID messages.
 
         state_ptr = new Olsr_state();
-
-
-        for (int i = 0; i< getNumWlanInterfaces(); i++)
-        {
-            // Create never expiring interface association tuple entries for our
-            // own network interfaces, so that GetMainAddress () works to
-            // translate the node's own interface addresses into the main address.
-            Olsr_iface_assoc_tuple* tuple = new Olsr_iface_assoc_tuple;
-            int index = getWlanInterfaceIndex(i);
-            tuple->iface_addr() = getIfaceAddressFromIndex(index);
-            tuple->main_addr() = ra_addr();
-            tuple->time() = simtime_t::getMaxTime().dbl();
-            tuple->local_iface_index() = index;
-            add_ifaceassoc_tuple(tuple);
-        }
-
+        auto node = getContainingNode(this);
+        auto nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
+        if ((!nodeStatus || nodeStatus->getState() == NodeStatus::UP))
+            start();
 
 /*        hello_timer_.resched(hello_ival());
         tc_timer_.resched(hello_ival());
@@ -499,16 +487,35 @@ void Olsr::initialize(int stage)
         {
             linkLayerFeeback();
         }
-        scheduleEvent();
-
-        globalRtable[ra_addr()] = &rtable_;
-        computed = false;
-
-        WATCH_PTRMAP(rtable_.rt_);
-
     }
 }
 
+void Olsr::start()
+{
+    if (configured)
+        return;
+    configured = true;
+    registerRoutingModule();
+
+    for (int i = 0; i< getNumWlanInterfaces(); i++) {
+           // Create never expiring interface association tuple entries for our
+           // own network interfaces, so that GetMainAddress () works to
+           // translate the node's own interface addresses into the main address.
+           Olsr_iface_assoc_tuple* tuple = new Olsr_iface_assoc_tuple;
+           int index = getWlanInterfaceIndex(i);
+           tuple->iface_addr() = getIfaceAddressFromIndex(index);
+           tuple->main_addr() = ra_addr();
+           tuple->time() = simtime_t::getMaxTime().dbl();
+           tuple->local_iface_index() = index;
+           add_ifaceassoc_tuple(tuple);
+    }
+    scheduleEvent();
+    globalRtable[ra_addr()] = &rtable_;
+    computed = false;
+
+    WATCH_PTRMAP(rtable_.rt_);
+
+}
 
 ///
 /// \brief  This function is called whenever a event  is received. It identifies
@@ -3149,14 +3156,15 @@ Olsr::isNodeCandidate(const nsaddr_t &src_addr)
 
 void Olsr::handleStartOperation(LifecycleOperation *operation)
 {
+    start();
     hello_timer_.resched(hello_ival());
     tc_timer_.resched(hello_ival());
     mid_timer_.resched(hello_ival());
-    scheduleEvent();}
+    scheduleEvent();
+}
 
 void Olsr::handleStopOperation(LifecycleOperation *operation)
 {
-
     rtable_.clear();
     msgs_.clear();
     while (getTimerMultimMap()->size()>0)

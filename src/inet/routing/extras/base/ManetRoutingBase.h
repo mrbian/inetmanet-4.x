@@ -226,6 +226,8 @@ class INET_API ManetRoutingBase : public ApplicationBase, public UdpSocket::ICal
 /////////////////////////////////////////////
     virtual void registerRoutingModule();
 
+    virtual void start() = 0;
+
 //
 //
     virtual void createTimerQueue();

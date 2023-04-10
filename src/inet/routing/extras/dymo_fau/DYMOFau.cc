@@ -36,6 +36,7 @@
 #include "inet/transportlayer/contract/udp/UdpSocket.h"
 #include "inet/networklayer/ipv4/Ipv4.h"
 #include "inet/routing/extras/dymo_fau/DYMO_PacketBBMessage_m.h"
+#include "inet/common/lifecycle/NodeStatus.h"
 
 namespace inet {
 
@@ -120,13 +121,10 @@ void DYMOFau::initialize(int stage)
         BUFFER_SIZE_PACKETS = par("BUFFER_SIZE_PACKETS");
         BUFFER_SIZE_BYTES = par("BUFFER_SIZE_BYTES");
 
-        registerRoutingModule();
-
         // myAddr = AUTOASSIGN_ADDRESS_BASE.getInt() + uint32(getParentModule()->getId());
 
         rateLimiterRREQ = new DYMO_TokenBucket(RREQ_RATE_LIMIT, RREQ_BURST_LIMIT, simTime());
 
-        myAddr = getAddress();
         dymo_routingTable = new DYMO_RoutingTable(this, myAddr);
         WATCH_PTR(dymo_routingTable);
 
@@ -135,14 +133,26 @@ void DYMOFau::initialize(int stage)
         queuedDataPackets = new DYMO_DataQueue(this, BUFFER_SIZE_PACKETS, BUFFER_SIZE_BYTES);
         WATCH_PTR(queuedDataPackets);
 
-        if (!isInMacLayer())
-            registerHook();
-
+        auto node = getContainingNode(this);
+        auto nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
+        if ((!nodeStatus || nodeStatus->getState() == NodeStatus::UP))
+            start();
         // setSendToICMP(true);
         linkLayerFeeback();
         timerMsg = new cMessage("DYMO_scheduler");
-        socket.joinMulticastGroup(L3Address(Ipv4Address::LL_MANET_ROUTERS));
     }
+}
+
+void DYMOFau::start()
+{
+    if (configured)
+        return;
+    configured = true;
+    registerRoutingModule();
+    myAddr = getAddress();
+    if (!isInMacLayer())
+        registerHook();
+    socket.joinMulticastGroup(L3Address(Ipv4Address::LL_MANET_ROUTERS));
 }
 
 void DYMOFau::finish()
@@ -1403,7 +1413,7 @@ void DYMOFau::processLinkBreak(const Packet *dgram)
 
 void  DYMOFau::handleStartOperation(LifecycleOperation *operation)
 {
-
+    start();
     rateLimiterRREQ = new DYMO_TokenBucket(RREQ_RATE_LIMIT, RREQ_BURST_LIMIT, simTime());
     dymo_routingTable = new DYMO_RoutingTable(this, myAddr);
     queuedDataPackets = new DYMO_DataQueue(this, BUFFER_SIZE_PACKETS, BUFFER_SIZE_BYTES);

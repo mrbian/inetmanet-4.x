@@ -42,6 +42,7 @@
 #include "inet/networklayer/common/FragmentationTag_m.h"
 #include "inet/routing/extras/dsr/DsrProtocolTag_m.h"
 #include "inet/common/packet/dissector/PacketDissector.h"
+#include "inet/common/lifecycle/NodeStatus.h"
 
 namespace inet {
 
@@ -353,88 +354,98 @@ void DSRUU::initialize(int stage)
     }
     else if (stage == INITSTAGE_ROUTING_PROTOCOLS)
     {
-        registerRoutingModule();
+        auto node = getContainingNode(this);
+        auto nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
+        if ((!nodeStatus || nodeStatus->getState() == NodeStatus::UP))
+            start();
 
         registerProtocol(Protocol::dsr, gate("socketOut"), gate("socketOut"));
         registerProtocol(Protocol::manet, gate("socketOut"), gate("socketOut"));
 
-        registerHook();
 
-        // ASSERT(stage >= STAGE:IP_LAYER_READY_FOR_HOOK_REGISTRATION);
+    }
+    return;
+}
 
-        int  num_80211 = 0;
-        //NetworkInterface *   i_face;
+void DSRUU::start()
+{
+    if (configured)
+        return;
+    configured = true;
 
-        for (int i = 0; i < getInterfaceTable()->getNumInterfaces(); i++)
+    registerRoutingModule();
+    registerHook();
+    // ASSERT(stage >= STAGE:IP_LAYER_READY_FOR_HOOK_REGISTRATION);
+    int  num_80211 = 0;
+    //NetworkInterface *   i_face;
+    for (int i = 0; i < getInterfaceTable()->getNumInterfaces(); i++)
+    {
+        auto ie = getInterfaceTable()->getInterface(i);
+        auto name = ie->getInterfaceName();
+        if (strstr(name, "wlan")!=nullptr)
         {
-            auto ie = getInterfaceTable()->getInterface(i);
-            auto name = ie->getInterfaceName();
-            if (strstr(name, "wlan")!=nullptr)
-            {
-                //i_face = ie;
-                num_80211++;
-                interfaceId = ie->getInterfaceId();
-            }
+            //i_face = ie;
+            num_80211++;
+            interfaceId = ie->getInterfaceId();
         }
-        // One enabled network interface (in total)
-        if (num_80211!=1)
-            throw cRuntimeError("DSR has found %i 80211 interfaces", num_80211);
+    }
+    // One enabled network interface (in total)
+    if (num_80211!=1)
+        throw cRuntimeError("DSR has found %i 80211 interfaces", num_80211);
 
-        /* Initilize tables */
-        neigh_tbl_init();
-        rreq_tbl_init();
-        grat_rrep_tbl_init();
-        maint_buf_init();
-        send_buf_init();
-        etxNumRetry = -1;
-        etxActive = par("ETX_Active");
-        if (etxActive)
-        {
-            etxTime = par("ETXHelloInterval");
-            etxNumRetry = par("ETXRetryBeforeFail");
-            etxWindowSize = etxTime*(unsigned int)par("ETXWindowNumHello");
-            etxJitter = 0.1;
-            etx_timer.init(&DSRUU::EtxMsgSend, nullptr);
-            set_timer(&etx_timer, 0.0);
-            //set_timer(&etx_timer, etxTime);
-            etxWindow = 0;
-            etxSize = 100; // Minimun length
-        }
-        auto ie = interface80211ptr;
-        myaddr_.s_addr = ie->getNetworkAddress();
-        macaddr_ = ie->getMacAddress();
+    /* Initilize tables */
+    neigh_tbl_init();
+    rreq_tbl_init();
+    grat_rrep_tbl_init();
+    maint_buf_init();
+    send_buf_init();
+    etxNumRetry = -1;
+    etxActive = par("ETX_Active");
+    if (etxActive)
+    {
+        etxTime = par("ETXHelloInterval");
+        etxNumRetry = par("ETXRetryBeforeFail");
+        etxWindowSize = etxTime*(unsigned int)par("ETXWindowNumHello");
+        etxJitter = 0.1;
+        etx_timer.init(&DSRUU::EtxMsgSend, nullptr);
+        set_timer(&etx_timer, 0.0);
+        //set_timer(&etx_timer, etxTime);
+        etxWindow = 0;
+        etxSize = 100; // Minimun length
+    }
+    auto ie = interface80211ptr;
+    myaddr_.s_addr = ie->getNetworkAddress();
+    macaddr_ = ie->getMacAddress();
 
-        if (!par("UseNetworkLayerAck").boolValue())
-        {
-            linkLayerFeeback();
-            // host->subscribe(linkBrokenSignal, this);
-            //host->subscribe(NF_LINK_BREAK, this);
-            // host->subscribe(NF_TX_ACKED, this);
-        }
+    if (!par("UseNetworkLayerAck").boolValue())
+    {
+        linkLayerFeeback();
+        // host->subscribe(linkBrokenSignal, this);
+        //host->subscribe(NF_LINK_BREAK, this);
+        // host->subscribe(NF_TX_ACKED, this);
+    }
 
 //        if (get_confval(PromiscOperation))
 //            host->subscribe(NF_LINK_PROMISCUOUS, this);
-        // clear routing entries related to wlan interfaces and autoassign ip adresses
-        bool manetPurgeRoutingTables = (bool) par("manetPurgeRoutingTables");
-        if (manetPurgeRoutingTables) {
-            // clean the route table wlan interface entry
-            for (int i = this->getInetRoutingTable()->getNumRoutes()-1; i>=0; i--) {
-                auto entry = getInetRoutingTable()->getRoute(i);
-                const NetworkInterface *ie = entry->getInterface();
-                if (strstr(ie->getInterfaceName(), "wlan")!=nullptr) {
-                    getInetRoutingTable()->deleteRoute(entry);
-                }
+    // clear routing entries related to wlan interfaces and autoassign ip adresses
+    bool manetPurgeRoutingTables = (bool) par("manetPurgeRoutingTables");
+    if (manetPurgeRoutingTables) {
+        // clean the route table wlan interface entry
+        for (int i = this->getInetRoutingTable()->getNumRoutes()-1; i>=0; i--) {
+            auto entry = getInetRoutingTable()->getRoute(i);
+            const NetworkInterface *ie = entry->getInterface();
+            if (strstr(ie->getInterfaceName(), "wlan")!=nullptr) {
+                getInetRoutingTable()->deleteRoute(entry);
             }
         }
-        auto interface = interface80211ptr;
-        CHK(interface->getProtocolDataForUpdate<Ipv4InterfaceData>())->joinMulticastGroup(Ipv4Address::LL_MANET_ROUTERS);
-        struct in_addr myAddr = my_addr();
-        pathCacheMap.setRoot(myAddr.s_addr);
-        is_init = true;
-        EV_INFO << "Dsr active" << "\n";
-        WATCH_MAP(pathCacheMap.pathsCache);
     }
-    return;
+    auto interface = interface80211ptr;
+    CHK(interface->getProtocolDataForUpdate<Ipv4InterfaceData>())->joinMulticastGroup(Ipv4Address::LL_MANET_ROUTERS);
+    struct in_addr myAddr = my_addr();
+    pathCacheMap.setRoot(myAddr.s_addr);
+    is_init = true;
+    EV_INFO << "Dsr active" << "\n";
+    WATCH_MAP(pathCacheMap.pathsCache);
 }
 
 void DSRUU::finish()
@@ -1463,6 +1474,7 @@ bool DSRUU::proccesICMP(cMessage *msg)
 void DSRUU::handleStartOperation(LifecycleOperation *operation)
 {
     nodeActive = true;
+    start();
 }
 
 void DSRUU::handleStopOperation(LifecycleOperation *operation)

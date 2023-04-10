@@ -761,6 +761,8 @@ private:
     Packet *newDsrPacket(struct dsr_pkt *dp, int interface_id, bool = true);
     Packet *newDsrPacket(struct dsr_pkt *dp, int interface_id, const Packet *);
 
+    bool configured = false;
+    virtual void start() override;
 
   public:
     virtual void socketDataArrived(UdpSocket *socket, Packet *packet) override {throw cRuntimeError("DSR doesn't use Udp sockets");}

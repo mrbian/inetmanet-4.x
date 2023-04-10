@@ -358,11 +358,10 @@ void ManetRoutingBase::registerRoutingModule()
     // clear routing entries related to wlan interfaces and autoassign ip adresses
     bool manetPurgeRoutingTables = (bool) par("manetPurgeRoutingTables");
     if (manetPurgeRoutingTables && !mac_layer_) {
-        IRoute *entry;
         // clean the route table wlan interface entry
         for (int i=inet_rt->getNumRoutes()-1; i>=0; i--) {
-            entry = inet_rt->getRoute(i);
-            const NetworkInterface *ie = entry->getInterface();
+            auto entry = inet_rt->getRoute(i);
+            auto ie = entry->getInterface();
             if (strstr(ie->getInterfaceName(), "wlan")!=nullptr) {
                 inet_rt->deleteRoute(entry);
             }
@@ -373,19 +372,26 @@ void ManetRoutingBase::registerRoutingModule()
         if (AUTOASSIGN_ADDRESS_BASE.getInt() == 0)
             throw cRuntimeError("Auto assignment need autoassignAddressBase to be set");
         Ipv4Address myAddr(AUTOASSIGN_ADDRESS_BASE.getInt() + uint32_t(getParentModule()->getId()));
-        for (int k=0; k<inet_ift->getNumInterfaces(); k++) {
-            NetworkInterface *ie = inet_ift->getInterface(k);
+        for (int k = 0; k < inet_ift->getNumInterfaces(); k++) {
+            auto ie = inet_ift->getInterface(k);
             if (strstr(ie->getInterfaceName(), "wlan")!=nullptr) {
-                ie->getProtocolDataForUpdate<Ipv4InterfaceData>()->setIPAddress(myAddr);
-                ie->getProtocolDataForUpdate<Ipv4InterfaceData>()->setNetmask(Ipv4Address::ALLONES_ADDRESS); // full address must match for local delivery
+                auto ifaceData = ie->findProtocolDataForUpdate<Ipv4InterfaceData>();
+                if (ifaceData) {
+                    ifaceData->setIPAddress(myAddr);
+                    ifaceData->setNetmask(Ipv4Address::ALLONES_ADDRESS); // full address must match for local delivery
+                }
             }
         }
     }
     // register LL-MANET-Routers
     if (!mac_layer_) {
         for (auto & elem : *interfaceVector) {
-            elem.interfacePtr->getProtocolDataForUpdate<Ipv4InterfaceData>()->joinMulticastGroup(Ipv4Address::LL_MANET_ROUTERS);
+            auto ie = elem.interfacePtr;
+            auto ifaceData = ie->findProtocolDataForUpdate<Ipv4InterfaceData>();
+            if (ifaceData)
+                ifaceData->joinMulticastGroup(Ipv4Address::LL_MANET_ROUTERS);
         }
+
         arp = getModuleFromPar<IArp>(par("arpModule"), this);
 
         hostModule->subscribe(interfaceConfigChangedSignal, this);

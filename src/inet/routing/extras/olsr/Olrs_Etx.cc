@@ -40,6 +40,7 @@
 #include <omnetpp.h>
 #include "inet/routing/extras/olsr/Olrs_Etx_dijkstra.h"
 #include "inet/routing/extras/olsr/OlrsPkt_m.h"
+#include "inet/common/lifecycle/NodeStatus.h"
 
 namespace inet {
 
@@ -144,36 +145,17 @@ Olsr_Etx::initialize(int stage)
         msg_seq_ = OLSR_MAX_SEQ_NUM;
         ansn_ = OLSR_MAX_SEQ_NUM;
 
-        registerRoutingModule();
-
         // Starts all timers
-
         helloTimer = new Olsr_HelloTimer(); ///< Timer for sending HELLO messages.
         tcTimer = new Olsr_TcTimer();   ///< Timer for sending TC messages.
         midTimer = new Olsr_MidTimer(); ///< Timer for sending MID messages.
         linkQualityTimer = new Olsr_Etx_LinkQualityTimer();
 
         state_ptr = state_etx_ptr = new Olsr_Etx_state(&this->parameter_);
-
-        for (int i = 0; i< getNumWlanInterfaces(); i++)
-        {
-            // Create never expiring interface association tuple entries for our
-            // own network interfaces, so that GetMainAddress () works to
-            // translate the node's own interface addresses into the main address.
-            Olsr_iface_assoc_tuple* tuple = new Olsr_iface_assoc_tuple;
-            int index = getWlanInterfaceIndex(i);
-            tuple->iface_addr() = getIfaceAddressFromIndex(index);
-            tuple->main_addr() = ra_addr();
-            tuple->time() = simtime_t::getMaxTime().dbl();
-            tuple->local_iface_index() = index;
-            add_ifaceassoc_tuple(tuple);
-        }
-
-
-        hello_timer_.resched(hello_ival());
-        tc_timer_.resched(hello_ival());
-        mid_timer_.resched(hello_ival());
-        link_quality_timer_.resched(0.0);
+        auto node = getContainingNode(this);
+        auto nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
+        if ((!nodeStatus || nodeStatus->getState() == NodeStatus::UP))
+            start();
 
         useIndex = false;
 
@@ -181,11 +163,34 @@ Olsr_Etx::initialize(int stage)
         {
             linkLayerFeeback();
         }
-        scheduleEvent();
-
     }
 }
 
+void Olsr_Etx::start()
+{
+    if (configured)
+        return;
+    configured = true;
+    registerRoutingModule();
+    for (int i = 0; i< getNumWlanInterfaces(); i++)
+    {
+        // Create never expiring interface association tuple entries for our
+        // own network interfaces, so that GetMainAddress () works to
+        // translate the node's own interface addresses into the main address.
+        Olsr_iface_assoc_tuple* tuple = new Olsr_iface_assoc_tuple;
+        int index = getWlanInterfaceIndex(i);
+        tuple->iface_addr() = getIfaceAddressFromIndex(index);
+        tuple->main_addr() = ra_addr();
+        tuple->time() = simtime_t::getMaxTime().dbl();
+        tuple->local_iface_index() = index;
+        add_ifaceassoc_tuple(tuple);
+    }
+    hello_timer_.resched(hello_ival());
+    tc_timer_.resched(hello_ival());
+    mid_timer_.resched(hello_ival());
+    link_quality_timer_.resched(0.0);
+    scheduleEvent();
+}
 
 ///
 /// \brief  This function is called whenever a event  is received. It identifies

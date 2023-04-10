@@ -108,6 +108,9 @@ class DYMOFau : public ManetRoutingBase
 
 
   protected:
+    bool configured = false;
+    virtual void start() override;
+
     friend class DYMO_RoutingTable;
 
     INetfilter::IHook::Result processPacket(const Packet* datagram);

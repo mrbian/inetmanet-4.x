@@ -188,6 +188,7 @@ class Olsr_Etx : public Olsr
         //std::vector<OLSR_ETX_msg> msgs_;
 
     protected:
+        virtual void start() override;
 
         Olsr_Etx_state *state_etx_ptr;
 

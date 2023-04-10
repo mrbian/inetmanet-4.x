@@ -74,6 +74,9 @@ class Batman : public ManetRoutingBase
     std::map<HnaElement,HnaGlobalEntry*> hnaMap;
     std::vector<HnaElement> hna_buff_local;
 
+    bool configured = false;
+    virtual void start() override;
+
   // methods
   private:
     void parseIncomingPacket(L3Address neigh, BatmanIf *if_incoming, Packet *);

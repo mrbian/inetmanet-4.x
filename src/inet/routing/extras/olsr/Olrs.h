@@ -356,6 +356,9 @@ class Olsr : public ManetRoutingBase
     friend class Olsr_Timer;
   protected:
 
+    bool configured = false;
+    virtual void start() override;
+
     //std::priority_queue<TimerQueueElem> *timerQueuePtr;
     bool topologyChange = false;
     virtual void setTopologyChanged(bool p) {topologyChange = p;}
