@@ -532,8 +532,8 @@ OlsrOpt::nb_loss(Olsr_link_tuple* tuple)
           getNodeId(tuple->nb_iface_addr()).c_str());
 
     updated_link_tuple(tuple, OLSR_WILL_DEFAULT);
-    topologychanged += state_.erase_nb2hop_tuples(get_main_addr(tuple->nb_iface_addr()));
-    topologychanged += state_.erase_mprsel_tuples(get_main_addr(tuple->nb_iface_addr()));
+    topologychanged |= state_.erase_nb2hop_tuples(get_main_addr(tuple->nb_iface_addr()));
+    topologychanged |= state_.erase_mprsel_tuples(get_main_addr(tuple->nb_iface_addr()));
     mpr_computation();
     rtable_computation();
 }

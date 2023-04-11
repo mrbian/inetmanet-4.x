@@ -47,8 +47,6 @@
 #include "inet/linklayer/common/MacAddressTag_m.h"
 #include "inet/common/packet/dissector/PacketDissector.h"
 #include "inet/networklayer/ipv4/Ipv4Header_m.h"
-#include "inet/common/lifecycle/NodeStatus.h"
-
 
 #include "inet/linklayer/common/InterfaceTag_m.h"
 
@@ -197,10 +195,7 @@ void NS_CLASS initialize(int stage)
 
         for (int i = 0; i < MAX_NR_INTERFACES; i++)
             DEV_NR(i).enabled=0;
-        auto node = getContainingNode(this);
-        auto nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
-        if ((!nodeStatus || nodeStatus->getState() == NodeStatus::UP))
-            start();
+        startIfUp();
 
 #ifndef AODV_USE_STL
         list_t *lista_ptr;

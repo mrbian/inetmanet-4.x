@@ -36,7 +36,6 @@
 #include "inet/transportlayer/contract/udp/UdpSocket.h"
 #include "inet/networklayer/ipv4/Ipv4.h"
 #include "inet/routing/extras/dymo_fau/DYMO_PacketBBMessage_m.h"
-#include "inet/common/lifecycle/NodeStatus.h"
 
 namespace inet {
 
@@ -132,11 +131,7 @@ void DYMOFau::initialize(int stage)
         WATCH_OBJ(outstandingRREQList);
         queuedDataPackets = new DYMO_DataQueue(this, BUFFER_SIZE_PACKETS, BUFFER_SIZE_BYTES);
         WATCH_PTR(queuedDataPackets);
-
-        auto node = getContainingNode(this);
-        auto nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
-        if ((!nodeStatus || nodeStatus->getState() == NodeStatus::UP))
-            start();
+        startIfUp();
         // setSendToICMP(true);
         linkLayerFeeback();
         timerMsg = new cMessage("DYMO_scheduler");

@@ -7,7 +7,6 @@
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "inet/networklayer/common/L3AddressTag_m.h"
 #include "inet/linklayer/common/InterfaceTag_m.h"
-#include "inet/common/lifecycle/NodeStatus.h"
 
 namespace inet {
 
@@ -153,10 +152,7 @@ void Batman::initialize(int stage)
         timer = new cMessage("Batmant Timer");
         WATCH_PTRMAP(origMap);
 
-        auto node = getContainingNode(this);
-        auto nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
-        if ((!nodeStatus || nodeStatus->getState() == NodeStatus::UP))
-            start();
+        startIfUp();
         //simtime_t curr_time = simTime();
         //simtime_t select_timeout = forw_list[0]->send_time > curr_time ? forw_list[0]->send_time : curr_time+10;
         //scheduleAt(select_timeout, timer);

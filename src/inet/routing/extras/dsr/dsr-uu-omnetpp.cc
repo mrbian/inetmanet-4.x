@@ -42,7 +42,6 @@
 #include "inet/networklayer/common/FragmentationTag_m.h"
 #include "inet/routing/extras/dsr/DsrProtocolTag_m.h"
 #include "inet/common/packet/dissector/PacketDissector.h"
-#include "inet/common/lifecycle/NodeStatus.h"
 
 namespace inet {
 
@@ -354,11 +353,7 @@ void DSRUU::initialize(int stage)
     }
     else if (stage == INITSTAGE_ROUTING_PROTOCOLS)
     {
-        auto node = getContainingNode(this);
-        auto nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
-        if ((!nodeStatus || nodeStatus->getState() == NodeStatus::UP))
-            start();
-
+        startIfUp();
         registerProtocol(Protocol::dsr, gate("socketOut"), gate("socketOut"));
         registerProtocol(Protocol::manet, gate("socketOut"), gate("socketOut"));
 

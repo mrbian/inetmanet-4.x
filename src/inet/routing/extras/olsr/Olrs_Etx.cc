@@ -40,7 +40,6 @@
 #include <omnetpp.h>
 #include "inet/routing/extras/olsr/Olrs_Etx_dijkstra.h"
 #include "inet/routing/extras/olsr/OlrsPkt_m.h"
-#include "inet/common/lifecycle/NodeStatus.h"
 
 namespace inet {
 
@@ -152,11 +151,7 @@ Olsr_Etx::initialize(int stage)
         linkQualityTimer = new Olsr_Etx_LinkQualityTimer();
 
         state_ptr = state_etx_ptr = new Olsr_Etx_state(&this->parameter_);
-        auto node = getContainingNode(this);
-        auto nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
-        if ((!nodeStatus || nodeStatus->getState() == NodeStatus::UP))
-            start();
-
+        startIfUp();
         useIndex = false;
 
         if (use_mac())

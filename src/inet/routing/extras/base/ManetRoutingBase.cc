@@ -36,6 +36,7 @@
 #include "inet/networklayer/ipv4/Ipv4InterfaceData.h"
 #include "inet/common/ProtocolTag_m.h"
 #include "inet/common/packet/dissector/PacketDissector.h"
+#include "inet/common/lifecycle/NodeStatus.h"
 
 namespace inet {
 
@@ -410,6 +411,16 @@ void ManetRoutingBase::registerRoutingModule()
         socket.setBroadcast(true);
     }
 }
+
+
+void ManetRoutingBase::startIfUp()
+{
+    auto node = getContainingNode(this);
+    auto nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
+    if ((!nodeStatus || nodeStatus->getState() == NodeStatus::UP))
+        start();
+}
+
 
 ManetRoutingBase::~ManetRoutingBase()
 {

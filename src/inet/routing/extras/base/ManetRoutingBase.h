@@ -224,10 +224,9 @@ class INET_API ManetRoutingBase : public ApplicationBase, public UdpSocket::ICal
 //      must be executed in the initialize method with stage 4 o bigger, this method initialize all the estructures
 /////////////////////////////////////////////
 /////////////////////////////////////////////
-    virtual void registerRoutingModule();
-
-    virtual void start() = 0;
-
+    virtual void registerRoutingModule(); // This method must be call in the start
+    virtual void start() = 0;  // every protocol must implement the start method, it must be called in
+    virtual void startIfUp(); // Call the start method if the node is in Up state
 //
 //
     virtual void createTimerQueue();

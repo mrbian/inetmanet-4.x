@@ -40,7 +40,6 @@
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/networklayer/common/L3Tools.h"
 #include "inet/networklayer/ipv4/Ipv4InterfaceData.h"
-#include "inet/common/lifecycle/NodeStatus.h"
 
 namespace inet {
 namespace inetmanet {
@@ -475,11 +474,7 @@ void Olsr::initialize(int stage)
         midTimer = new Olsr_MidTimer(); ///< Timer for sending MID messages.
 
         state_ptr = new Olsr_state();
-        auto node = getContainingNode(this);
-        auto nodeStatus = dynamic_cast<NodeStatus *>(node->getSubmodule("status"));
-        if ((!nodeStatus || nodeStatus->getState() == NodeStatus::UP))
-            start();
-
+        startIfUp();
 /*        hello_timer_.resched(hello_ival());
         tc_timer_.resched(hello_ival());
         mid_timer_.resched(hello_ival());*/
