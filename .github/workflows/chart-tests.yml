@@ -1,4 +1,4 @@
-name: Chart tests
+name: "Test: chart"
 
 on:
   schedule:
@@ -9,8 +9,8 @@ on:
 
 jobs:
   main:
-    # runs-on: ubuntu-latest
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
+    # runs-on: [self-hosted, linux]
     strategy:
       matrix:
         mode: ["release"]
@@ -18,79 +18,48 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          path: inet
-      - uses: actions/checkout@v3
-        with:
           repository: omnetpp/omnetpp
           path: omnetpp
-      - run: mkdir -p $GITHUB_WORKSPACE/ccache
+      - uses: actions/checkout@v3
+        with:
+          path: inet
+      - run: mkdir -p /home/runner/work/ccache
       - uses: actions/cache/restore@v3
         with:
-          path: $GITHUB_WORKSPACE/ccache
+          path: /home/runner/work/ccache
           key: native-${{ matrix.mode }}-ccache-${{ github.run_id }}
           # See: https://github.com/actions/cache/blob/main/tips-and-workarounds.md#update-a-cache
           restore-keys: native-${{ matrix.mode }}-ccache
       - name: Run main
+        env:
+          MODE: ${{ matrix.mode }}
         run: |
           echo "::group::Installing packages"
-          #sudo apt-get update -y && \
-          #sudo apt-get upgrade -y && \
-          #sudo apt-get install -y --no-install-recommends git wget curl ca-certificates \
-          #  make clang lld gdb bison flex perl doxygen graphviz libxml2-dev zlib1g-dev \
-          #  python3 python3-pip python3-pandas python3-numpy python3-matplotlib \
-          #  python3-scipy python3-seaborn python3-posix-ipc && \
-          #sudo apt-get clean
-          echo "::endgroup::"
- 
-          echo "::group::Running omnetpp setenv"
-          cd $GITHUB_WORKSPACE/omnetpp
-          cp configure.user.dist configure.user
-          . setenv -f
+          sudo apt-get install -y --no-install-recommends git wget curl ca-certificates \
+            make ccache clang lld gdb bison flex perl doxygen graphviz libxml2-dev zlib1g-dev \
+            libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libz3-dev libopenscenegraph-dev \
+            python3 python3-pip python3-pandas python3-numpy python3-matplotlib \
+            python3-scipy python3-seaborn python3-posix-ipc
           echo "::endgroup::"
 
-          echo "::group::Configuring omnetpp"
-          ./configure WITH_LIBXML=yes WITH_QTENV=no WITH_OSG=no WITH_OSGEARTH=no
-          echo "::endgroup::"
- 
-          echo "::group::Compiling omnetpp"
-          make MODE=${{ matrix.mode }} -j $(nproc) base
-          echo "::endgroup::"
+          source $GITHUB_WORKSPACE/inet/_scripts/github/build-omnetpp.sh
 
-          #echo "::group::Installing pip"
-          #sudo apt install -y python3-pip
-          #echo "::endgroup::"
+          echo "::group::Installing pip"
+          sudo apt install -y python3-pip
+          echo "::endgroup::"
 
           echo "::group::Installing Python packages"
-          python3 -m pip install matplotlib numpy pandas scipy ipython cppyy sewar dask distributed IPython optimparallel
+          python3 -m pip install --upgrade matplotlib numpy pandas scipy ipython cppyy sewar dask distributed IPython optimparallel
           echo "::endgroup::"
 
-          echo "::group::Running inet setenv"
-          cd $GITHUB_WORKSPACE/inet
-          . setenv -f
-          echo "::endgroup::"
-
-          echo "::group::Enabling all inet features"
-          opp_featuretool enable all
-          echo "::endgroup::"
-
-          echo "::group::Disabling some inet features"
-          opp_featuretool disable VisualizationOsg VisualizationOsgShowcases SelfDoc
-          echo "::endgroup::"
-
-          echo "::group::Making inet makefiles"
-          make makefiles
-          echo "::endgroup::"
-
-          echo "::group::Compiling inet"
-          make MODE=${{ matrix.mode }} -j $(nproc)
-          echo "::endgroup::"
+          source $GITHUB_WORKSPACE/inet/_scripts/github/build-inet.sh
 
           echo "::group::Cloning inet media repository"
           git clone https://github.com/inet-framework/media.git
           echo "::endgroup::"
 
           echo "::group::Running chart tests"
-          inet_run_chart_tests -m release -f showcases --exclude-filter /osg/
+          inet_run_chart_tests -m release -f showcases
           echo "::endgroup::"
       - uses: actions/upload-artifact@v3
         if: always() # even if the test failed, of course
@@ -99,3 +68,4 @@ jobs:
           path: |
             ${{ github.workspace }}/inet/media/**/*_new.png
             ${{ github.workspace }}/inet/media/**/*_diff.png
+          if-no-files-found: ignore

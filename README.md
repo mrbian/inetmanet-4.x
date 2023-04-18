@@ -1,8 +1,15 @@
-[![badge 1][badge-1]][1] [![badge 2][badge-2]][2]
+[![Build: cross](https://github.com/inet-framework/inet/actions/workflows/cross-build.yml/badge.svg)](https://github.com/inet-framework/inet/actions/workflows/cross-build.yml)
+[![Build: native](https://github.com/inet-framework/inet/actions/workflows/native-build.yml/badge.svg)](https://github.com/inet-framework/inet/actions/workflows/native-build.yml)
 
+[![Test: chart](https://github.com/inet-framework/inet/actions/workflows/chart-tests.yml/badge.svg)](https://github.com/inet-framework/inet/actions/workflows/chart-tests.yml)
+[![Test: feature](https://github.com/inet-framework/inet/actions/workflows/feature-tests.yml/badge.svg)](https://github.com/inet-framework/inet/actions/workflows/feature-tests.yml)
+[![Test: fingerprint](https://github.com/inet-framework/inet/actions/workflows/fingerprint-tests.yml/badge.svg)](https://github.com/inet-framework/inet/actions/workflows/fingerprint-tests.yml)
+[![Test: module](https://github.com/inet-framework/inet/actions/workflows/module-tests.yml/badge.svg)](https://github.com/inet-framework/inet/actions/workflows/module-tests.yml)
+[![Test: other](https://github.com/inet-framework/inet/actions/workflows/other-tests.yml/badge.svg)](https://github.com/inet-framework/inet/actions/workflows/other-tests.yml)
+[![Test: statistical](https://github.com/inet-framework/inet/actions/workflows/statistical-tests.yml/badge.svg)](https://github.com/inet-framework/inet/actions/workflows/statistical-tests.yml)
+[![Test: unit](https://github.com/inet-framework/inet/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/inet-framework/inet/actions/workflows/unit-tests.yml)
+[![Test: validation](https://github.com/inet-framework/inet/actions/workflows/validation-tests.yml/badge.svg)](https://github.com/inet-framework/inet/actions/workflows/validation-tests.yml)
 
-Warning this version needs at least omnet++ 6-pre12.
-For older omnet++ versions you  can use V4.2.x branch or inetmanet 3
 
 Inetmanet/INET Framework for OMNEST/OMNeT++
 =================================
@@ -76,11 +83,3 @@ Inetmanet is compatible with inet framework but it has several differences.
               iCanClod.
               CloudNetSim++.
               
-
-
-
-[badge-1]: https://github.com/inet-framework/inet/workflows/Build%20and%20tests/badge.svg?branch=master
-[badge-2]: https://github.com/inet-framework/inet/workflows/Feature%20tests/badge.svg?branch=master
-
-[1]: https://github.com/inet-framework/inet/actions?query=workflow%3A%22Build+and+tests%22
-[2]: https://github.com/inet-framework/inet/actions?query=workflow%3A%22Feature+tests%22

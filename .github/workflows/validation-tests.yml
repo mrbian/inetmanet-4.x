@@ -1,4 +1,4 @@
-name: "Test: statistical"
+name: "Test: validation"
 
 on:
   schedule:
@@ -30,7 +30,7 @@ jobs:
           key: native-${{ matrix.mode }}-ccache-${{ github.run_id }}
           # See: https://github.com/actions/cache/blob/main/tips-and-workarounds.md#update-a-cache
           restore-keys: native-${{ matrix.mode }}-ccache
-      - name: Run main
+      - name: Build and test
         env:
           MODE: ${{ matrix.mode }}
         run: |
@@ -54,16 +54,6 @@ jobs:
 
           source $GITHUB_WORKSPACE/inet/_scripts/github/build-inet.sh
 
-          echo "::group::Cloning inet statistical results"
-          git clone https://github.com/inet-framework/statistics.git
+          echo "::group::Running validation tests"
+          inet_run_validation_tests -m release
           echo "::endgroup::"
-
-          echo "::group::Running statistical tests"
-          inet_run_statistical_tests -m release
-          echo "::endgroup::"
-      - uses: actions/upload-artifact@v3
-        if: always() # even if the test failed, of course
-        with:
-          name: statistical-test-results
-          path: ${{ github.workspace }}/inet/statistics/**/*.diff
-          if-no-files-found: ignore

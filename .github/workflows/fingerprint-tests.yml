@@ -1,0 +1,77 @@
+name: "Test: fingerprint"
+
+on:
+  schedule:
+    - cron: "0 21 * * 1-5" # https://crontab.guru/#0_21_*_*_1-5 : "At 21:00 on every day-of-week from Monday through Friday."
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+    # nothing
+
+jobs:
+  activity-check:
+    name: Activity check
+    runs-on: ubuntu-latest
+    outputs:
+      is_active: ${{ steps.activity.outputs.is_active }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check for repo activity
+        id: activity
+        run: |
+          # Skip activity check when manually triggered.
+          if [ "${{ github.event_name }}" == "repository_dispatch" ] || [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            is_active=true
+          elif [ "$(git rev-list --after="24 hours" ${{ github.sha }})" ]; then
+            is_active=true
+          else
+            is_active=false
+          fi
+          echo "is_active=$is_active" >> $GITHUB_OUTPUT
+
+  fingerprint-tests:
+    needs: activity-check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mode: ["debug", "release"]
+        split: [0, 1, 2, 3]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: omnetpp/omnetpp
+          path: omnetpp
+      - uses: actions/checkout@v3
+        with:
+          path: inet
+      - run: mkdir -p /home/runner/work/ccache
+      - uses: actions/cache/restore@v3
+        with:
+          path: /home/runner/work/ccache
+          key: native-${{ matrix.mode }}-ccache-${{ github.run_id }}
+          # See: https://github.com/actions/cache/blob/main/tips-and-workarounds.md#update-a-cache
+          restore-keys: native-${{ matrix.mode }}-ccache
+      - name: Run main
+        env:
+          MODE: ${{ matrix.mode }}
+        run: |
+          echo "::group::Installing packages"
+          sudo apt-get install -y --no-install-recommends git wget curl ca-certificates \
+            make ccache clang lld gdb bison flex perl doxygen graphviz libxml2-dev zlib1g-dev \
+            libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libz3-dev libopenscenegraph-dev python3
+          echo "::endgroup::"
+
+          source $GITHUB_WORKSPACE/inet/_scripts/github/build-omnetpp.sh
+
+          source $GITHUB_WORKSPACE/inet/_scripts/github/build-inet.sh
+
+          echo "::group::Running fingerprint tests"
+          SPLIT_N=4
+          SPLIT_I=${{ matrix.split }}
+          cd $GITHUB_WORKSPACE/inet/tests/fingerprint
+          # this indirectly calls the script named simply "inet", which handles the MODE envvar internally
+          ./fingerprinttest -n $SPLIT_N -i $SPLIT_I -f 'tplx' -f '~tNl' -f '~tND'
+          echo "::endgroup::"
