@@ -427,7 +427,7 @@ void WirelessNumHops::run()
             itHeap = itHeap3;
         }
         int numeq = equal.size()-1;
-        int val = numeq > 0?getEnvir()->getRNG(0)->intRand(numeq):0;
+        int val = numeq > 0?getSimulation()->getContext()->getRNG(0)->intRand(numeq):0;
         itHeap = equal[val];
         equal.clear();
 
