@@ -26,7 +26,6 @@ typedef std::vector<double> PathCacheCost;
 class DsrDataBase : public cOwnedObject
 {
     private:
-
         // path cache information
         class Path
         {

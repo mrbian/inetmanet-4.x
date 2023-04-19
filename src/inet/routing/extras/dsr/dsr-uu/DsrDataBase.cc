@@ -69,9 +69,7 @@ bool DsrDataBase::getPath(const L3Address &dest, PathCacheRoute &route, double &
 {
     route.clear();
     cost = 1e100;
-
     bool found = false;
-
     auto it = pathsCache.find(dest);
     if (it == pathsCache.end())
         return found;
@@ -647,7 +645,8 @@ void DsrDataBase::run(const L3Address &target)
             itHeap = itHeap3;
         }
         int numeq = equal.size()-1;
-        int val = numeq > 0?getActiveSimulationOrEnvir()->getRNG(0)->intRand(numeq):0;
+        auto owner = check_and_cast<cSimpleModule *>(this->getOwner());
+        int val = numeq > 0? owner->getRNG(0)->intRand(numeq):0;
         itHeap = equal[val];
         equal.clear();
 
