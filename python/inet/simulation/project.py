@@ -1,17 +1,15 @@
 """
-Provides abstractions for simulation projects.
+This module provides abstractions for simulation projects.
 
 The main functions are:
 
- - :py:func:`get_simulation_project`:
- - :py:func:`get_default_simulation_project`:
+- :py:func:`get_simulation_project`:
+- :py:func:`get_default_simulation_project`:
 
 In general, it's a good idea to use the default project, because it makes calling the various functions easier and in
 most cases there's only one simulation project is worked on. The default simulation project is automatically set to the
 one above the current working directory when the omnetpp.repl package is loaded, but it can be overridden by the user
 later.
-
-Please note that undocumented features are not supposed to be used by the user.
 """
 
 import glob
@@ -140,7 +138,7 @@ class SimulationProject:
             external_include_folders (List of strings):
                 The list of absolute directories that contains external C++ include files.
 
-            simulation_configs (List of :py:class:`omnetpp.simulation.config.SimulationConfig`):
+            simulation_configs (List of :py:class:`SimulationConfig <inet.simulation.config.SimulationConfig>`):
                 The list of simulation configs available in this simulation project.
 
             kwargs (dict):
@@ -211,10 +209,12 @@ class SimulationProject:
     def get_relative_path(self, path):
         return os.path.relpath(path, self.get_environment_variable_relative_path(self.folder_environment_variable, self.folder))
 
-    def get_executable(self, mode="release", dynamic_loading=True):
+    def get_executable(self, mode="release"):
+        dynamic_loading = self.build_types[0] == "dynamic library"
         executable_environment_variable = "__omnetpp_root_dir" if dynamic_loading else self.folder_environment_variable
-        executable = "bin/opp_run" if dynamic_loading else self.executables[0]
-        return self.get_environment_variable_relative_path(executable_environment_variable, executable + self.get_library_suffix(mode=mode))
+        executable = "bin/opp_run" if dynamic_loading else os.path.join(self.folder, self.executables[0])
+        suffix = self.get_library_suffix(mode=mode) if dynamic_loading else ""
+        return self.get_environment_variable_relative_path(executable_environment_variable, executable + suffix)
 
     def get_library_suffix(self, mode="release"):
         if mode == "release":
@@ -231,11 +231,12 @@ class SimulationProject:
 
     def get_dynamic_libraries_for_running(self):
         result = []
-        for library in self.dynamic_libraries:
-            result.append(os.path.join(self.library_folder, library))
-        for used_project in self.used_projects:
-            simulation_project = get_simulation_project(used_project, None)
-            result = result + list(map(simulation_project.get_full_path, simulation_project.get_dynamic_libraries_for_running()))
+        if self.build_types[0] == "dynamic library":
+            for library in self.dynamic_libraries:
+                result.append(os.path.join(self.library_folder, library))
+            for used_project in self.used_projects:
+                simulation_project = get_simulation_project(used_project, None)
+                result = result + list(map(simulation_project.get_full_path, simulation_project.get_dynamic_libraries_for_running()))
         return result
 
     def get_multiple_args(self, option, elements):
@@ -514,7 +515,7 @@ def find_simulation_project_from_current_working_directory():
         else:
             path = parent_path
     for k, simulation_project in simulation_projects.items():
-        if current_working_directory.startswith(simulation_project.get_full_path(".")):
+        if current_working_directory.startswith(os.path.realpath(simulation_project.get_full_path("."))):
             return simulation_project
 
 def determine_default_simulation_project(name=None, version=None, required=True, **kwargs):
