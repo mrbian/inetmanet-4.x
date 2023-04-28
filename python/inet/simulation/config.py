@@ -139,7 +139,7 @@ class SimulationConfig:
                matches_filter(self.ini_file, ini_file_filter, exclude_ini_file_filter, full_match) and \
                matches_filter(self.config, config_filter, exclude_config_filter, full_match) and \
                simulation_config_filter(self)
-    
+
     def clean_simulation_results(self):
         _logger.info("Cleaning simulation results, folder = " + self.working_directory)
         simulation_project = self.simulation_project
