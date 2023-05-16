@@ -54,7 +54,7 @@ Packet *MsduAggregation::aggregateFrames(std::vector<Packet *> *frames)
     auto ra = firstHeader->getReceiverAddress();
     auto aggregatedFrame = new Packet();
     std::string aggregatedName;
-    for (int i = 0; i < (int)frames->size(); i++) {
+    for (size_t i = 0; i < frames->size(); i++) {
         auto msduSubframeHeader = makeShared<Ieee80211MsduSubframeHeader>();
         auto frame = frames->at(i);
         const auto& header = frame->popAtFront<Ieee80211DataHeader>();
@@ -66,7 +66,7 @@ Packet *MsduAggregation::aggregateFrames(std::vector<Packet *> *frames)
         aggregatedFrame->insertAtBack(msdu);
         aggregatedFrame->getRegionTags().copyTags(frame->getRegionTags(), frame->getFrontOffset(), aggregatedFrame->getBackOffset() - frame->getDataLength(), frame->getDataLength());
         int paddingLength = 4 - B(msduSubframeHeader->getChunkLength() + msdu->getChunkLength()).get() % 4;
-        if (i != (int)frames->size() - 1 && paddingLength != 4) {
+        if (i + 1 != frames->size() && paddingLength != 4) {
             auto padding = makeShared<ByteCountChunk>(B(paddingLength));
             aggregatedFrame->insertAtBack(padding);
         }

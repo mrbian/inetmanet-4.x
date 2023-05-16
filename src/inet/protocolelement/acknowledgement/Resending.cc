@@ -20,7 +20,7 @@ void Resending::initialize(int stage)
         numRetries = par("numRetries");
 }
 
-void Resending::pushPacket(Packet *packet, cGate *gate)
+void Resending::pushPacket(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacket");
     take(packet);
@@ -35,17 +35,17 @@ void Resending::handleMessage(cMessage *message)
     retry++;
 }
 
-void Resending::handlePushPacketProcessed(Packet *p, cGate *gate, bool successful)
+void Resending::handlePushPacketProcessed(Packet *p, const cGate *gate, bool successful)
 {
     Enter_Method("handlePushPacketProcessed");
     if (successful || retry == numRetries) {
         if (producer != nullptr)
-            producer->handlePushPacketProcessed(packet, inputGate->getPathStartGate(), successful);
+            producer.handlePushPacketProcessed(packet, successful);
         delete packet;
         packet = nullptr;
         retry = 0;
         if (producer != nullptr)
-            producer->handleCanPushPacketChanged(inputGate->getPathStartGate());
+            producer.handleCanPushPacketChanged();
     }
     else {
         pushOrSendPacket(packet->dup(), outputGate, consumer);

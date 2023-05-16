@@ -22,9 +22,9 @@ cGate *BackPressureBarrier::getRegistrationForwardingGate(cGate *gate)
         throw cRuntimeError("Unknown gate");
 }
 
-Packet *BackPressureBarrier::canPullPacket(cGate *gate) const
+Packet *BackPressureBarrier::canPullPacket(const cGate *gate) const
 {
-    auto packet = provider->canPullPacket(inputGate->getPathStartGate());
+    auto packet = provider.canPullPacket();
     if (packet == nullptr)
         throw cRuntimeError("Cannot pull packet from the other side of the backpressure barrier");
     return packet;

@@ -19,11 +19,12 @@ void PacketCloner::initialize(int stage)
     PacketProcessorBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         inputGate = gate("in");
-        producer = findConnectedModule<IActivePacketSource>(inputGate);
+        producer.reference(inputGate, false);
         for (int i = 0; i < gateSize("out"); i++) {
             auto outputGate = gate("out", i);
-            auto consumer = getConnectedModule<IPassivePacketSink>(outputGate);
             outputGates.push_back(outputGate);
+            PassivePacketSinkRef consumer;
+            consumer.reference(outputGate, true);
             consumers.push_back(consumer);
         }
     }
@@ -35,7 +36,7 @@ void PacketCloner::handleMessage(cMessage *message)
     pushPacket(packet, packet->getArrivalGate());
 }
 
-void PacketCloner::pushPacket(Packet *packet, cGate *gate)
+void PacketCloner::pushPacket(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacket");
     take(packet);
@@ -48,17 +49,17 @@ void PacketCloner::pushPacket(Packet *packet, cGate *gate)
     updateDisplayString();
 }
 
-void PacketCloner::handleCanPushPacketChanged(cGate *gate)
+void PacketCloner::handleCanPushPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
     if (producer != nullptr)
-        producer->handleCanPushPacketChanged(inputGate->getPathStartGate());
+        producer.handleCanPushPacketChanged();
 }
 
-void PacketCloner::handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void PacketCloner::handlePushPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
     Enter_Method("handlePushPacketProcessed");
-    producer->handlePushPacketProcessed(packet, gate, successful);
+    producer.handlePushPacketProcessed(packet, successful);
 }
 
 } // namespace queueing

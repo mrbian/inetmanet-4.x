@@ -57,20 +57,20 @@ void PacketFilterBase::endPacketStreaming(Packet *packet)
     inProgressStreamId = -1;
 }
 
-bool PacketFilterBase::canPushSomePacket(cGate *gate) const
+bool PacketFilterBase::canPushSomePacket(const cGate *gate) const
 {
-    return consumer == nullptr || consumer->canPushSomePacket(outputGate->getPathEndGate());
+    return consumer == nullptr || consumer.canPushSomePacket();
 }
 
-bool PacketFilterBase::canPushPacket(Packet *packet, cGate *gate) const
+bool PacketFilterBase::canPushPacket(Packet *packet, const cGate *gate) const
 {
     if (backpressure)
-        return matchesPacket(packet) && consumer != nullptr && consumer->canPushPacket(packet, outputGate->getPathEndGate());
+        return matchesPacket(packet) && consumer != nullptr && consumer.canPushPacket(packet);
     else
-        return !matchesPacket(packet) || consumer == nullptr || consumer->canPushPacket(packet, outputGate->getPathEndGate());
+        return !matchesPacket(packet) || consumer == nullptr || consumer.canPushPacket(packet);
 }
 
-void PacketFilterBase::pushPacket(Packet *packet, cGate *gate)
+void PacketFilterBase::pushPacket(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacket");
     take(packet);
@@ -91,7 +91,7 @@ void PacketFilterBase::pushPacket(Packet *packet, cGate *gate)
     updateDisplayString();
 }
 
-void PacketFilterBase::pushPacketStart(Packet *packet, cGate *gate, bps datarate)
+void PacketFilterBase::pushPacketStart(Packet *packet, const cGate *gate, bps datarate)
 {
     Enter_Method("pushPacketStart");
     take(packet);
@@ -109,7 +109,7 @@ void PacketFilterBase::pushPacketStart(Packet *packet, cGate *gate, bps datarate
     updateDisplayString();
 }
 
-void PacketFilterBase::pushPacketEnd(Packet *packet, cGate *gate)
+void PacketFilterBase::pushPacketEnd(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacketEnd");
     take(packet);
@@ -132,7 +132,7 @@ void PacketFilterBase::pushPacketEnd(Packet *packet, cGate *gate)
     updateDisplayString();
 }
 
-void PacketFilterBase::pushPacketProgress(Packet *packet, cGate *gate, bps datarate, b position, b extraProcessableLength)
+void PacketFilterBase::pushPacketProgress(Packet *packet, const cGate *gate, bps datarate, b position, b extraProcessableLength)
 {
     Enter_Method("pushPacketProgress");
     take(packet);
@@ -155,30 +155,29 @@ void PacketFilterBase::pushPacketProgress(Packet *packet, cGate *gate, bps datar
     updateDisplayString();
 }
 
-void PacketFilterBase::handleCanPushPacketChanged(cGate *gate)
+void PacketFilterBase::handleCanPushPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
     if (producer != nullptr)
-        producer->handleCanPushPacketChanged(inputGate->getPathStartGate());
+        producer.handleCanPushPacketChanged();
 }
 
-void PacketFilterBase::handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void PacketFilterBase::handlePushPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
-    producer->handlePushPacketProcessed(packet, inputGate->getPathStartGate(), successful);
+    producer.handlePushPacketProcessed(packet, successful);
 }
 
-bool PacketFilterBase::canPullSomePacket(cGate *gate) const
+bool PacketFilterBase::canPullSomePacket(const cGate *gate) const
 {
     Enter_Method("canPullSomePacket");
     return canPullPacket(gate) != nullptr;
 }
 
-Packet *PacketFilterBase::canPullPacket(cGate *gate) const
+Packet *PacketFilterBase::canPullPacket(const cGate *gate) const
 {
     Enter_Method("canPullPacket");
-    auto providerGate = inputGate->getPathStartGate();
     while (true) {
-        auto packet = provider->canPullPacket(providerGate);
+        auto packet = provider.canPullPacket();
         if (packet == nullptr)
             return nullptr;
         else if (matchesPacket(packet))
@@ -187,7 +186,7 @@ Packet *PacketFilterBase::canPullPacket(cGate *gate) const
             return nullptr;
         else {
             auto nonConstThisPtr = const_cast<PacketFilterBase *>(this);
-            packet = provider->pullPacket(providerGate);
+            packet = nonConstThisPtr->provider.pullPacket();
             nonConstThisPtr->take(packet);
             nonConstThisPtr->emit(packetPulledInSignal, packet);
             EV_INFO << "Filtering out packet" << EV_FIELD(packet) << EV_ENDL;
@@ -199,19 +198,19 @@ Packet *PacketFilterBase::canPullPacket(cGate *gate) const
     }
 }
 
-Packet *PacketFilterBase::pullPacket(cGate *gate)
+Packet *PacketFilterBase::pullPacket(const cGate *gate)
 {
     Enter_Method("pullPacket");
-    auto providerGate = inputGate->getPathStartGate();
     while (true) {
-        auto packet = provider->pullPacket(providerGate);
+        auto packet = provider.pullPacket();
         take(packet);
         emit(packetPulledInSignal, packet);
         if (matchesPacket(packet)) {
             processPacket(packet);
             handlePacketProcessed(packet);
             EV_INFO << "Passing through packet" << EV_FIELD(packet) << EV_ENDL;
-            animatePullPacket(packet, outputGate);
+            if (collector != nullptr)
+                animatePullPacket(packet, outputGate, collector.getReferencedGate());
             updateDisplayString();
             emit(packetPulledOutSignal, packet);
             return packet;
@@ -224,36 +223,36 @@ Packet *PacketFilterBase::pullPacket(cGate *gate)
     }
 }
 
-Packet *PacketFilterBase::pullPacketStart(cGate *gate, bps datarate)
+Packet *PacketFilterBase::pullPacketStart(const cGate *gate, bps datarate)
 {
     Enter_Method("pullPacketStart");
     throw cRuntimeError("Invalid operation");
 }
 
-Packet *PacketFilterBase::pullPacketEnd(cGate *gate)
+Packet *PacketFilterBase::pullPacketEnd(const cGate *gate)
 {
     Enter_Method("pullPacketEnd");
     throw cRuntimeError("Invalid operation");
 }
 
-Packet *PacketFilterBase::pullPacketProgress(cGate *gate, bps datarate, b position, b extraProcessableLength)
+Packet *PacketFilterBase::pullPacketProgress(const cGate *gate, bps datarate, b position, b extraProcessableLength)
 {
     Enter_Method("pullPacketProgress");
     throw cRuntimeError("Invalid operation");
 }
 
-void PacketFilterBase::handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void PacketFilterBase::handlePullPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
     Enter_Method("handlePullPacketProcessed");
     if (collector != nullptr)
-        collector->handlePullPacketProcessed(packet, outputGate->getPathEndGate(), successful);
+        collector.handlePullPacketProcessed(packet, successful);
 }
 
-void PacketFilterBase::handleCanPullPacketChanged(cGate *gate)
+void PacketFilterBase::handleCanPullPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPullPacketChanged");
     if (collector != nullptr)
-        collector->handleCanPullPacketChanged(outputGate->getPathEndGate());
+        collector.handleCanPullPacketChanged();
 }
 
 void PacketFilterBase::dropPacket(Packet *packet)

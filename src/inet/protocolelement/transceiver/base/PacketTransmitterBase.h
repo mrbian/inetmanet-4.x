@@ -8,12 +8,12 @@
 #ifndef __INET_PACKETTRANSMITTERBASE_H
 #define __INET_PACKETTRANSMITTERBASE_H
 
-#include "inet/common/ModuleRef.h"
 #include "inet/common/clock/ClockUserModuleMixin.h"
 #include "inet/common/lifecycle/ModuleOperations.h"
 #include "inet/common/lifecycle/OperationalMixin.h"
 #include "inet/physicallayer/common/Signal.h"
 #include "inet/queueing/base/PacketProcessorBase.h"
+#include "inet/queueing/common/ActivePacketSourceRef.h"
 #include "inet/queueing/contract/IActivePacketSource.h"
 #include "inet/queueing/contract/IPassivePacketSink.h"
 
@@ -31,7 +31,7 @@ class INET_API PacketTransmitterBase : public ClockUserModuleMixin<OperationalMi
 
     cGate *inputGate = nullptr;
     cGate *outputGate = nullptr;
-    ModuleRef<IActivePacketSource> producer;
+    ActivePacketSourceRef producer;
 
     bps txDatarate = bps(NaN);
     Signal *txSignal = nullptr;
@@ -65,15 +65,15 @@ class INET_API PacketTransmitterBase : public ClockUserModuleMixin<OperationalMi
   public:
     virtual ~PacketTransmitterBase();
 
-    virtual bool supportsPacketPushing(cGate *gate) const override { return inputGate == gate; }
-    virtual bool supportsPacketPulling(cGate *gate) const override { return false; }
+    virtual bool supportsPacketPushing(const cGate *gate) const override { return inputGate == gate; }
+    virtual bool supportsPacketPulling(const cGate *gate) const override { return false; }
 
-    virtual bool canPushSomePacket(cGate *gate) const override { return !txEndTimer->isScheduled(); } // TODO: add hasCarrier
-    virtual bool canPushPacket(Packet *packet, cGate *gate) const override { return canPushSomePacket(gate); }
+    virtual bool canPushSomePacket(const cGate *gate) const override { return !txEndTimer->isScheduled(); } // TODO: add hasCarrier
+    virtual bool canPushPacket(Packet *packet, const cGate *gate) const override { return canPushSomePacket(gate); }
 
-    virtual void pushPacketStart(Packet *packet, cGate *gate, bps datarate) override { throw cRuntimeError("Invalid operation"); }
-    virtual void pushPacketEnd(Packet *packet, cGate *gate) override { throw cRuntimeError("Invalid operation"); }
-    virtual void pushPacketProgress(Packet *packet, cGate *gate, bps datarate, b position, b extraProcessableLength = b(0)) override { throw cRuntimeError("Invalid operation"); }
+    virtual void pushPacketStart(Packet *packet, const cGate *gate, bps datarate) override { throw cRuntimeError("Invalid operation"); }
+    virtual void pushPacketEnd(Packet *packet, const cGate *gate) override { throw cRuntimeError("Invalid operation"); }
+    virtual void pushPacketProgress(Packet *packet, const cGate *gate, bps datarate, b position, b extraProcessableLength = b(0)) override { throw cRuntimeError("Invalid operation"); }
 };
 
 } // namespace inet

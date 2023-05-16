@@ -34,7 +34,7 @@ void StreamingTransmitter::handleCrashOperation(LifecycleOperation *operation)
         abortTx();
 }
 
-void StreamingTransmitter::pushPacket(Packet *packet, cGate *gate)
+void StreamingTransmitter::pushPacket(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacket");
     take(packet);
@@ -76,10 +76,9 @@ void StreamingTransmitter::endTx()
     txStartTime = -1;
     txStartClockTime = -1;
     // 4. notify producer
-    auto gate = inputGate->getPathStartGate();
     if (producer != nullptr) {
-        producer->handlePushPacketProcessed(packet, gate, true);
-        producer->handleCanPushPacketChanged(gate);
+        producer.handlePushPacketProcessed(packet, true);
+        producer.handleCanPushPacketChanged();
     }
 }
 
@@ -108,10 +107,9 @@ void StreamingTransmitter::abortTx()
     txStartTime = -1;
     txStartClockTime = -1;
     // 6. notify producer
-    auto gate = inputGate->getPathStartGate();
     if (producer != nullptr) {
-        producer->handlePushPacketProcessed(packet, gate, true);
-        producer->handleCanPushPacketChanged(gate);
+        producer.handlePushPacketProcessed(packet, true);
+        producer.handleCanPushPacketChanged();
     }
 }
 

@@ -80,7 +80,7 @@ void GateScheduleCanvasVisualizer::refreshGateVisualization(const GateVisualizat
     auto durations = gate->getDurations();
     bool open = gate->getInitiallyOpen();
     clocktime_t scheduleDuration = 0;
-    for (int i = 0; i < durations.size(); i++)
+    for (size_t i = 0; i < durations.size(); i++)
         scheduleDuration += durations[i];
     if (scheduleDuration == 0)
         figure->addSchedule(0, width, open);
@@ -90,8 +90,8 @@ void GateScheduleCanvasVisualizer::refreshGateVisualization(const GateVisualizat
         clocktime_t schedulePosition = std::fmod((currentTime + gate->getInitialOffset()).dbl(), scheduleDuration.dbl());
         auto scheduleDisplayStart = schedulePosition - (currentTimePosition / width) * displayDuration;
         auto scheduleDisplayEnd = scheduleDisplayStart + displayDuration;
-        auto indexStart = (int)std::floor(scheduleDisplayStart.dbl() / scheduleDuration.dbl()) * durations.size();
-        auto indexEnd = (int)std::ceil(scheduleDisplayEnd.dbl() / scheduleDuration.dbl()) * durations.size();
+        int indexStart = (int)std::floor(scheduleDisplayStart.dbl() / scheduleDuration.dbl()) * durations.size();
+        int indexEnd = (int)std::ceil(scheduleDisplayEnd.dbl() / scheduleDuration.dbl()) * durations.size();
         clocktime_t displayTime = currentTime - schedulePosition + indexStart / durations.size() * scheduleDuration;
         figure->clearSchedule();
         for (int i = indexStart; i <= indexEnd; i++) {

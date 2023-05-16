@@ -26,10 +26,10 @@ void PacketDestreamer::initialize(int stage)
         datarate = bps(par("datarate"));
         inputGate = gate("in");
         outputGate = gate("out");
-        producer = findConnectedModule<IActivePacketSource>(inputGate);
-        provider = findConnectedModule<IPassivePacketSource>(inputGate);
-        consumer = findConnectedModule<IPassivePacketSink>(outputGate);
-        collector = findConnectedModule<IActivePacketSink>(outputGate);
+        producer.reference(inputGate, false);
+        provider.reference(inputGate, false);
+        consumer.reference(outputGate, false);
+        collector.reference(outputGate, false);
     }
     else if (stage == INITSTAGE_QUEUEING) {
         checkPacketOperationSupport(inputGate);
@@ -43,17 +43,17 @@ void PacketDestreamer::handleMessage(cMessage *message)
     pushPacket(packet, packet->getArrivalGate());
 }
 
-bool PacketDestreamer::canPushSomePacket(cGate *gate) const
+bool PacketDestreamer::canPushSomePacket(const cGate *gate) const
 {
-    return !isStreaming() && consumer->canPushSomePacket(outputGate->getPathEndGate());
+    return !isStreaming() && consumer.canPushSomePacket();
 }
 
-bool PacketDestreamer::canPushPacket(Packet *packet, cGate *gate) const
+bool PacketDestreamer::canPushPacket(Packet *packet, const cGate *gate) const
 {
-    return !isStreaming() && consumer->canPushPacket(packet, outputGate->getPathEndGate());
+    return !isStreaming() && consumer.canPushPacket(packet);
 }
 
-void PacketDestreamer::pushPacketStart(Packet *packet, cGate *gate, bps datarate)
+void PacketDestreamer::pushPacketStart(Packet *packet, const cGate *gate, bps datarate)
 {
     Enter_Method("pushPacketStart");
     take(packet);
@@ -63,7 +63,7 @@ void PacketDestreamer::pushPacketStart(Packet *packet, cGate *gate, bps datarate
     EV_INFO << "Starting destreaming packet" << EV_FIELD(packet, *streamedPacket) << EV_ENDL;
 }
 
-void PacketDestreamer::pushPacketEnd(Packet *packet, cGate *gate)
+void PacketDestreamer::pushPacketEnd(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacketEnd");
     take(packet);
@@ -79,7 +79,7 @@ void PacketDestreamer::pushPacketEnd(Packet *packet, cGate *gate)
     updateDisplayString();
 }
 
-void PacketDestreamer::pushPacketProgress(Packet *packet, cGate *gate, bps datarate, b position, b extraProcessableLength)
+void PacketDestreamer::pushPacketProgress(Packet *packet, const cGate *gate, bps datarate, b position, b extraProcessableLength)
 {
     Enter_Method("pushPacketProgress");
     take(packet);
@@ -89,63 +89,64 @@ void PacketDestreamer::pushPacketProgress(Packet *packet, cGate *gate, bps datar
     EV_INFO << "Progressing destreaming" << EV_FIELD(packet, *streamedPacket) << EV_ENDL;
 }
 
-void PacketDestreamer::handleCanPushPacketChanged(cGate *gate)
+void PacketDestreamer::handleCanPushPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
     if (producer != nullptr)
-        producer->handleCanPushPacketChanged(inputGate->getPathStartGate());
+        producer.handleCanPushPacketChanged();
 }
 
-void PacketDestreamer::handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void PacketDestreamer::handlePushPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
     Enter_Method("handlePushPacketProcessed");
     if (producer != nullptr)
-        producer->handlePushPacketProcessed(packet, inputGate->getPathStartGate(), successful);
+        producer.handlePushPacketProcessed(packet, successful);
 }
 
-bool PacketDestreamer::canPullSomePacket(cGate *gate) const
+bool PacketDestreamer::canPullSomePacket(const cGate *gate) const
 {
-    return !isStreaming() && provider->canPullSomePacket(inputGate->getPathStartGate());
+    return !isStreaming() && provider.canPullSomePacket();
 }
 
-Packet *PacketDestreamer::canPullPacket(cGate *gate) const
+Packet *PacketDestreamer::canPullPacket(const cGate *gate) const
 {
-    return isStreaming() ? nullptr : provider->canPullPacket(inputGate->getPathStartGate());
+    return isStreaming() ? nullptr : provider.canPullPacket();
 }
 
-Packet *PacketDestreamer::pullPacket(cGate *gate)
+Packet *PacketDestreamer::pullPacket(const cGate *gate)
 {
     Enter_Method("pullPacket");
     ASSERT(!isStreaming());
     streamDatarate = datarate;
-    auto packet = provider->pullPacketStart(inputGate->getPathStartGate(), streamDatarate);
+    auto packet = provider.pullPacketStart(streamDatarate);
     EV_INFO << "Starting destreaming packet" << EV_FIELD(packet) << EV_ENDL;
     take(packet);
     streamedPacket = packet;
-    packet = provider->pullPacketEnd(inputGate->getPathStartGate());
+    packet = provider.pullPacketEnd();
     EV_INFO << "Ending destreaming packet" << EV_FIELD(packet) << EV_ENDL;
     take(packet);
     delete streamedPacket;
     streamedPacket = packet;
     handlePacketProcessed(packet);
-    animatePullPacket(streamedPacket, outputGate);
+    if (collector != nullptr)
+        animatePullPacket(streamedPacket, outputGate, collector.getReferencedGate());
     updateDisplayString();
     streamedPacket = nullptr;
     return packet;
 }
 
-void PacketDestreamer::handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void PacketDestreamer::handlePullPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
     Enter_Method("handlePullPacketConfirmation");
     if (collector != nullptr)
         collector->handlePullPacketProcessed(packet, gate, successful);
 }
 
-void PacketDestreamer::handleCanPullPacketChanged(cGate *gate)
+void PacketDestreamer::handleCanPullPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPullPacketChanged");
     if (collector != nullptr)
-        collector->handleCanPullPacketChanged(outputGate->getPathEndGate());
+        collector.handleCanPullPacketChanged();
 }
 
 } // namespace inet

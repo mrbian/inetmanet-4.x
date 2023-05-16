@@ -11,6 +11,7 @@
 #include "inet/common/ProtocolTag_m.h"
 #include "inet/common/socket/SocketTag_m.h"
 #include "inet/linklayer/common/InterfaceTag_m.h"
+#include "inet/queueing/common/PassivePacketSinkRef.h"
 
 namespace inet {
 
@@ -54,7 +55,7 @@ void MessageDispatcher::arrived(cMessage *message, cGate *inGate, const SendOpti
 }
 
 #ifdef INET_WITH_QUEUEING
-bool MessageDispatcher::canPushSomePacket(cGate *inGate) const
+bool MessageDispatcher::canPushSomePacket(const cGate *inGate) const
 {
     int size = gateSize("out");
     for (int i = 0; i < size; i++) {
@@ -66,46 +67,49 @@ bool MessageDispatcher::canPushSomePacket(cGate *inGate) const
     return true;
 }
 
-bool MessageDispatcher::canPushPacket(Packet *packet, cGate *inGate) const
+bool MessageDispatcher::canPushPacket(Packet *packet, const cGate *inGate) const
 {
     auto outGate = const_cast<MessageDispatcher *>(this)->handlePacket(packet, inGate);
     auto consumer = findConnectedModule<queueing::IPassivePacketSink>(outGate);
     return consumer != nullptr && !dynamic_cast<MessageDispatcher *>(consumer) && consumer->canPushPacket(packet, outGate->getPathEndGate());
 }
 
-void MessageDispatcher::pushPacket(Packet *packet, cGate *inGate)
+void MessageDispatcher::pushPacket(Packet *packet, const cGate *inGate)
 {
     Enter_Method("pushPacket");
     take(packet);
     auto outGate = handlePacket(packet, inGate);
-    auto consumer = findConnectedModule<IPassivePacketSink>(outGate);
+    queueing::PassivePacketSinkRef consumer;
+    consumer.reference(outGate, false);
     handlePacketProcessed(packet);
     pushOrSendPacket(packet, outGate, consumer);
     updateDisplayString();
 }
 
-void MessageDispatcher::pushPacketStart(Packet *packet, cGate *inGate, bps datarate)
+void MessageDispatcher::pushPacketStart(Packet *packet, const cGate *inGate, bps datarate)
 {
     Enter_Method("pushPacketStart");
     take(packet);
     auto outGate = handlePacket(packet, inGate);
-    auto consumer = findConnectedModule<IPassivePacketSink>(outGate);
+    queueing::PassivePacketSinkRef consumer;
+    consumer.reference(outGate, false);
     pushOrSendPacketStart(packet, outGate, consumer, datarate, packet->getTransmissionId());
     updateDisplayString();
 }
 
-void MessageDispatcher::pushPacketEnd(Packet *packet, cGate *inGate)
+void MessageDispatcher::pushPacketEnd(Packet *packet, const cGate *inGate)
 {
     Enter_Method("pushPacketEnd");
     take(packet);
     auto outGate = handlePacket(packet, inGate);
-    auto consumer = findConnectedModule<IPassivePacketSink>(outGate);
+    queueing::PassivePacketSinkRef consumer;
+    consumer.reference(outGate, false);
     handlePacketProcessed(packet);
     pushOrSendPacketEnd(packet, outGate, consumer, packet->getTransmissionId());
     updateDisplayString();
 }
 
-void MessageDispatcher::handleCanPushPacketChanged(cGate *outGate)
+void MessageDispatcher::handleCanPushPacketChanged(const cGate *outGate)
 {
     int size = gateSize("in");
     for (int i = 0; i < size; i++) {
@@ -116,13 +120,13 @@ void MessageDispatcher::handleCanPushPacketChanged(cGate *outGate)
     }
 }
 
-void MessageDispatcher::handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void MessageDispatcher::handlePushPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
 }
 
 #endif // #ifdef INET_WITH_QUEUEING
 
-cGate *MessageDispatcher::handlePacket(Packet *packet, cGate *inGate)
+cGate *MessageDispatcher::handlePacket(Packet *packet, const cGate *inGate)
 {
     const auto& socketInd = packet->findTag<SocketInd>();
     if (socketInd != nullptr) {

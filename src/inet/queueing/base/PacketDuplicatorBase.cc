@@ -18,9 +18,9 @@ void PacketDuplicatorBase::initialize(int stage)
     PacketProcessorBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         inputGate = gate("in");
-        producer = findConnectedModule<IActivePacketSource>(inputGate);
+        producer.reference(inputGate, false);
         outputGate = gate("out");
-        consumer = findConnectedModule<IPassivePacketSink>(outputGate);
+        consumer.reference(outputGate, false);
     }
     else if (stage == INITSTAGE_QUEUEING) {
         checkPacketOperationSupport(inputGate);
@@ -28,7 +28,7 @@ void PacketDuplicatorBase::initialize(int stage)
     }
 }
 
-void PacketDuplicatorBase::pushPacket(Packet *packet, cGate *gate)
+void PacketDuplicatorBase::pushPacket(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacket");
     take(packet);
@@ -42,11 +42,11 @@ void PacketDuplicatorBase::pushPacket(Packet *packet, cGate *gate)
     pushOrSendPacket(packet, outputGate, consumer);
 }
 
-void PacketDuplicatorBase::handleCanPushPacketChanged(cGate *gate)
+void PacketDuplicatorBase::handleCanPushPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
     if (producer != nullptr)
-        producer->handleCanPushPacketChanged(inputGate->getPathStartGate());
+        producer.handleCanPushPacketChanged();
 }
 
 } // namespace queueing

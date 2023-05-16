@@ -10,6 +10,7 @@
 
 #include "inet/common/IProtocolRegistrationListener.h"
 #include "inet/queueing/base/PacketProcessorBase.h"
+#include "inet/queueing/common/PassivePacketSinkRef.h"
 #include "inet/queueing/contract/IActivePacketSource.h"
 #include "inet/queueing/contract/IPassivePacketSink.h"
 
@@ -26,7 +27,7 @@ class INET_API PacketMultiplexer : public PacketProcessorBase, public virtual IP
     std::vector<IActivePacketSource *> producers;
 
     cGate *outputGate = nullptr;
-    IPassivePacketSink *consumer = nullptr;
+    PassivePacketSinkRef consumer;
 
     int inProgressStreamId = -1;
 
@@ -42,23 +43,23 @@ class INET_API PacketMultiplexer : public PacketProcessorBase, public virtual IP
     virtual void checkPacketStreaming(Packet *packet);
 
   public:
-    virtual IPassivePacketSink *getConsumer(cGate *gate) override { return consumer; }
+    virtual IPassivePacketSink *getConsumer(const cGate *gate) override { return consumer; }
 
-    virtual bool supportsPacketPulling(cGate *gate) const override { return false; }
-    virtual bool supportsPacketPushing(cGate *gate) const override { return true; }
-    virtual bool supportsPacketStreaming(cGate *gate) const override { return true; }
+    virtual bool supportsPacketPulling(const cGate *gate) const override { return false; }
+    virtual bool supportsPacketPushing(const cGate *gate) const override { return true; }
+    virtual bool supportsPacketStreaming(const cGate *gate) const override { return true; }
 
-    virtual bool canPushSomePacket(cGate *gate) const override { return consumer->canPushSomePacket(outputGate); }
-    virtual bool canPushPacket(Packet *packet, cGate *gate) const override { return consumer->canPushPacket(packet, gate); }
+    virtual bool canPushSomePacket(const cGate *gate) const override { return consumer->canPushSomePacket(outputGate); }
+    virtual bool canPushPacket(Packet *packet, const cGate *gate) const override { return consumer->canPushPacket(packet, gate); }
 
-    virtual void pushPacket(Packet *packet, cGate *gate) override;
+    virtual void pushPacket(Packet *packet, const cGate *gate) override;
 
-    virtual void pushPacketStart(Packet *packet, cGate *gate, bps datarate) override;
-    virtual void pushPacketProgress(Packet *packet, cGate *gate, bps datarate, b position, b extraProcessableLength = b(0)) override;
-    virtual void pushPacketEnd(Packet *packet, cGate *gate) override;
+    virtual void pushPacketStart(Packet *packet, const cGate *gate, bps datarate) override;
+    virtual void pushPacketProgress(Packet *packet, const cGate *gate, bps datarate, b position, b extraProcessableLength = b(0)) override;
+    virtual void pushPacketEnd(Packet *packet, const cGate *gate) override;
 
-    virtual void handleCanPushPacketChanged(cGate *gate) override;
-    virtual void handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful) override;
+    virtual void handleCanPushPacketChanged(const cGate *gate) override;
+    virtual void handlePushPacketProcessed(Packet *packet, const cGate *gate, bool successful) override;
 
     virtual bool isForwardingService(cGate *gate, ServicePrimitive servicePrimitive) const override { return forwardServiceRegistration; }
     virtual bool isForwardingProtocol(cGate *gate, ServicePrimitive servicePrimitive) const override { return forwardProtocolRegistration; }

@@ -22,11 +22,12 @@ void PacketDemultiplexer::initialize(int stage)
         inputGate = gate("in");
         for (int i = 0; i < gateSize("out"); i++) {
             auto outputGate = gate("out", i);
-            auto output = getConnectedModule<IActivePacketSink>(outputGate);
             outputGates.push_back(outputGate);
-            collectors.push_back(output);
+            ActivePacketSinkRef collector;
+            collector.reference(outputGate, true);
+            collectors.push_back(collector);
         }
-        provider = findConnectedModule<IPassivePacketSource>(inputGate);
+        provider.reference(inputGate, false);
     }
     else if (stage == INITSTAGE_QUEUEING) {
         checkPacketOperationSupport(inputGate);
@@ -35,29 +36,29 @@ void PacketDemultiplexer::initialize(int stage)
     }
 }
 
-Packet *PacketDemultiplexer::pullPacket(cGate *gate)
+Packet *PacketDemultiplexer::pullPacket(const cGate *gate)
 {
     Enter_Method("pullPacket");
-    auto packet = provider->pullPacket(inputGate->getPathStartGate());
+    auto packet = provider.pullPacket();
     take(packet);
     EV_INFO << "Forwarding packet" << EV_FIELD(packet) << EV_ENDL;
-    animatePullPacket(packet, gate);
+    animatePullPacket(packet, outputGates[gate->getIndex()], findConnectedGate<IActivePacketSink>(gate));
     numProcessedPackets++;
     processedTotalLength += packet->getDataLength();
     updateDisplayString();
     return packet;
 }
 
-void PacketDemultiplexer::handleCanPullPacketChanged(cGate *gate)
+void PacketDemultiplexer::handleCanPullPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPullPacketChanged");
-    for (int i = 0; i < (int)outputGates.size(); i++)
+    for (size_t i = 0; i < outputGates.size(); i++)
         // NOTE: notifying a listener may prevent others from pulling
-        if (collectors[i] != nullptr && provider->canPullSomePacket(inputGate->getPathStartGate()))
+        if (collectors[i] != nullptr && provider.canPullSomePacket())
             collectors[i]->handleCanPullPacketChanged(outputGates[i]->getPathEndGate());
 }
 
-void PacketDemultiplexer::handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void PacketDemultiplexer::handlePullPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
     Enter_Method("handlePullPacketProcessed");
     throw cRuntimeError("Invalid operation");

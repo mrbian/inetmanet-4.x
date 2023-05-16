@@ -71,10 +71,10 @@ void PeriodicGate::readDurationsPar()
         throw cRuntimeError("The duration parameter must contain an even number of values");
     totalDuration = CLOCKTIME_ZERO;
     durations.resize(size);
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         clocktime_t duration = durationsPar->get(i).doubleValueInUnit("s");
         if (duration <= CLOCKTIME_ZERO)
-            throw cRuntimeError("Unaccepted duration value (%s) at position %d", durationsPar->get(i).str().c_str(), i);
+            throw cRuntimeError("Unaccepted duration value (%s) at position %zu", durationsPar->get(i).str().c_str(), i);
         durations[i] = duration;
         totalDuration += duration;
     }
@@ -157,7 +157,7 @@ void PeriodicGate::updateIsInGuardBand()
 {
     bool newIsInGuardBand = false;
     if (isOpen_) {
-        auto packet = provider != nullptr ? provider->canPullPacket(inputGate->getPathStartGate()) : nullptr;
+        auto packet = provider != nullptr ? provider.canPullPacket() : nullptr;
         newIsInGuardBand = packet != nullptr && !canPacketFlowThrough(packet);
     }
     if (isInGuardBand_ != newIsInGuardBand) {
@@ -167,13 +167,13 @@ void PeriodicGate::updateIsInGuardBand()
     }
 }
 
-void PeriodicGate::handleCanPushPacketChanged(cGate *gate)
+void PeriodicGate::handleCanPushPacketChanged(const cGate *gate)
 {
     PacketGateBase::handleCanPushPacketChanged(gate);
     updateIsInGuardBand();
 }
 
-void PeriodicGate::handleCanPullPacketChanged(cGate *gate)
+void PeriodicGate::handleCanPullPacketChanged(const cGate *gate)
 {
     PacketGateBase::handleCanPullPacketChanged(gate);
     updateIsInGuardBand();

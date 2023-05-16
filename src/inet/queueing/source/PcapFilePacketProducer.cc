@@ -34,7 +34,7 @@ void PcapFilePacketProducer::handleMessage(cMessage *message)
 {
     if (message->isPacket()) {
         auto packet = check_and_cast<Packet *>(message);
-        if (consumer == nullptr || consumer->canPushPacket(packet, outputGate->getPathEndGate())) {
+        if (consumer == nullptr || consumer.canPushPacket(packet)) {
             emit(packetPushedSignal, packet);
             pushOrSendPacket(packet, outputGate, consumer);
             schedulePacket();
@@ -57,7 +57,7 @@ void PcapFilePacketProducer::schedulePacket()
         EV << "End of PCAP file reached" << EV_ENDL;
 }
 
-void PcapFilePacketProducer::handleCanPushPacketChanged(cGate *gate)
+void PcapFilePacketProducer::handleCanPushPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
     if (gate == outputGate)

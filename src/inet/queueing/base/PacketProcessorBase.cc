@@ -123,52 +123,52 @@ void PacketProcessorBase::checkPacketOperationSupport(cGate *startGate, cGate *e
         throw cRuntimeError("Cannot check packet operation support on gates %s - %s", startGate->getFullPath().c_str(), endGate->getFullPath().c_str());
 }
 
-void PacketProcessorBase::pushOrSendPacket(Packet *packet, cGate *gate, IPassivePacketSink *consumer)
+void PacketProcessorBase::pushOrSendPacket(Packet *packet, cGate *startGate, PassivePacketSinkRef& consumer)
 {
     if (consumer != nullptr) {
-        animatePushPacket(packet, gate);
-        consumer->pushPacket(packet, findConnectedGate<IPacketProcessor>(gate));
+        animatePushPacket(packet, startGate, consumer.getReferencedGate());
+        consumer->pushPacket(packet, consumer.getReferencedGate());
     }
     else
-        send(packet, gate);
+        send(packet, startGate);
 }
 
-void PacketProcessorBase::pushOrSendPacketStart(Packet *packet, cGate *gate, IPassivePacketSink *consumer, bps datarate, int transmissionId)
+void PacketProcessorBase::pushOrSendPacketStart(Packet *packet, cGate *startGate, PassivePacketSinkRef& consumer, bps datarate, int transmissionId)
 {
     simtime_t duration = s(packet->getTotalLength() / datarate).get();
     SendOptions sendOptions;
     sendOptions.duration(duration);
     sendOptions.updateTx(transmissionId, duration);
     if (consumer != nullptr) {
-        animatePushPacketStart(packet, gate, datarate, sendOptions);
-        consumer->pushPacketStart(packet, findConnectedGate<IPacketProcessor>(gate), datarate);
+        animatePushPacketStart(packet, startGate, consumer.getReferencedGate(), datarate, sendOptions);
+        consumer->pushPacketStart(packet, consumer.getReferencedGate(), datarate);
     }
     else {
         auto progressTag = packet->addTagIfAbsent<ProgressTag>();
         progressTag->setDatarate(datarate);
         progressTag->setPosition(b(0));
-        send(packet, sendOptions, gate);
+        send(packet, sendOptions, startGate);
     }
 }
 
-void PacketProcessorBase::pushOrSendPacketEnd(Packet *packet, cGate *gate, IPassivePacketSink *consumer, int transmissionId)
+void PacketProcessorBase::pushOrSendPacketEnd(Packet *packet, cGate *startGate, PassivePacketSinkRef& consumer, int transmissionId)
 {
     // NOTE: duration is unknown due to arbitrarily changing datarate
     SendOptions sendOptions;
     sendOptions.updateTx(transmissionId, 0);
     if (consumer != nullptr) {
-        animatePushPacketEnd(packet, gate, sendOptions);
-        consumer->pushPacketEnd(packet, findConnectedGate<IPacketProcessor>(gate));
+        animatePushPacketEnd(packet, startGate, consumer.getReferencedGate(), sendOptions);
+        consumer->pushPacketEnd(packet, consumer.getReferencedGate());
     }
     else {
         auto progressTag = packet->addTagIfAbsent<ProgressTag>();
         progressTag->setDatarate(bps(NaN));
         progressTag->setPosition(packet->getTotalLength());
-        send(packet, sendOptions, gate);
+        send(packet, sendOptions, startGate);
     }
 }
 
-void PacketProcessorBase::pushOrSendPacketProgress(Packet *packet, cGate *gate, IPassivePacketSink *consumer, bps datarate, b position, b extraProcessableLength, int transmissionId)
+void PacketProcessorBase::pushOrSendPacketProgress(Packet *packet, cGate *startGate, PassivePacketSinkRef& consumer, bps datarate, b position, b extraProcessableLength, int transmissionId)
 {
     // NOTE: duration is unknown due to arbitrarily changing datarate
     simtime_t remainingDuration = s((packet->getTotalLength() - position) / datarate).get();
@@ -176,16 +176,16 @@ void PacketProcessorBase::pushOrSendPacketProgress(Packet *packet, cGate *gate, 
     sendOptions.updateTx(transmissionId, remainingDuration);
     if (consumer != nullptr) {
         if (position == b(0)) {
-            animatePushPacketStart(packet, gate, datarate, sendOptions);
-            consumer->pushPacketStart(packet, gate->getPathEndGate(), datarate);
+            animatePushPacketStart(packet, startGate, consumer.getReferencedGate(), datarate, sendOptions);
+            consumer->pushPacketStart(packet, consumer.getReferencedGate(), datarate);
         }
         else if (position == packet->getTotalLength()) {
-            animatePushPacketEnd(packet, gate, sendOptions);
-            consumer->pushPacketEnd(packet, gate->getPathEndGate());
+            animatePushPacketEnd(packet, startGate, consumer.getReferencedGate(), sendOptions);
+            consumer->pushPacketEnd(packet, consumer.getReferencedGate());
         }
         else {
-            animatePushPacketProgress(packet, gate, datarate, position, extraProcessableLength, sendOptions);
-            consumer->pushPacketProgress(packet, gate->getPathEndGate(), datarate, position, extraProcessableLength);
+            animatePushPacketProgress(packet, startGate, consumer.getReferencedGate(), datarate, position, extraProcessableLength, sendOptions);
+            consumer->pushPacketProgress(packet, consumer.getReferencedGate(), datarate, position, extraProcessableLength);
         }
     }
     else {
@@ -193,11 +193,11 @@ void PacketProcessorBase::pushOrSendPacketProgress(Packet *packet, cGate *gate, 
         progressTag->setDatarate(datarate);
         progressTag->setPosition(position);
         progressTag->setExtraProcessableLength(extraProcessableLength);
-        send(packet, sendOptions, gate);
+        send(packet, sendOptions, startGate);
     }
 }
 
-void PacketProcessorBase::animate(Packet *packet, cGate *gate, const SendOptions& sendOptions, Action action) const
+void PacketProcessorBase::animate(Packet *packet, cGate *startGate, cGate *endGate, const SendOptions& sendOptions, Action action) const
 {
     packet->setIsUpdate(sendOptions.isUpdate);
     packet->setTransmissionId(sendOptions.transmissionId_);
@@ -205,13 +205,12 @@ void PacketProcessorBase::animate(Packet *packet, cGate *gate, const SendOptions
         throw cRuntimeError("No transmissionId specified in SendOptions for a transmission update");
     packet->setDuration(SIMTIME_ZERO);
     packet->setRemainingDuration(SIMTIME_ZERO);
-    auto endGate = gate->getPathEndGate();
     packet->setArrival(endGate->getOwnerModule()->getId(), endGate->getId(), simTime());
-    packet->setSentFrom(gate->getOwnerModule(), gate->getId(), simTime());
+    packet->setSentFrom(startGate->getOwnerModule(), startGate->getId(), simTime());
 
 #ifdef INET_WITH_SELFDOC
     if (SelfDoc::generateSelfdoc) {
-        auto from = gate->getOwnerModule();
+        auto from = startGate->getOwnerModule();
         auto fromName = from->getComponentType()->getFullName();
         auto to = endGate->getOwnerModule();
         auto toName = to->getComponentType()->getFullName();
@@ -221,9 +220,9 @@ void PacketProcessorBase::animate(Packet *packet, cGate *gate, const SendOptions
             os << "=SelfDoc={ " << SelfDoc::keyVal("module", fromName)
                     << ", " << SelfDoc::keyVal("action", action == PUSH ? "PUSH_OUT" : "PULLED_OUT")
                     << ", " << SelfDoc::val("details") << " : {"
-                    << SelfDoc::keyVal("gate", SelfDoc::gateInfo(gate))
+                    << SelfDoc::keyVal("gate", SelfDoc::gateInfo(startGate))
                     << ", "<< SelfDoc::keyVal("msg", opp_typename(typeid(*packet)))
-                    << ", " << SelfDoc::keyVal("kind", SelfDoc::kindToStr(packet->getKind(), gate->getProperties(), "messageKinds", endGate->getProperties(), "messageKinds"))
+                    << ", " << SelfDoc::keyVal("kind", SelfDoc::kindToStr(packet->getKind(), startGate->getProperties(), "messageKinds", endGate->getProperties(), "messageKinds"))
                     << ", " << SelfDoc::keyVal("ctrl", ctrl ? opp_typename(typeid(*ctrl)) : "")
                     << ", " << SelfDoc::tagsToJson("tags", packet)
                     << ", " << SelfDoc::keyVal("destModule", toName)
@@ -238,7 +237,7 @@ void PacketProcessorBase::animate(Packet *packet, cGate *gate, const SendOptions
                     << ", " << SelfDoc::val("details") << " : {"
                     << SelfDoc::keyVal("gate", SelfDoc::gateInfo(endGate))
                     << ", " << SelfDoc::keyVal("msg", opp_typename(typeid(*packet)))
-                    << ", " << SelfDoc::keyVal("kind", SelfDoc::kindToStr(packet->getKind(), endGate->getProperties(), "messageKinds", gate->getProperties(), "messageKinds"))
+                    << ", " << SelfDoc::keyVal("kind", SelfDoc::kindToStr(packet->getKind(), endGate->getProperties(), "messageKinds", startGate->getProperties(), "messageKinds"))
                     << ", " << SelfDoc::keyVal("ctrl", ctrl ? opp_typename(typeid(*ctrl)) : "")
                     << ", " << SelfDoc::tagsToJson("tags", packet)
                     << ", " << SelfDoc::keyVal("srcModule", fromName)
@@ -250,9 +249,10 @@ void PacketProcessorBase::animate(Packet *packet, cGate *gate, const SendOptions
 #endif // INET_WITH_SELFDOC
 
     auto envir = getEnvir();
+    auto gate = startGate;
     if (gate->getNextGate() != nullptr) {
         envir->beginSend(packet, sendOptions);
-        while (gate->getNextGate() != nullptr) {
+        while (gate->getNextGate() != nullptr && gate != endGate) {
             ChannelResult result;
             result.duration = sendOptions.duration_;
             result.remainingDuration = sendOptions.remainingDuration;
@@ -264,131 +264,131 @@ void PacketProcessorBase::animate(Packet *packet, cGate *gate, const SendOptions
     envir->pausePoint();
 }
 
-void PacketProcessorBase::animatePacket(Packet *packet, cGate *gate, Action action) const
+void PacketProcessorBase::animatePacket(Packet *packet, cGate *startGate, cGate *endGate, Action action) const
 {
     SendOptions sendOptions;
     sendOptions.duration_ = 0;
     sendOptions.remainingDuration = 0;
-    animate(packet, gate, sendOptions, action);
+    animate(packet, startGate, endGate, sendOptions, action);
 }
 
-void PacketProcessorBase::animatePacketStart(Packet *packet, cGate *gate, bps datarate, long transmissionId, Action action) const
+void PacketProcessorBase::animatePacketStart(Packet *packet, cGate *startGate, cGate *endGate, bps datarate, long transmissionId, Action action) const
 {
     simtime_t duration = s(packet->getDataLength() / datarate).get();
     SendOptions sendOptions;
     sendOptions.duration_ = duration;
     sendOptions.remainingDuration = duration;
     sendOptions.transmissionId(transmissionId);
-    animatePacketStart(packet, gate, datarate, sendOptions, action);
+    animatePacketStart(packet, startGate, endGate, datarate, sendOptions, action);
 }
 
-void PacketProcessorBase::animatePacketStart(Packet *packet, cGate *gate, bps datarate, const SendOptions& sendOptions, Action action) const
+void PacketProcessorBase::animatePacketStart(Packet *packet, cGate *startGate, cGate *endGate, bps datarate, const SendOptions& sendOptions, Action action) const
 {
-    animate(packet, gate, sendOptions, action);
+    animate(packet, startGate, endGate, sendOptions, action);
 }
 
-void PacketProcessorBase::animatePacketEnd(Packet *packet, cGate *gate, long transmissionId, Action action) const
+void PacketProcessorBase::animatePacketEnd(Packet *packet, cGate *startGate, cGate *endGate, long transmissionId, Action action) const
 {
     SendOptions sendOptions;
     sendOptions.updateTx(transmissionId, 0);
-    animatePacketEnd(packet, gate, sendOptions, action);
+    animatePacketEnd(packet, startGate, endGate, sendOptions, action);
 }
 
-void PacketProcessorBase::animatePacketEnd(Packet *packet, cGate *gate, const SendOptions& sendOptions, Action action) const
+void PacketProcessorBase::animatePacketEnd(Packet *packet, cGate *startGate, cGate *endGate, const SendOptions& sendOptions, Action action) const
 {
-    animate(packet, gate, sendOptions, action);
+    animate(packet, startGate, endGate, sendOptions, action);
 }
 
-void PacketProcessorBase::animatePacketProgress(Packet *packet, cGate *gate, bps datarate, b position, b extraProcessableLength, long transmissionId, Action action) const
+void PacketProcessorBase::animatePacketProgress(Packet *packet, cGate *startGate, cGate *endGate, bps datarate, b position, b extraProcessableLength, long transmissionId, Action action) const
 {
     SendOptions sendOptions;
     sendOptions.transmissionId(transmissionId);
-    animatePacketProgress(packet, gate, datarate, position, extraProcessableLength, sendOptions, action);
+    animatePacketProgress(packet, startGate, endGate, datarate, position, extraProcessableLength, sendOptions, action);
 }
 
-void PacketProcessorBase::animatePacketProgress(Packet *packet, cGate *gate, bps datarate, b position, b extraProcessableLength, const SendOptions& sendOptions, Action action) const
+void PacketProcessorBase::animatePacketProgress(Packet *packet, cGate *startGate, cGate *endGate, bps datarate, b position, b extraProcessableLength, const SendOptions& sendOptions, Action action) const
 {
-    animate(packet, gate, sendOptions, action);
+    animate(packet, startGate, endGate, sendOptions, action);
 }
 
-void PacketProcessorBase::animatePush(Packet *packet, cGate *gate, const SendOptions& sendOptions) const
+void PacketProcessorBase::animatePush(Packet *packet, cGate *startGate, cGate *endGate, const SendOptions& sendOptions) const
 {
-    animate(packet, gate, sendOptions, PUSH);
+    animate(packet, startGate, endGate, sendOptions, PUSH);
 }
 
-void PacketProcessorBase::animatePushPacket(Packet *packet, cGate *gate) const
+void PacketProcessorBase::animatePushPacket(Packet *packet, cGate *startGate, cGate *endGate) const
 {
-    animatePacket(packet, gate, PUSH);
+    animatePacket(packet, startGate, endGate, PUSH);
 }
 
-void PacketProcessorBase::animatePushPacketStart(Packet *packet, cGate *gate, bps datarate, long transmissionId) const
+void PacketProcessorBase::animatePushPacketStart(Packet *packet, cGate *startGate, cGate *endGate, bps datarate, long transmissionId) const
 {
-    animatePacketStart(packet, gate, datarate, transmissionId, PUSH);
+    animatePacketStart(packet, startGate, endGate, datarate, transmissionId, PUSH);
 }
 
-void PacketProcessorBase::animatePushPacketStart(Packet *packet, cGate *gate, bps datarate, const SendOptions& sendOptions) const
+void PacketProcessorBase::animatePushPacketStart(Packet *packet, cGate *startGate, cGate *endGate, bps datarate, const SendOptions& sendOptions) const
 {
-    animatePacketStart(packet, gate, datarate, sendOptions, PUSH);
+    animatePacketStart(packet, startGate, endGate, datarate, sendOptions, PUSH);
 }
 
-void PacketProcessorBase::animatePushPacketEnd(Packet *packet, cGate *gate, long transmissionId) const
+void PacketProcessorBase::animatePushPacketEnd(Packet *packet, cGate *startGate, cGate *endGate, long transmissionId) const
 {
-    animatePacketEnd(packet, gate, transmissionId, PUSH);
+    animatePacketEnd(packet, startGate, endGate, transmissionId, PUSH);
 }
 
-void PacketProcessorBase::animatePushPacketEnd(Packet *packet, cGate *gate, const SendOptions& sendOptions) const
+void PacketProcessorBase::animatePushPacketEnd(Packet *packet, cGate *startGate, cGate *endGate, const SendOptions& sendOptions) const
 {
-    animatePacketEnd(packet, gate, sendOptions, PUSH);
+    animatePacketEnd(packet, startGate, endGate, sendOptions, PUSH);
 }
 
-void PacketProcessorBase::animatePushPacketProgress(Packet *packet, cGate *gate, bps datarate, b position, b extraProcessableLength, long transmissionId) const
+void PacketProcessorBase::animatePushPacketProgress(Packet *packet, cGate *startGate, cGate *endGate, bps datarate, b position, b extraProcessableLength, long transmissionId) const
 {
-    animatePacketProgress(packet, gate, datarate, position, extraProcessableLength, transmissionId, PUSH);
+    animatePacketProgress(packet, startGate, endGate, datarate, position, extraProcessableLength, transmissionId, PUSH);
 }
 
-void PacketProcessorBase::animatePushPacketProgress(Packet *packet, cGate *gate, bps datarate, b position, b extraProcessableLength, const SendOptions& sendOptions) const
+void PacketProcessorBase::animatePushPacketProgress(Packet *packet, cGate *startGate, cGate *endGate, bps datarate, b position, b extraProcessableLength, const SendOptions& sendOptions) const
 {
-    animatePacketProgress(packet, gate, datarate, position, extraProcessableLength, sendOptions, PUSH);
+    animatePacketProgress(packet, startGate, endGate, datarate, position, extraProcessableLength, sendOptions, PUSH);
 }
 
-void PacketProcessorBase::animatePull(Packet *packet, cGate *gate, const SendOptions& sendOptions) const
+void PacketProcessorBase::animatePull(Packet *packet, cGate *startGate, cGate *endGate, const SendOptions& sendOptions) const
 {
-    animate(packet, gate, sendOptions, PULL);
+    animate(packet, startGate, endGate, sendOptions, PULL);
 }
 
-void PacketProcessorBase::animatePullPacket(Packet *packet, cGate *gate) const
+void PacketProcessorBase::animatePullPacket(Packet *packet, cGate *startGate, cGate *endGate) const
 {
-    animatePacket(packet, gate, PULL);
+    animatePacket(packet, startGate, endGate, PULL);
 }
 
-void PacketProcessorBase::animatePullPacketStart(Packet *packet, cGate *gate, bps datarate, long transmissionId) const
+void PacketProcessorBase::animatePullPacketStart(Packet *packet, cGate *startGate, cGate *endGate, bps datarate, long transmissionId) const
 {
-    animatePacketStart(packet, gate, datarate, transmissionId, PULL);
+    animatePacketStart(packet, startGate, endGate, datarate, transmissionId, PULL);
 }
 
-void PacketProcessorBase::animatePullPacketStart(Packet *packet, cGate *gate, bps datarate, const SendOptions& sendOptions) const
+void PacketProcessorBase::animatePullPacketStart(Packet *packet, cGate *startGate, cGate *endGate, bps datarate, const SendOptions& sendOptions) const
 {
-    animatePacketStart(packet, gate, datarate, sendOptions, PULL);
+    animatePacketStart(packet, startGate, endGate, datarate, sendOptions, PULL);
 }
 
-void PacketProcessorBase::animatePullPacketEnd(Packet *packet, cGate *gate, long transmissionId) const
+void PacketProcessorBase::animatePullPacketEnd(Packet *packet, cGate *startGate, cGate *endGate, long transmissionId) const
 {
-    animatePacketEnd(packet, gate, transmissionId, PULL);
+    animatePacketEnd(packet, startGate, endGate, transmissionId, PULL);
 }
 
-void PacketProcessorBase::animatePullPacketEnd(Packet *packet, cGate *gate, const SendOptions& sendOptions) const
+void PacketProcessorBase::animatePullPacketEnd(Packet *packet, cGate *startGate, cGate *endGate, const SendOptions& sendOptions) const
 {
-    animatePacketEnd(packet, gate, sendOptions, PULL);
+    animatePacketEnd(packet, startGate, endGate, sendOptions, PULL);
 }
 
-void PacketProcessorBase::animatePullPacketProgress(Packet *packet, cGate *gate, bps datarate, b position, b extraProcessableLength, long transmissionId) const
+void PacketProcessorBase::animatePullPacketProgress(Packet *packet, cGate *startGate, cGate *endGate, bps datarate, b position, b extraProcessableLength, long transmissionId) const
 {
-    animatePacketProgress(packet, gate, datarate, position, extraProcessableLength, transmissionId, PULL);
+    animatePacketProgress(packet, startGate, endGate, datarate, position, extraProcessableLength, transmissionId, PULL);
 }
 
-void PacketProcessorBase::animatePullPacketProgress(Packet *packet, cGate *gate, bps datarate, b position, b extraProcessableLength, const SendOptions& sendOptions) const
+void PacketProcessorBase::animatePullPacketProgress(Packet *packet, cGate *startGate, cGate *endGate, bps datarate, b position, b extraProcessableLength, const SendOptions& sendOptions) const
 {
-    animatePacketProgress(packet, gate, datarate, position, extraProcessableLength, sendOptions, PULL);
+    animatePacketProgress(packet, startGate, endGate, datarate, position, extraProcessableLength, sendOptions, PULL);
 }
 
 void PacketProcessorBase::dropPacket(Packet *packet, PacketDropReason reason, int limit)

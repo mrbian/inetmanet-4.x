@@ -16,7 +16,7 @@ namespace inet {
  * This template class implements a module reference that is parameterized by
  * a gate of the referencing module. The reference can be set by providing the
  * gate of the referencing module. After the reference is set, it can be used
- * similarly to simple a C++ pointer. The pointer is automatically set to nullptr
+ * similarly to a simple C++ pointer. The pointer is automatically set to nullptr
  * when the referenced module is deleted.
  *
  * TODO follow connection
@@ -24,17 +24,25 @@ namespace inet {
 template<typename T>
 class INET_API ModuleRefByGate
 {
-  private:
+  protected:
+    cGate *referencedGate = nullptr;
     opp_component_ptr<T> referencedModule;
-    cGate *gate = nullptr;
+
+#ifndef NDEBUG
+    cGate *referencingGate = nullptr;
+#endif
 
     void checkReference() const {
         if (referencedModule.getNullable() == nullptr) {
-            if (gate == nullptr)
+#ifndef NDEBUG
+            if (referencingGate == nullptr)
                 throw cRuntimeError("Dereferencing uninitialized reference of type '%s'", opp_typename(typeid(T)));
             else
                 throw cRuntimeError("Dereferencing nullptr of type '%s' referenced by '(%s)%s' through gate '%s'",
-                                    opp_typename(typeid(T)), gate->getOwnerModule()->getClassName(), gate->getOwnerModule()->getFullPath().c_str(), gate->getFullName());
+                                    opp_typename(typeid(T)), referencingGate->getOwnerModule()->getClassName(), referencingGate->getOwnerModule()->getFullPath().c_str(), referencingGate->getFullName());
+#else
+            throw cRuntimeError("Dereferencing uninitialized reference of type '%s'", opp_typename(typeid(T)));
+#endif
         }
     }
 
@@ -58,19 +66,26 @@ class INET_API ModuleRefByGate
     T *getNullable() { return referencedModule.getNullable(); }
     const T *getNullable() const { return referencedModule.getNullable(); }
 
-    T *get() { checkReference(); return get(); }
-    const T *get() const { checkReference(); return get(); }
+    T *get() { checkReference(); return referencedModule.get(); }
+    const T *get() const { checkReference(); return referencedModule.get(); }
 
-    cGate *getGate() { return gate; }
-    const cGate *getGate() const { return gate; }
+#ifndef NDEBUG
+    cGate *getReferencingGate() { return referencingGate; }
+    const cGate *getReferencingGate() const { return referencingGate; }
+#endif
 
-    void reference(cGate *gate, bool mandatory) {
-        if (gate == nullptr)
-            throw cRuntimeError("Gate is nullptr");
-        if (this->gate != nullptr)
+    cGate *getReferencedGate() { return referencedGate; }
+    const cGate *getReferencedGate() const { return referencedGate; }
+
+    void reference(cGate *referencingGate, bool mandatory, int direction = 0) {
+        if (referencingGate == nullptr)
+            throw cRuntimeError("Referencing gate is nullptr");
+#ifndef NDEBUG
+        if (this->referencingGate != nullptr)
             throw cRuntimeError("Reference is already initialized");
-        this->gate = gate;
-        referencedModule = mandatory ? getConnectedModule<T>(gate) : findConnectedModule<T>(gate);
+        this->referencingGate = referencingGate;
+#endif
+        std::tie(referencedModule, referencedGate) = mandatory ? getConnectedModuleAndGate<T>(referencingGate, direction) : findConnectedModuleAndGate<T>(referencingGate, direction);
     }
 };
 

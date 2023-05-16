@@ -41,11 +41,9 @@ void InstantServer::handleMessage(cMessage *message)
 
 bool InstantServer::canProcessPacket()
 {
-    auto inputGatePathStartGate = inputGate->getPathStartGate();
-    auto outputGatePathEndGate = outputGate->getPathEndGate();
-    if (provider->canPullSomePacket(inputGatePathStartGate) && consumer->canPushSomePacket(outputGatePathEndGate)) {
-        auto packet = provider->canPullPacket(inputGatePathStartGate);
-        return packet != nullptr && consumer->canPushPacket(packet, outputGatePathEndGate);
+    if (provider.canPullSomePacket() && consumer.canPushSomePacket()) {
+        auto packet = provider.canPullPacket();
+        return packet != nullptr && consumer.canPushPacket(packet);
     }
     else
         return false;
@@ -53,7 +51,7 @@ bool InstantServer::canProcessPacket()
 
 void InstantServer::processPacket()
 {
-    auto packet = provider->pullPacket(inputGate->getPathStartGate());
+    auto packet = provider.pullPacket();
     take(packet);
     emit(packetPulledSignal, packet);
     std::string packetName = packet->getName();
@@ -66,7 +64,7 @@ void InstantServer::processPacket()
     EV_INFO << "Processing packet ended" << EV_ENDL;
 }
 
-void InstantServer::handleCanPushPacketChanged(cGate *gate)
+void InstantServer::handleCanPushPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
     if (serveTimer)
@@ -75,7 +73,7 @@ void InstantServer::handleCanPushPacketChanged(cGate *gate)
         processPackets();
 }
 
-void InstantServer::handleCanPullPacketChanged(cGate *gate)
+void InstantServer::handleCanPullPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPullPacketChanged");
     if (serveTimer)

@@ -10,6 +10,10 @@
 
 #include "inet/common/clock/ClockUserModuleMixin.h"
 #include "inet/queueing/base/PacketProcessorBase.h"
+#include "inet/queueing/common/ActivePacketSinkRef.h"
+#include "inet/queueing/common/ActivePacketSourceRef.h"
+#include "inet/queueing/common/PassivePacketSinkRef.h"
+#include "inet/queueing/common/PassivePacketSourceRef.h"
 #include "inet/queueing/contract/IPacketFlow.h"
 
 namespace inet {
@@ -24,12 +28,12 @@ class INET_API PacketStreamer : public ClockUserModuleMixin<PacketProcessorBase>
     bps datarate = bps(NaN);
 
     cGate *inputGate = nullptr;
-    IActivePacketSource *producer = nullptr;
-    IPassivePacketSource *provider = nullptr;
+    ActivePacketSourceRef producer;
+    PassivePacketSourceRef provider;
 
     cGate *outputGate = nullptr;
-    IPassivePacketSink *consumer = nullptr;
-    IActivePacketSink *collector = nullptr;
+    PassivePacketSinkRef consumer;
+    ActivePacketSinkRef collector;
 
     bps streamDatarate = bps(NaN);
     Packet *streamedPacket = nullptr;
@@ -46,35 +50,35 @@ class INET_API PacketStreamer : public ClockUserModuleMixin<PacketProcessorBase>
   public:
     virtual ~PacketStreamer();
 
-    virtual IPassivePacketSink *getConsumer(cGate *gate) override { return this; }
-    virtual IPassivePacketSource *getProvider(cGate *gate) override { return this; }
+    virtual IPassivePacketSink *getConsumer(const cGate *gate) override { return this; }
+    virtual IPassivePacketSource *getProvider(const cGate *gate) override { return this; }
 
-    virtual bool supportsPacketPushing(cGate *gate) const override { return true; }
-    virtual bool supportsPacketPulling(cGate *gate) const override { return true; }
-    virtual bool supportsPacketPassing(cGate *gate) const override { return gate == inputGate; }
-    virtual bool supportsPacketStreaming(cGate *gate) const override { return gate == outputGate; }
+    virtual bool supportsPacketPushing(const cGate *gate) const override { return true; }
+    virtual bool supportsPacketPulling(const cGate *gate) const override { return true; }
+    virtual bool supportsPacketPassing(const cGate *gate) const override { return gate == inputGate; }
+    virtual bool supportsPacketStreaming(const cGate *gate) const override { return gate == outputGate; }
 
-    virtual bool canPushSomePacket(cGate *gate) const override;
-    virtual bool canPushPacket(Packet *packet, cGate *gate) const override;
-    virtual void pushPacket(Packet *packet, cGate *gate) override;
+    virtual bool canPushSomePacket(const cGate *gate) const override;
+    virtual bool canPushPacket(Packet *packet, const cGate *gate) const override;
+    virtual void pushPacket(Packet *packet, const cGate *gate) override;
 
-    virtual void pushPacketStart(Packet *packet, cGate *gate, bps datarate) override { throw cRuntimeError("Invalid operation"); }
-    virtual void pushPacketEnd(Packet *packet, cGate *gate) override { throw cRuntimeError("Invalid operation"); }
-    virtual void pushPacketProgress(Packet *packet, cGate *gate, bps datarate, b position, b extraProcessableLength = b(0)) override { throw cRuntimeError("Invalid operation"); }
+    virtual void pushPacketStart(Packet *packet, const cGate *gate, bps datarate) override { throw cRuntimeError("Invalid operation"); }
+    virtual void pushPacketEnd(Packet *packet, const cGate *gate) override { throw cRuntimeError("Invalid operation"); }
+    virtual void pushPacketProgress(Packet *packet, const cGate *gate, bps datarate, b position, b extraProcessableLength = b(0)) override { throw cRuntimeError("Invalid operation"); }
 
-    virtual void handleCanPushPacketChanged(cGate *gate) override;
-    virtual void handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful) override;
+    virtual void handleCanPushPacketChanged(const cGate *gate) override;
+    virtual void handlePushPacketProcessed(Packet *packet, const cGate *gate, bool successful) override;
 
-    virtual bool canPullSomePacket(cGate *gate) const override;
-    virtual Packet *canPullPacket(cGate *gate) const override;
-    virtual Packet *pullPacket(cGate *gate) override { throw cRuntimeError("Invalid operation"); }
+    virtual bool canPullSomePacket(const cGate *gate) const override;
+    virtual Packet *canPullPacket(const cGate *gate) const override;
+    virtual Packet *pullPacket(const cGate *gate) override { throw cRuntimeError("Invalid operation"); }
 
-    virtual Packet *pullPacketStart(cGate *gate, bps datarate) override;
-    virtual Packet *pullPacketEnd(cGate *gate) override;
-    virtual Packet *pullPacketProgress(cGate *gate, bps datarate, b position, b extraProcessableLength) override;
+    virtual Packet *pullPacketStart(const cGate *gate, bps datarate) override;
+    virtual Packet *pullPacketEnd(const cGate *gate) override;
+    virtual Packet *pullPacketProgress(const cGate *gate, bps datarate, b position, b extraProcessableLength) override;
 
-    virtual void handleCanPullPacketChanged(cGate *gate) override;
-    virtual void handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful) override;
+    virtual void handleCanPullPacketChanged(const cGate *gate) override;
+    virtual void handlePullPacketProcessed(Packet *packet, const cGate *gate, bool successful) override;
 };
 
 } // namespace inet

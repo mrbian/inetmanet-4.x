@@ -9,6 +9,7 @@
 
 #include "inet/common/ModuleAccess.h"
 #include "inet/networklayer/diffserv/DiffservUtil.h"
+#include "inet/queueing/common/PassivePacketSinkRef.h"
 
 namespace inet {
 
@@ -37,7 +38,7 @@ void TokenBucketMeter::initialize(int stage)
     }
 }
 
-void TokenBucketMeter::pushPacket(Packet *packet, cGate *inputGate)
+void TokenBucketMeter::pushPacket(Packet *packet, const cGate *inputGate)
 {
     numRcvd++;
     cGate *outputGate = nullptr;
@@ -48,7 +49,8 @@ void TokenBucketMeter::pushPacket(Packet *packet, cGate *inputGate)
         numRed++;
         outputGate = gate("redOut");
     }
-    auto consumer = findConnectedModule<IPassivePacketSink>(outputGate);
+    queueing::PassivePacketSinkRef consumer;
+    consumer.reference(outputGate, false);
     pushOrSendPacket(packet, outputGate, consumer);
 }
 

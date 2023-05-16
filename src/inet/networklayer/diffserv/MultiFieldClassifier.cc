@@ -145,7 +145,7 @@ void MultiFieldClassifier::initialize(int stage)
     }
 }
 
-void MultiFieldClassifier::pushPacket(Packet *packet, cGate *inputGate)
+void MultiFieldClassifier::pushPacket(Packet *packet, const cGate *inputGate)
 {
     numRcvd++;
     int gateIndex = classifyPacket(packet);
@@ -156,7 +156,8 @@ void MultiFieldClassifier::pushPacket(Packet *packet, cGate *inputGate)
         outputGate = gate("out", gateIndex);
     else
         outputGate = gate("defaultOut", gateIndex);
-    auto consumer = findConnectedModule<IPassivePacketSink>(outputGate);
+    queueing::PassivePacketSinkRef consumer;
+    consumer.reference(outputGate, false);
     pushOrSendPacket(packet, outputGate, consumer);
 }
 

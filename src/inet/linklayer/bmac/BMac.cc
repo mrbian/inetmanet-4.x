@@ -700,12 +700,12 @@ void BMac::scheduleWakeUp()
         scheduleAfter(slotDuration, wakeup);
 }
 
-queueing::IPassivePacketSource *BMac::getProvider(cGate *gate)
+queueing::IPassivePacketSource *BMac::getProvider(const cGate *gate)
 {
     return (gate->getId() == upperLayerInGateId) ? txQueue.get() : nullptr;
 }
 
-void BMac::handleCanPullPacketChanged(cGate *gate)
+void BMac::handleCanPullPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPullPacketChanged");
     // force wakeup now
@@ -716,7 +716,7 @@ void BMac::handleCanPullPacketChanged(cGate *gate)
     }
 }
 
-void BMac::handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void BMac::handlePullPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
     Enter_Method("handlePullPacketProcessed");
     throw cRuntimeError("Not supported callback");

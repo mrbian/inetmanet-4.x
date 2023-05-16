@@ -31,7 +31,7 @@ void ActivePacketSource::initialize(int stage)
 void ActivePacketSource::handleMessage(cMessage *message)
 {
     if (message == productionTimer) {
-        if (consumer == nullptr || consumer->canPushSomePacket(outputGate->getPathEndGate())) {
+        if (consumer == nullptr || consumer.canPushSomePacket()) {
             scheduleProductionTimer(productionIntervalParameter->doubleValue());
             producePacket();
         }
@@ -60,7 +60,7 @@ void ActivePacketSource::scheduleProductionTimerAndProducePacket()
         scheduleProductionTimer(initialProductionOffset);
         initialProductionOffsetScheduled = true;
     }
-    else if (consumer == nullptr || consumer->canPushSomePacket(outputGate->getPathEndGate())) {
+    else if (consumer == nullptr || consumer.canPushSomePacket()) {
         scheduleProductionTimer(productionIntervalParameter->doubleValue());
         producePacket();
     }
@@ -75,14 +75,14 @@ void ActivePacketSource::producePacket()
     updateDisplayString();
 }
 
-void ActivePacketSource::handleCanPushPacketChanged(cGate *gate)
+void ActivePacketSource::handleCanPushPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
     if (!productionTimer->isScheduled())
         scheduleProductionTimerAndProducePacket();
 }
 
-void ActivePacketSource::handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void ActivePacketSource::handlePushPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
     Enter_Method("handlePushPacketProcessed");
 }

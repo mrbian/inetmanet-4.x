@@ -24,7 +24,7 @@ void PassivePacketSink::initialize(int stage)
     else if (stage == INITSTAGE_QUEUEING) {
         checkPacketOperationSupport(inputGate);
         if (producer != nullptr)
-            producer->handleCanPushPacketChanged(inputGate->getPathStartGate());
+            producer.handleCanPushPacketChanged();
         if (!consumptionTimer->isScheduled() && initialConsumptionOffset != 0)
             scheduleConsumptionTimer(initialConsumptionOffset);
     }
@@ -34,18 +34,18 @@ void PassivePacketSink::handleMessage(cMessage *message)
 {
     if (message == consumptionTimer) {
         if (producer != nullptr)
-            producer->handleCanPushPacketChanged(inputGate->getPathStartGate());
+            producer.handleCanPushPacketChanged();
     }
     else
         PassivePacketSinkBase::handleMessage(message);
 }
 
-bool PassivePacketSink::canPushSomePacket(cGate *gate) const
+bool PassivePacketSink::canPushSomePacket(const cGate *gate) const
 {
     return getClockTime() >= initialConsumptionOffset && !consumptionTimer->isScheduled() && PassivePacketSinkBase::canPushSomePacket(gate);
 }
 
-bool PassivePacketSink::canPushPacket(Packet *packet, cGate *gate) const
+bool PassivePacketSink::canPushPacket(Packet *packet, const cGate *gate) const
 {
     return canPushSomePacket(gate);
 }
@@ -60,7 +60,7 @@ void PassivePacketSink::scheduleConsumptionTimer(clocktime_t delay)
     }
 }
 
-void PassivePacketSink::pushPacket(Packet *packet, cGate *gate)
+void PassivePacketSink::pushPacket(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacket");
     take(packet);

@@ -9,6 +9,7 @@
 #define __INET_PACKETSENDTOPUSH_H
 
 #include "inet/queueing/base/PacketProcessorBase.h"
+#include "inet/queueing/common/PassivePacketSinkRef.h"
 #include "inet/queueing/contract/IActivePacketSource.h"
 
 namespace inet {
@@ -18,20 +19,20 @@ class INET_API PacketSendToPush : public PacketProcessorBase, public IActivePack
 {
   protected:
     cGate *outputGate = nullptr;
-    IPassivePacketSink *consumer = nullptr;
+    PassivePacketSinkRef consumer;
 
   protected:
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage *message) override;
 
   public:
-    virtual IPassivePacketSink *getConsumer(cGate *gate) override { return consumer; }
+    virtual IPassivePacketSink *getConsumer(const cGate *gate) override { return consumer; }
 
-    virtual bool supportsPacketPushing(cGate *gate) const override { return outputGate == gate; }
-    virtual bool supportsPacketPulling(cGate *gate) const override { return false; }
+    virtual bool supportsPacketPushing(const cGate *gate) const override { return outputGate == gate; }
+    virtual bool supportsPacketPulling(const cGate *gate) const override { return false; }
 
-    virtual void handleCanPushPacketChanged(cGate *gate) override {}
-    virtual void handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful) override {}
+    virtual void handleCanPushPacketChanged(const cGate *gate) override {}
+    virtual void handlePushPacketProcessed(Packet *packet, const cGate *gate, bool successful) override {}
 };
 
 } // namespace queueing

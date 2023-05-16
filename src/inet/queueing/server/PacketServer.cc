@@ -64,13 +64,13 @@ void PacketServer::scheduleProcessingTimer()
 
 bool PacketServer::canStartProcessingPacket()
 {
-    return provider->canPullSomePacket(inputGate->getPathStartGate()) &&
-           consumer->canPushSomePacket(outputGate->getPathEndGate());
+    return provider.canPullSomePacket() &&
+           consumer.canPushSomePacket();
 }
 
 void PacketServer::startProcessingPacket()
 {
-    packet = provider->pullPacket(inputGate->getPathStartGate());
+    packet = provider.pullPacket();
     take(packet);
     emit(packetPulledSignal, packet);
     EV_INFO << "Processing packet started" << EV_FIELD(packet) << EV_ENDL;
@@ -90,7 +90,7 @@ void PacketServer::endProcessingPacket()
     packet = nullptr;
 }
 
-void PacketServer::handleCanPushPacketChanged(cGate *gate)
+void PacketServer::handleCanPushPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
     if (!processingTimer->isScheduled() && canStartProcessingPacket()) {
@@ -103,7 +103,7 @@ void PacketServer::handleCanPushPacketChanged(cGate *gate)
     }
 }
 
-void PacketServer::handleCanPullPacketChanged(cGate *gate)
+void PacketServer::handleCanPullPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPullPacketChanged");
     if (!processingTimer->isScheduled() && canStartProcessingPacket()) {

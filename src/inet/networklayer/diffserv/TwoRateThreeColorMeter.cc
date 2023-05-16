@@ -9,6 +9,7 @@
 
 #include "inet/common/ModuleAccess.h"
 #include "inet/networklayer/diffserv/DiffservUtil.h"
+#include "inet/queueing/common/PassivePacketSinkRef.h"
 
 namespace inet {
 
@@ -41,7 +42,7 @@ void TwoRateThreeColorMeter::initialize(int stage)
     }
 }
 
-void TwoRateThreeColorMeter::pushPacket(Packet *packet, cGate *inputGate)
+void TwoRateThreeColorMeter::pushPacket(Packet *packet, const cGate *inputGate)
 {
     numRcvd++;
     cGate *outputGate = nullptr;
@@ -61,7 +62,8 @@ void TwoRateThreeColorMeter::pushPacket(Packet *packet, cGate *inputGate)
             outputGate = gate("redOut");
             break;
     }
-    auto consumer = findConnectedModule<IPassivePacketSink>(outputGate);
+    queueing::PassivePacketSinkRef consumer;
+    consumer.reference(outputGate, false);
     pushOrSendPacket(packet, outputGate, consumer);
 }
 

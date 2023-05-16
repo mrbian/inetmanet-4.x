@@ -36,7 +36,7 @@ void PacketTransmitterBase::initialize(int stage)
     else if (stage == INITSTAGE_QUEUEING) {
         checkPacketOperationSupport(inputGate);
         if (producer != nullptr)
-            producer->handleCanPushPacketChanged(inputGate->getPathStartGate());
+            producer.handleCanPushPacketChanged();
     }
 }
 
@@ -55,7 +55,7 @@ void PacketTransmitterBase::handleMessageWhenUp(cMessage *message)
 void PacketTransmitterBase::handleStartOperation(LifecycleOperation *operation)
 {
     if (producer != nullptr)
-        producer->handleCanPushPacketChanged(inputGate->getPathStartGate());
+        producer.handleCanPushPacketChanged();
 }
 
 Signal *PacketTransmitterBase::encodePacket(Packet *packet)

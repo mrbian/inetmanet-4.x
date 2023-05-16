@@ -34,7 +34,7 @@ void PcapFilePacketConsumer::initialize(int stage)
     else if (stage == INITSTAGE_QUEUEING) {
         checkPacketOperationSupport(inputGate);
         if (producer != nullptr)
-            producer->handleCanPushPacketChanged(inputGate->getPathStartGate());
+            producer.handleCanPushPacketChanged();
     }
 }
 
@@ -43,7 +43,7 @@ void PcapFilePacketConsumer::finish()
     pcapWriter.close();
 }
 
-void PcapFilePacketConsumer::pushPacket(Packet *packet, cGate *gate)
+void PcapFilePacketConsumer::pushPacket(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacket");
     take(packet);

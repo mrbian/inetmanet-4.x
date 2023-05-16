@@ -31,12 +31,12 @@ void PreemptingServer::handleMessage(cMessage *message)
 
 bool PreemptingServer::canStartStreaming() const
 {
-    return provider->canPullSomePacket(inputGate->getPathStartGate()) && consumer->canPushSomePacket(outputGate->getPathEndGate());
+    return provider.canPullSomePacket() && consumer.canPushSomePacket();
 }
 
 void PreemptingServer::startStreaming()
 {
-    auto packet = provider->pullPacketStart(inputGate->getPathStartGate(), datarate);
+    auto packet = provider.pullPacketStart(datarate);
     take(packet);
     EV_INFO << "Starting streaming packet" << EV_FIELD(packet) << EV_ENDL;
     streamedPacket = packet;
@@ -48,7 +48,7 @@ void PreemptingServer::startStreaming()
 
 void PreemptingServer::endStreaming()
 {
-    auto packet = provider->pullPacketEnd(inputGate->getPathStartGate());
+    auto packet = provider.pullPacketEnd();
     take(packet);
     delete streamedPacket;
     streamedPacket = packet;
@@ -58,14 +58,14 @@ void PreemptingServer::endStreaming()
     updateDisplayString();
 }
 
-void PreemptingServer::handleCanPushPacketChanged(cGate *gate)
+void PreemptingServer::handleCanPushPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
     if (!isStreaming() && canStartStreaming())
         startStreaming();
 }
 
-void PreemptingServer::handleCanPullPacketChanged(cGate *gate)
+void PreemptingServer::handleCanPullPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPullPacketChanged");
     if (isStreaming()) {
@@ -76,12 +76,12 @@ void PreemptingServer::handleCanPullPacketChanged(cGate *gate)
         startStreaming();
 }
 
-void PreemptingServer::handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void PreemptingServer::handlePushPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
     Enter_Method("handlePushPacketProcessed");
     if (isStreaming()) {
         delete streamedPacket;
-        streamedPacket = provider->pullPacketEnd(inputGate->getPathStartGate());
+        streamedPacket = provider.pullPacketEnd();
         take(streamedPacket);
         EV_INFO << "Ending streaming packet" << EV_FIELD(packet, *streamedPacket) << EV_ENDL;
         delete streamedPacket;

@@ -39,7 +39,7 @@ void DscpMarker::initialize(int stage)
     PacketProcessorBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         outputGate = gate("out");
-        consumer = findConnectedModule<IPassivePacketSink>(outputGate);
+        consumer.reference(outputGate, false);
         parseDSCPs(par("dscps"), "dscps", dscps);
         if (dscps.empty())
             dscps.push_back(DSCP_BE);
@@ -59,7 +59,7 @@ void DscpMarker::handleMessage(cMessage *message)
     pushPacket(packet, packet->getArrivalGate());
 }
 
-void DscpMarker::pushPacket(Packet *packet, cGate *inputGate)
+void DscpMarker::pushPacket(Packet *packet, const cGate *inputGate)
 {
     Enter_Method("pushPacket");
     take(packet);

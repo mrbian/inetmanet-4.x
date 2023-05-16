@@ -25,7 +25,7 @@ void PassivePacketSource::initialize(int stage)
     else if (stage == INITSTAGE_QUEUEING) {
         checkPacketOperationSupport(outputGate);
         if (collector != nullptr)
-            collector->handleCanPullPacketChanged(outputGate->getPathEndGate());
+            collector.handleCanPullPacketChanged();
         if (!providingTimer->isScheduled() && initialProvidingOffset != 0)
             scheduleProvidingTimer(initialProvidingOffset);
     }
@@ -35,18 +35,18 @@ void PassivePacketSource::handleMessage(cMessage *message)
 {
     if (message == providingTimer) {
         if (collector != nullptr)
-            collector->handleCanPullPacketChanged(outputGate->getPathEndGate());
+            collector.handleCanPullPacketChanged();
     }
     else
         throw cRuntimeError("Unknown message");
 }
 
-bool PassivePacketSource::canPullSomePacket(cGate *gate) const
+bool PassivePacketSource::canPullSomePacket(const cGate *gate) const
 {
     return getClockTime() >= initialProvidingOffset && !providingTimer->isScheduled();
 }
 
-Packet *PassivePacketSource::canPullPacket(cGate *gate) const
+Packet *PassivePacketSource::canPullPacket(const cGate *gate) const
 {
     Enter_Method("canPullPacket");
     if (getClockTime() < initialProvidingOffset || providingTimer->isScheduled())
@@ -69,14 +69,15 @@ void PassivePacketSource::scheduleProvidingTimer(clocktime_t delay)
     }
 }
 
-Packet *PassivePacketSource::pullPacket(cGate *gate)
+Packet *PassivePacketSource::pullPacket(const cGate *gate)
 {
     Enter_Method("pullPacket");
     if (providingTimer->isScheduled() && providingTimer->getArrivalTime() > simTime())
         throw cRuntimeError("Another packet is already being provided");
     else {
         auto packet = providePacket(gate);
-        animatePullPacket(packet, outputGate);
+        if (collector != nullptr)
+            animatePullPacket(packet, outputGate, collector.getReferencedGate());
         emit(packetPulledSignal, packet);
         scheduleProvidingTimer(providingIntervalParameter->doubleValue());
         updateDisplayString();
@@ -84,7 +85,7 @@ Packet *PassivePacketSource::pullPacket(cGate *gate)
     }
 }
 
-Packet *PassivePacketSource::providePacket(cGate *gate)
+Packet *PassivePacketSource::providePacket(const cGate *gate)
 {
     Packet *packet;
     if (nextPacket == nullptr)

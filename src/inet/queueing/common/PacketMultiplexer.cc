@@ -27,7 +27,7 @@ void PacketMultiplexer::initialize(int stage)
             producers.push_back(input);
         }
         outputGate = gate("out");
-        consumer = findConnectedModule<IPassivePacketSink>(outputGate);
+        consumer.reference(outputGate, false);
     }
     else if (stage == INITSTAGE_QUEUEING) {
         for (auto& inputGate : inputGates)
@@ -72,7 +72,7 @@ void PacketMultiplexer::endPacketStreaming(Packet *packet)
     inProgressStreamId = -1;
 }
 
-void PacketMultiplexer::pushPacket(Packet *packet, cGate *gate)
+void PacketMultiplexer::pushPacket(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacket");
     take(packet);
@@ -82,7 +82,7 @@ void PacketMultiplexer::pushPacket(Packet *packet, cGate *gate)
     updateDisplayString();
 }
 
-void PacketMultiplexer::pushPacketStart(Packet *packet, cGate *gate, bps datarate)
+void PacketMultiplexer::pushPacketStart(Packet *packet, const cGate *gate, bps datarate)
 {
     Enter_Method("pushPacketStart");
     take(packet);
@@ -93,7 +93,7 @@ void PacketMultiplexer::pushPacketStart(Packet *packet, cGate *gate, bps datarat
     updateDisplayString();
 }
 
-void PacketMultiplexer::pushPacketEnd(Packet *packet, cGate *gate)
+void PacketMultiplexer::pushPacketEnd(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacketEnd");
     take(packet);
@@ -107,7 +107,7 @@ void PacketMultiplexer::pushPacketEnd(Packet *packet, cGate *gate)
     updateDisplayString();
 }
 
-void PacketMultiplexer::pushPacketProgress(Packet *packet, cGate *gate, bps datarate, b position, b extraProcessableLength)
+void PacketMultiplexer::pushPacketProgress(Packet *packet, const cGate *gate, bps datarate, b position, b extraProcessableLength)
 {
     Enter_Method("pushPacketProgress");
     take(packet);
@@ -122,16 +122,16 @@ void PacketMultiplexer::pushPacketProgress(Packet *packet, cGate *gate, bps data
     updateDisplayString();
 }
 
-void PacketMultiplexer::handleCanPushPacketChanged(cGate *gate)
+void PacketMultiplexer::handleCanPushPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
-    for (int i = 0; i < (int)inputGates.size(); i++)
+    for (size_t i = 0; i < inputGates.size(); i++)
         // NOTE: notifying a listener may prevent others from pushing
         if (producers[i] != nullptr && consumer->canPushSomePacket(outputGate))
             producers[i]->handleCanPushPacketChanged(inputGates[i]->getPathStartGate());
 }
 
-void PacketMultiplexer::handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void PacketMultiplexer::handlePushPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
     Enter_Method("handlePushPacketProcessed");
 }

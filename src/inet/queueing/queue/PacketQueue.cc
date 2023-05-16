@@ -24,8 +24,8 @@ void PacketQueue::initialize(int stage)
     PacketQueueBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         queue.setName("storage");
-        producer = findConnectedModule<IActivePacketSource>(inputGate);
-        collector = findConnectedModule<IActivePacketSink>(outputGate);
+        producer.reference(inputGate, false);
+        collector.reference(outputGate, false);
         packetCapacity = par("packetCapacity");
         dataCapacity = b(par("dataCapacity"));
         buffer = findModuleFromPar<IPacketBuffer>(par("bufferModule"), this);
@@ -38,7 +38,7 @@ void PacketQueue::initialize(int stage)
         checkPacketOperationSupport(inputGate);
         checkPacketOperationSupport(outputGate);
         if (producer != nullptr)
-            producer->handleCanPushPacketChanged(inputGate->getPathStartGate());
+            producer.handleCanPushPacketChanged();
     }
     else if (stage == INITSTAGE_LAST)
         updateDisplayString();
@@ -78,7 +78,7 @@ Packet *PacketQueue::getPacket(int index) const
     return check_and_cast<Packet *>(queue.get(index));
 }
 
-void PacketQueue::pushPacket(Packet *packet, cGate *gate)
+void PacketQueue::pushPacket(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacket");
     take(packet);
@@ -98,13 +98,13 @@ void PacketQueue::pushPacket(Packet *packet, cGate *gate)
     }
     ASSERT(!isOverloaded());
     if (collector != nullptr && getNumPackets() != 0)
-        collector->handleCanPullPacketChanged(outputGate->getPathEndGate());
+        collector.handleCanPullPacketChanged();
     cNamedObject packetPushEndedDetails("atomicOperationEnded");
     emit(packetPushEndedSignal, nullptr, &packetPushEndedDetails);
     updateDisplayString();
 }
 
-Packet *PacketQueue::pullPacket(cGate *gate)
+Packet *PacketQueue::pullPacket(const cGate *gate)
 {
     Enter_Method("pullPacket");
     auto packet = check_and_cast<Packet *>(queue.front());
@@ -122,7 +122,8 @@ Packet *PacketQueue::pullPacket(cGate *gate)
     insertPacketEvent(this, packet, PEK_QUEUED, queueingTime, packetEvent);
     increaseTimeTag<QueueingTimeTag>(packet, queueingTime, queueingTime);
     emit(packetPulledSignal, packet);
-    animatePullPacket(packet, outputGate);
+    if (collector != nullptr)
+        animatePullPacket(packet, outputGate, collector.getReferencedGate());
     updateDisplayString();
     return packet;
 }
@@ -154,7 +155,7 @@ void PacketQueue::removeAllPackets()
     updateDisplayString();
 }
 
-bool PacketQueue::canPushSomePacket(cGate *gate) const
+bool PacketQueue::canPushSomePacket(const cGate *gate) const
 {
     if (packetDropperFunction)
         return true;
@@ -165,7 +166,7 @@ bool PacketQueue::canPushSomePacket(cGate *gate) const
     return true;
 }
 
-bool PacketQueue::canPushPacket(Packet *packet, cGate *gate) const
+bool PacketQueue::canPushPacket(Packet *packet, const cGate *gate) const
 {
     if (packetDropperFunction)
         return true;

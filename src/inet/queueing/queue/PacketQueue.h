@@ -9,6 +9,8 @@
 #define __INET_PACKETQUEUE_H
 
 #include "inet/queueing/base/PacketQueueBase.h"
+#include "inet/queueing/common/ActivePacketSinkRef.h"
+#include "inet/queueing/common/ActivePacketSourceRef.h"
 #include "inet/queueing/contract/IActivePacketSink.h"
 #include "inet/queueing/contract/IActivePacketSource.h"
 #include "inet/queueing/contract/IPacketBuffer.h"
@@ -24,8 +26,8 @@ class INET_API PacketQueue : public PacketQueueBase, public IPacketBuffer::ICall
     int packetCapacity = -1;
     b dataCapacity = b(-1);
 
-    IActivePacketSource *producer = nullptr;
-    IActivePacketSink *collector = nullptr;
+    ActivePacketSourceRef producer;
+    ActivePacketSinkRef collector;
 
     cPacketQueue queue;
     IPacketBuffer *buffer = nullptr;
@@ -55,15 +57,15 @@ class INET_API PacketQueue : public PacketQueueBase, public IPacketBuffer::ICall
     virtual void removePacket(Packet *packet) override;
     virtual void removeAllPackets() override;
 
-    virtual bool supportsPacketPushing(cGate *gate) const override { return inputGate == gate; }
-    virtual bool canPushSomePacket(cGate *gate) const override;
-    virtual bool canPushPacket(Packet *packet, cGate *gate) const override;
-    virtual void pushPacket(Packet *packet, cGate *gate) override;
+    virtual bool supportsPacketPushing(const cGate *gate) const override { return inputGate == gate; }
+    virtual bool canPushSomePacket(const cGate *gate) const override;
+    virtual bool canPushPacket(Packet *packet, const cGate *gate) const override;
+    virtual void pushPacket(Packet *packet, const cGate *gate) override;
 
-    virtual bool supportsPacketPulling(cGate *gate) const override { return outputGate == gate; }
-    virtual bool canPullSomePacket(cGate *gate) const override { return !isEmpty(); }
-    virtual Packet *canPullPacket(cGate *gate) const override { return !isEmpty() ? getPacket(0) : nullptr; }
-    virtual Packet *pullPacket(cGate *gate) override;
+    virtual bool supportsPacketPulling(const cGate *gate) const override { return outputGate == gate; }
+    virtual bool canPullSomePacket(const cGate *gate) const override { return !isEmpty(); }
+    virtual Packet *canPullPacket(const cGate *gate) const override { return !isEmpty() ? getPacket(0) : nullptr; }
+    virtual Packet *pullPacket(const cGate *gate) override;
 
     virtual void handlePacketRemoved(Packet *packet) override;
 };

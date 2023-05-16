@@ -17,9 +17,9 @@ void PacketServerBase::initialize(int stage)
     PacketProcessorBase::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
         inputGate = gate("in");
-        provider = getConnectedModule<IPassivePacketSource>(inputGate);
+        provider.reference(inputGate, true);
         outputGate = gate("out");
-        consumer = getConnectedModule<IPassivePacketSink>(outputGate);
+        consumer.reference(outputGate, true);
     }
     else if (stage == INITSTAGE_QUEUEING) {
         checkPacketOperationSupport(inputGate);
@@ -27,12 +27,12 @@ void PacketServerBase::initialize(int stage)
     }
 }
 
-void PacketServerBase::handlePushPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void PacketServerBase::handlePushPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
     Enter_Method("handlePushPacketProcessed");
 }
 
-void PacketServerBase::handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void PacketServerBase::handlePullPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
     Enter_Method("handlePullPacketProcessed");
 }

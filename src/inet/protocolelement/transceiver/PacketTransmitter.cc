@@ -30,7 +30,7 @@ void PacketTransmitter::handleCrashOperation(LifecycleOperation *operation)
     ASSERT(!isTransmitting());
 }
 
-void PacketTransmitter::pushPacket(Packet *packet, cGate *gate)
+void PacketTransmitter::pushPacket(Packet *packet, const cGate *gate)
 {
     Enter_Method("pushPacket");
     take(packet);
@@ -73,8 +73,8 @@ void PacketTransmitter::endTx()
     txStartClockTime = -1;
     // 4. notify producer
     if (producer != nullptr) {
-        producer->handlePushPacketProcessed(packet, inputGate->getPathStartGate(), true);
-        producer->handleCanPushPacketChanged(inputGate->getPathStartGate());
+        producer.handlePushPacketProcessed(packet, true);
+        producer.handleCanPushPacketChanged();
     }
     delete packet;
 }

@@ -33,7 +33,7 @@ void TokenBasedServer::initialize(int stage)
 void TokenBasedServer::processPackets()
 {
     while (true) {
-        auto packet = provider->canPullPacket(inputGate->getPathStartGate());
+        auto packet = provider.canPullPacket();
         if (packet == nullptr)
             break;
         else {
@@ -41,7 +41,7 @@ void TokenBasedServer::processPackets()
             auto tokenConsumptionPerBit = tokenConsumptionPerBitParameter->doubleValue();
             int numRequiredTokens = tokenConsumptionPerPacket + tokenConsumptionPerBit * packet->getTotalLength().get();
             if (numTokens >= numRequiredTokens) {
-                packet = provider->pullPacket(inputGate->getPathStartGate());
+                packet = provider.pullPacket();
                 take(packet);
                 emit(packetPulledSignal, packet);
                 EV_INFO << "Processing packet" << EV_FIELD(packet) << EV_ENDL;
@@ -64,12 +64,12 @@ void TokenBasedServer::processPackets()
     }
 }
 
-void TokenBasedServer::handleCanPushPacketChanged(cGate *gate)
+void TokenBasedServer::handleCanPushPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
 }
 
-void TokenBasedServer::handleCanPullPacketChanged(cGate *gate)
+void TokenBasedServer::handleCanPullPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPullPacketChanged");
     processPackets();

@@ -19,8 +19,8 @@ void PacketPullerBase::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         inputGate = gate("in");
         outputGate = gate("out");
-        collector = findConnectedModule<IActivePacketSink>(outputGate);
-        provider = findConnectedModule<IPassivePacketSource>(inputGate);
+        collector.reference(outputGate, false);
+        provider.reference(inputGate, false);
     }
     else if (stage == INITSTAGE_QUEUEING) {
         checkPacketOperationSupport(inputGate);
@@ -28,48 +28,48 @@ void PacketPullerBase::initialize(int stage)
     }
 }
 
-bool PacketPullerBase::canPullSomePacket(cGate *gate) const
+bool PacketPullerBase::canPullSomePacket(const cGate *gate) const
 {
-    return provider->canPullSomePacket(inputGate->getPathStartGate());
+    return provider.canPullSomePacket();
 }
 
-Packet *PacketPullerBase::canPullPacket(cGate *gate) const
+Packet *PacketPullerBase::canPullPacket(const cGate *gate) const
 {
-    return provider->canPullPacket(inputGate->getPathStartGate());
+    return provider.canPullPacket();
 }
 
-Packet *PacketPullerBase::pullPacket(cGate *gate)
-{
-    throw cRuntimeError("Invalid operation");
-}
-
-Packet *PacketPullerBase::pullPacketStart(cGate *gate, bps datarate)
+Packet *PacketPullerBase::pullPacket(const cGate *gate)
 {
     throw cRuntimeError("Invalid operation");
 }
 
-Packet *PacketPullerBase::pullPacketEnd(cGate *gate)
+Packet *PacketPullerBase::pullPacketStart(const cGate *gate, bps datarate)
 {
     throw cRuntimeError("Invalid operation");
 }
 
-Packet *PacketPullerBase::pullPacketProgress(cGate *gate, bps datarate, b position, b extraProcessableLength)
+Packet *PacketPullerBase::pullPacketEnd(const cGate *gate)
 {
     throw cRuntimeError("Invalid operation");
 }
 
-void PacketPullerBase::handleCanPullPacketChanged(cGate *gate)
+Packet *PacketPullerBase::pullPacketProgress(const cGate *gate, bps datarate, b position, b extraProcessableLength)
+{
+    throw cRuntimeError("Invalid operation");
+}
+
+void PacketPullerBase::handleCanPullPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPullPacketChanged");
     if (collector != nullptr)
-        collector->handleCanPullPacketChanged(outputGate->getPathEndGate());
+        collector.handleCanPullPacketChanged();
 }
 
-void PacketPullerBase::handlePullPacketProcessed(Packet *packet, cGate *gate, bool successful)
+void PacketPullerBase::handlePullPacketProcessed(Packet *packet, const cGate *gate, bool successful)
 {
     Enter_Method("handlePullPacketProcessed");
     if (collector != nullptr)
-        collector->handlePullPacketProcessed(packet, outputGate->getPathEndGate(), successful);
+        collector.handlePullPacketProcessed(packet, successful);
 }
 
 } // namespace queueing
