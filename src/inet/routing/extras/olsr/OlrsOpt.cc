@@ -534,6 +534,7 @@ OlsrOpt::nb_loss(Olsr_link_tuple* tuple)
     updated_link_tuple(tuple, OLSR_WILL_DEFAULT);
     topologychanged |= state_.erase_nb2hop_tuples(get_main_addr(tuple->nb_iface_addr()));
     topologychanged |= state_.erase_mprsel_tuples(get_main_addr(tuple->nb_iface_addr()));
+    EV_DEBUG << "Topology change << :" <<  topologychanged << endl;
     mpr_computation();
     rtable_computation();
 }

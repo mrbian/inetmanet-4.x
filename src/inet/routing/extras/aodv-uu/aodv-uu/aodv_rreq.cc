@@ -346,6 +346,7 @@ void NS_CLASS rreq_process(Ptr<RREQ> rreq, int rreqlen, struct in_addr ip_src,
         }
         extlen += AODV_EXT_SIZE(ext);
         ext = AODV_EXT_NEXT(ext);
+        EV_DEBUG << "ExtLen :" << extlen << endl;
     }
 #ifdef DEBUG_OUTPUT
     log_pkt_fields(rreq);

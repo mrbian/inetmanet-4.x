@@ -155,7 +155,7 @@ AODV_ext *NS_CLASS rrep_add_ext(Ptr<RREP> rrep, int type, unsigned int offset,
 void NS_CLASS rrep_send(Ptr<RREP> rrep, rt_table_t * rev_rt,
                         rt_table_t * fwd_rt, int size, double delay)
 {
-    u_int8_t rrep_flags = 0;
+    // u_int8_t rrep_flags = 0;
     struct in_addr dest;
 
     if (!rev_rt)
@@ -177,7 +177,7 @@ void NS_CLASS rrep_send(Ptr<RREP> rrep, rt_table_t * rev_rt,
             /* If the node we received a RREQ for is a neighbor we are
                probably facing a unidirectional link... Better request a
                RREP-ack */
-            rrep_flags |= RREP_ACK;
+            //rrep_flags |= RREP_ACK;
             neighbor->flags |= RT_UNIDIR;
 
             /* Must remove any pending hello timeouts when we set the
@@ -415,6 +415,7 @@ void NS_CLASS rrep_process(Ptr<RREP> rrep, int rreplen, struct in_addr ip_src,
         }
         extlen += AODV_EXT_SIZE(ext);
         ext = AODV_EXT_NEXT(ext);
+        EV_DEBUG << "ExtLen :" << extlen << endl;
     }
 
     /* ---------- CHECK IF WE SHOULD MAKE A FORWARD ROUTE ------------ */
