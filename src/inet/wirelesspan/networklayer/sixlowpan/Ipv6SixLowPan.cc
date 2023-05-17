@@ -331,7 +331,7 @@ void Ipv6SixLowPan::fragmentAndSend(Packet *packet, const NetworkInterface *ie, 
 
     int mtu = (ie->getMtu() < ipv6FragemtationMtu.get()) ? ipv6FragemtationMtu.get() : ie->getMtu();
     // check if datagram does not require fragmentation
-    if (packet->getTotalLength() <= B(mtu)) {
+    if (packet->getByteLength() <= mtu) {
         sendDatagramToOutput(packet, ie, nextHopAddr);
         return;
     }
@@ -1679,7 +1679,7 @@ Ipv6SixLowPan::decompressLowPanUdpNhc (Packet * packet, Ipv6Address saddr, Ipv6A
       udpHeader->setDestinationPort (temp);
       break;
     }
-  B totalLength = udpHeader->getChunkLength() + packet->getTotalLength();
+  B totalLength = udpHeader->getChunkLength() + packet->getDataLength();
   udpHeader->setTotalLengthField(totalLength);
   if (udpHeader->getCrcMode() == CRC_COMPUTED) {
       udpHeader->setCrc(0x0000); // crcMode == CRC_COMPUTED is done in an INetfilter hook
