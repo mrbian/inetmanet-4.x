@@ -27,8 +27,7 @@ package inet.physicallayer.wireless.ieee80211.packetlevel;
 module Ieee80211UnitDiskRadioLoss extends Ieee80211Radio
 {
     parameters:
-        transmitter.typename = default("Ieee80211UnitDiskTransmitter");
-        receiver.typename = default("Ieee80211UnitDiskReceiverLoss");
-        @class(Radio);
+        signalAnalogRepresentation = default("unitDiskLoss");
+
 }
 

@@ -19,6 +19,19 @@
 namespace inet {
 namespace physicallayer {
 
+void ReceiverBase::initialize(int stage)
+{
+    if (stage == INITSTAGE_LOCAL)
+        ignoreInterference = par("ignoreInterference");
+}
+
+std::ostream& ReceiverBase::printToStream(std::ostream& stream, int level, int evFlags) const
+{
+    if (level <= PRINT_LEVEL_INFO)
+        stream << (ignoreInterference ? ", ignoring interference" : ", considering interference");
+    return stream;
+}
+
 bool ReceiverBase::computeIsReceptionPossible(const IListening *listening, const ITransmission *transmission) const
 {
     return true;
@@ -35,12 +48,12 @@ bool ReceiverBase::computeIsReceptionAttempted(const IListening *listening, cons
         return false;
     else if (simTime() == reception->getStartTime(part)) {
         // TODO isn't there a better way for this optimization? see also in RadioMedium::isReceptionAttempted
-        auto transmission = reception->getReceiver()->getReceptionInProgress();
+        auto transmission = reception->getReceiverRadio()->getReceptionInProgress();
         return transmission == nullptr || transmission == reception->getTransmission();
     }
     else {
         // determining whether the reception is attempted or not for the future
-        auto radio = reception->getReceiver();
+        auto radio = reception->getReceiverRadio();
         auto radioMedium = radio->getMedium();
         auto interferingReceptions = interference->getInterferingReceptions();
         for (auto interferingReception : *interferingReceptions) {
@@ -87,6 +100,18 @@ const IReceptionResult *ReceiverBase::computeReceptionResult(const IListening *l
     auto signalTimeInd = packet->addTagIfAbsent<SignalTimeInd>();
     signalTimeInd->setStartTime(reception->getStartTime());
     signalTimeInd->setEndTime(reception->getEndTime());
+    if (snir->getMax() == 0) {
+        auto errorRateInd = packet->addTagIfAbsent<ErrorRateInd>();
+        errorRateInd->setSymbolErrorRate(1);
+        errorRateInd->setBitErrorRate(1);
+        errorRateInd->setPacketErrorRate(1);
+    }
+    else if (snir->getMin() == INFINITY) {
+        auto errorRateInd = packet->addTagIfAbsent<ErrorRateInd>();
+        errorRateInd->setSymbolErrorRate(0);
+        errorRateInd->setBitErrorRate(0);
+        errorRateInd->setPacketErrorRate(0);
+    }
     return new ReceptionResult(reception, decisions, packet);
 }
 

@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #endif
 
-
+#include "inet/common/socket/SocketTag_m.h"
 #include "inet/icancloud/Base/icancloud_Base.h"
 
 namespace inet {
@@ -212,7 +212,16 @@ void icancloud_Base::sendRequestMessage(Packet * pkt, cGate* gate) {
     }
 
     // Send the message!
-    send(pkt, gate);
+
+    if (pkt->getKind() == TCP_C_CLOSE) {
+        // send close request
+        auto request = new Request("close", TCP_C_CLOSE);
+        request->addTag<SocketReq>()->setSocketId(pkt->getTag<SocketReq>()->getSocketId());
+        send(request, gate);
+        delete pkt;
+    }
+    else
+        send(pkt, gate);
 
     // Process next request!
     processCurrentRequestMessage();

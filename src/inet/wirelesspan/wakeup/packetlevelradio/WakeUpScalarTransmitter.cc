@@ -6,12 +6,11 @@
 //
 
 #include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpScalarTransmitter.h"
-
 #include "inet/mobility/contract/IMobility.h"
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/ScalarTransmission.h"
+#include "inet/physicallayer/wireless/common/analogmodel/scalar/ScalarTransmissionAnalogModel.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/RadioControlInfo_m.h"
 #include "inet/physicallayer/wireless/common/modulation/BpskModulation.h"
-
+#include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpTransmission.h"
 
 namespace inet {
 namespace wirelesspan {
@@ -59,7 +58,8 @@ const ITransmission *WakeUpScalarTransmitter::createTransmission(const IRadio *t
     const Quaternion& startOrientation = mobility->getCurrentAngularPosition();
     const Quaternion& endOrientation = mobility->getCurrentAngularPosition();
     auto symbolTime = 0;
-    return new ScalarTransmission(transmitter, packet, startTime, endTime, preambleDuration, headerDuration, dataDuration, startPosition, endPosition, startOrientation, endOrientation, headerLength, packet->getTotalLength(), modulation, symbolTime, centerFrequency, bandwidth, transmissionBitrate, NaN, transmissionPower);
+    auto analogModel = getAnalogModel()->createAnalogModel(preambleDuration, headerDuration, dataDuration, centerFrequency, bandwidth, transmissionPower);
+    return new WakeUpTransmission(transmitter, packet, startTime, endTime, preambleDuration, headerDuration, dataDuration, startPosition, endPosition, startOrientation, endOrientation, nullptr, nullptr, nullptr, nullptr, analogModel, transmissionPower, centerFrequency, bandwidth);
 }
 
 } // namespace physicallayer

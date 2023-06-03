@@ -19,7 +19,6 @@
 #include "inet/flora/lorabase/LoRaMacFrame_m.h"
 #include "inet/flora/loraphy/LoRaMedium.h"
 #include "inet/flora/loraphy/LoRaReceiver.h"
-#include "inet/flora/loraphy/LoRaReception.h"
 #include "inet/flora/loraphy/LoRaTransmission.h"
 #include "inet/flora/loraphy/LoRaTransmitter.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandRadioBase.h"

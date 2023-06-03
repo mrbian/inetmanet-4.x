@@ -15,17 +15,17 @@
 
 package inet.flora.loraphy;
 
-import inet.physicallayer.wireless.common.contract.packetlevel.IAnalogModel;
+import inet.physicallayer.wireless.common.contract.packetlevel.IMediumAnalogModel;
 
 //
 // This analog model computes with scalar analog power representation. In other
 // words, the signal power does not change over time or frequency, except for
 // the boundaries of the signal.
 //
-module LoRaAnalogModel like IAnalogModel
+module LoRaMediumAnalogModel like IMediumAnalogModel
 {
     parameters:
         bool ignorePartialInterference = default(false);
         @display("i=block/tunnel");
-        @class(LoRaAnalogModel);
+        @class(LoRaMediumAnalogModel);
 }

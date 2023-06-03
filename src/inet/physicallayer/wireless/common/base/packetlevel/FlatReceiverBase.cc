@@ -8,8 +8,6 @@
 #include "inet/physicallayer/wireless/common/base/packetlevel/FlatReceiverBase.h"
 
 #include "inet/physicallayer/wireless/common/base/packetlevel/ApskModulationBase.h"
-#include "inet/physicallayer/wireless/common/base/packetlevel/FlatReceptionBase.h"
-#include "inet/physicallayer/wireless/common/base/packetlevel/FlatTransmissionBase.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandNoiseBase.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadioMedium.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
@@ -49,31 +47,16 @@ std::ostream& FlatReceiverBase::printToStream(std::ostream& stream, int level, i
 
 const IListeningDecision *FlatReceiverBase::computeListeningDecision(const IListening *listening, const IInterference *interference) const
 {
-    const IRadio *receiver = listening->getReceiver();
+    const IRadio *receiver = listening->getReceiverRadio();
     const IRadioMedium *radioMedium = receiver->getMedium();
-    const IAnalogModel *analogModel = radioMedium->getAnalogModel();
+    const IMediumAnalogModel *analogModel = radioMedium->getAnalogModel();
     const INoise *noise = analogModel->computeNoise(listening, interference);
-    const NarrowbandNoiseBase *narrowbandNoise = check_and_cast<const NarrowbandNoiseBase *>(noise);
-    W maxPower = narrowbandNoise->computeMaxPower(listening->getStartTime(), listening->getEndTime());
+
+    W maxPower = noise->computeMaxPower(listening->getStartTime(), listening->getEndTime());
     bool isListeningPossible = maxPower >= energyDetection;
     delete noise;
     EV_DEBUG << "Computing whether listening is possible: maximum power = " << maxPower << ", energy detection = " << energyDetection << " -> listening is " << (isListeningPossible ? "possible" : "impossible") << endl;
     return new ListeningDecision(listening, isListeningPossible);
-}
-
-// TODO this is not purely functional, see interface comment
-bool FlatReceiverBase::computeIsReceptionPossible(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part) const
-{
-    if (!NarrowbandReceiverBase::computeIsReceptionPossible(listening, reception, part))
-        return false;
-    else {
-        const FlatReceptionBase *flatReception = check_and_cast<const FlatReceptionBase *>(reception);
-        W minReceptionPower = flatReception->computeMinPower(reception->getStartTime(part), reception->getEndTime(part));
-        ASSERT(W(0.0) <= minReceptionPower);
-        bool isReceptionPossible = minReceptionPower >= sensitivity;
-        EV_DEBUG << "Computing whether reception is possible" << EV_FIELD(minReceptionPower) << EV_FIELD(sensitivity) << " -> reception is " << (isReceptionPossible ? "possible" : "impossible") << endl;
-        return isReceptionPossible;
-    }
 }
 
 bool FlatReceiverBase::computeIsReceptionSuccessful(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part, const IInterference *interference, const ISnir *snir) const
@@ -98,10 +81,12 @@ bool FlatReceiverBase::computeIsReceptionSuccessful(const IListening *listening,
 const IReceptionResult *FlatReceiverBase::computeReceptionResult(const IListening *listening, const IReception *reception, const IInterference *interference, const ISnir *snir, const std::vector<const IReceptionDecision *> *decisions) const
 {
     auto receptionResult = NarrowbandReceiverBase::computeReceptionResult(listening, reception, interference, snir, decisions);
-    auto errorRateInd = const_cast<Packet *>(receptionResult->getPacket())->addTagIfAbsent<ErrorRateInd>();
-    errorRateInd->setPacketErrorRate(errorModel ? errorModel->computePacketErrorRate(snir, IRadioSignal::SIGNAL_PART_WHOLE) : 0.0);
-    errorRateInd->setBitErrorRate(errorModel ? errorModel->computeBitErrorRate(snir, IRadioSignal::SIGNAL_PART_WHOLE) : 0.0);
-    errorRateInd->setSymbolErrorRate(errorModel ? errorModel->computeSymbolErrorRate(snir, IRadioSignal::SIGNAL_PART_WHOLE) : 0.0);
+    if (errorModel != nullptr) {
+        auto errorRateInd = const_cast<Packet *>(receptionResult->getPacket())->addTagIfAbsent<ErrorRateInd>();
+        errorRateInd->setPacketErrorRate(errorModel->computePacketErrorRate(snir, IRadioSignal::SIGNAL_PART_WHOLE));
+        errorRateInd->setBitErrorRate(errorModel->computeBitErrorRate(snir, IRadioSignal::SIGNAL_PART_WHOLE));
+        errorRateInd->setSymbolErrorRate(errorModel->computeSymbolErrorRate(snir, IRadioSignal::SIGNAL_PART_WHOLE));
+    }
     return receptionResult;
 }
 

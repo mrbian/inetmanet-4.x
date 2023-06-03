@@ -10,7 +10,7 @@ The second signal is expected to be received correctly.
 
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.inet.WirelessHost;
-import inet.physicallayer.wireless.unitdisk.UnitDiskRadioMedium;
+import inet.physicallayer.wireless.common.medium.UnitDiskRadioMedium;
 
 network Test
 {
@@ -57,20 +57,20 @@ snapshot-file = "${resultdir}/${configname}-${runnumber}.sna"
 *.host*.wlan[*].bitrate = 2Mbps
 *.host*.wlan[*].mac.headerLength = 10B
 *.host*.wlan[*].mac.fullDuplex = false
-*.host*.wlan[*].radio.typename = "UnitDiskRadio"
+*.host*.wlan[*].radio.typename = "GenericUnitDiskRadio"
 *.host*.wlan[*].radio.transmitter.bitrate = 2Mbps
 *.host*.wlan[*].radio.transmitter.preambleDuration = 0s
 *.host*.wlan[*].radio.transmitter.headerLength = 96b
 *.host*.wlan[*].radio.receiver.ignoreInterference = false
-*.hostSender1.wlan[*].radio.transmitter.communicationRange = 50m
-*.hostSender1.wlan[*].radio.transmitter.interferenceRange = 100m
-*.hostSender1.wlan[*].radio.transmitter.detectionRange = 200m
-*.hostSender2.wlan[*].radio.transmitter.communicationRange = 500m
-*.hostSender2.wlan[*].radio.transmitter.interferenceRange = 1km
-*.hostSender2.wlan[*].radio.transmitter.detectionRange = 2km
-*.hostReceiver.wlan[*].radio.transmitter.communicationRange = 300m
-*.hostReceiver.wlan[*].radio.transmitter.interferenceRange = 500m
-*.hostReceiver.wlan[*].radio.transmitter.detectionRange = 0m
+*.hostSender1.wlan[*].radio.transmitter.analogModel.communicationRange = 50m
+*.hostSender1.wlan[*].radio.transmitter.analogModel.interferenceRange = 100m
+*.hostSender1.wlan[*].radio.transmitter.analogModel.detectionRange = 200m
+*.hostSender2.wlan[*].radio.transmitter.analogModel.communicationRange = 500m
+*.hostSender2.wlan[*].radio.transmitter.analogModel.interferenceRange = 1km
+*.hostSender2.wlan[*].radio.transmitter.analogModel.detectionRange = 2km
+*.hostReceiver.wlan[*].radio.transmitter.analogModel.communicationRange = 300m
+*.hostReceiver.wlan[*].radio.transmitter.analogModel.interferenceRange = 500m
+*.hostReceiver.wlan[*].radio.transmitter.analogModel.detectionRange = 0m
 
 # ping app
 *.hostSender*.numApps = 1

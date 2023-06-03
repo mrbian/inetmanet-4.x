@@ -22,14 +22,14 @@ namespace physicallayer {
  *
  * This interface is strictly immutable to safely support parallel computation.
  */
-class INET_API IReception : public IPrintableObject
+class INET_API IReception : public virtual IPrintableObject
 {
   public:
     /**
-     * Returns the receiver that received the corresponding transmission
+     * Returns the radio that received the corresponding transmission
      * from the radio medium. This function never returns nullptr.
      */
-    virtual const IRadio *getReceiver() const = 0;
+    virtual const IRadio *getReceiverRadio() const = 0;
 
     /**
      * Returns the transmission that corresponds to this reception at the

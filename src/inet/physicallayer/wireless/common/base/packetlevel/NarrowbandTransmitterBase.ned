@@ -12,7 +12,7 @@ import inet.physicallayer.wireless.common.contract.packetlevel.ITransmitter;
 //
 // This module servces as a base module for narrowband transmitter models.
 //
-module NarrowbandTransmitterBase like ITransmitter
+module NarrowbandTransmitterBase extends TransmitterBase like ITransmitter
 {
     parameters:
         double preambleDuration @unit(s);  // preamble duration
@@ -23,5 +23,8 @@ module NarrowbandTransmitterBase like ITransmitter
         double bandwidth @unit(Hz);        // bandwidth of the band where the transmitter transmits on the medium
         double codeRate = default(1);
         string modulation;                 // "BPSK", "16-QAM", "256-QAM"
+        analogModel.power = default(this.power);
+        analogModel.defaultCenterFrequency = default(this.centerFrequency);
+        analogModel.defaultBandwidth = default(this.bandwidth);
         @display("i=block/wtx");
 }

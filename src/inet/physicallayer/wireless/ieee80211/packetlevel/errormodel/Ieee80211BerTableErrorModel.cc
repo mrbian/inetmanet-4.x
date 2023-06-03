@@ -7,9 +7,9 @@
 
 #include "inet/physicallayer/wireless/ieee80211/packetlevel/errormodel/Ieee80211BerTableErrorModel.h"
 
-#include "inet/physicallayer/wireless/common/base/packetlevel/FlatTransmissionBase.h"
-#include "inet/physicallayer/wireless/ieee80211/packetlevel/Ieee80211TransmissionBase.h"
+#include "inet/physicallayer/wireless/ieee80211/mode/IIeee80211Mode.h"
 #include "inet/physicallayer/wireless/ieee80211/packetlevel/errormodel/Ieee80211NistErrorModel.h"
+#include "inet/physicallayer/wireless/ieee80211/packetlevel/Ieee80211Transmission.h"
 
 namespace inet {
 
@@ -56,11 +56,11 @@ void Ieee80211BerTableErrorModel::initialize(int stage)
 double Ieee80211BerTableErrorModel::computePacketErrorRate(const ISnir *snir, IRadioSignal::SignalPart part) const
 {
     Enter_Method("computePacketErrorRate");
-    const ITransmission *transmission = snir->getReception()->getTransmission();
-    const FlatTransmissionBase *flatTransmission = check_and_cast<const FlatTransmissionBase *>(transmission);
-    double bitrate = flatTransmission->getBitrate().get();
-    b dataLength = flatTransmission->getDataLength();
-    return berTableFile->getPer(bitrate, getScalarSnir(snir), B(dataLength).get());
+    auto transmission = check_and_cast<const Ieee80211Transmission *>(snir->getReception()->getTransmission());
+    auto bitModel = transmission->getBitModel();
+    bps bitrate = transmission->getMode()->getDataMode()->getNetBitrate();
+    b dataLength = bitModel->getDataLength();
+    return berTableFile->getPer(bps(bitrate).get(), getScalarSnir(snir), B(dataLength).get());
 }
 
 double Ieee80211BerTableErrorModel::computeBitErrorRate(const ISnir *snir, IRadioSignal::SignalPart part) const

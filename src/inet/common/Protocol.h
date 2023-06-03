@@ -93,6 +93,8 @@ class INET_API Protocol
     static const Protocol ipv4;
     static const Protocol ipv6;
     static const Protocol sixlowpan;
+    static const Protocol ipsecAh;
+    static const Protocol ipsecEsp;
     static const Protocol isis;
     static const Protocol l2isis;
     static const Protocol lldp;
@@ -130,7 +132,7 @@ class INET_API Protocol
     static const Protocol probabilistic;
     static const Protocol shortcutMac;
     static const Protocol shortcutPhy;
-    static const Protocol unitDisk;
+    static const Protocol genericPhy;
     static const Protocol unknown;
     static const Protocol wiseRoute;
 

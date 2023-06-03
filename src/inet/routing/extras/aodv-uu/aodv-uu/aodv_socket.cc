@@ -502,8 +502,9 @@ void NS_CLASS aodv_socket_send_delayed (Packet * pkt, struct in_addr dst,
         info->len = len;
         info->ttl = ttl;
         info->dev = dev;
-        pkt->setControlInfo(info);
-        scheduleAt(simTime()+delay,pkt);
+
+        info->setControlInfo(pkt);
+        scheduleAt(simTime()+delay,info);
     }
     else
         aodv_socket_send(pkt, dst, len, ttl, dev);

@@ -315,11 +315,10 @@ vector<Packet*> LocalNetManager::manage_close_connections(
         pktClose->setKind(TCP_C_CLOSE);
         //Build the parameters for close the socket
 
-        TcpCommand *cmd = new TcpCommand();
         //cmd->setConnId((*(connectionIDs.begin() + i)));
         pktClose->addTagIfAbsent<SocketReq>()->setSocketId((*(connectionIDs.begin() + i)));
-
-        pktClose->setControlInfo(cmd);
+        //TcpCommand *cmd = new TcpCommand();
+        //pktClose->setControlInfo(cmd);
         sm_vector.push_back(pktClose);
     }
 
@@ -471,11 +470,10 @@ void LocalNetManager::manage_close_single_connection(Packet *pkt){
 
     if (pkt->getControlInfo())
         delete pkt->removeControlInfo();
-
-    TcpCommand *cmd = new TcpCommand();
     //cmd->setConnId((*(connectionIDs.begin() + i)));
     pkt->addTagIfAbsent<SocketReq>()->setSocketId(sm_close_connection->getConnectionId());
-    pkt->setControlInfo(cmd);
+    //TcpCommand *cmd = new TcpCommand();
+    //pkt->setControlInfo(cmd);
 
     pkt->insertAtFront(sm_close_connection);
     //Build the parameters for close the socket

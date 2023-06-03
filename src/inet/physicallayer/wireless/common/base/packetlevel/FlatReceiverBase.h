@@ -15,6 +15,7 @@ namespace inet {
 
 namespace physicallayer {
 
+// REFACTOR TODO
 class INET_API FlatReceiverBase : public NarrowbandReceiverBase
 {
   protected:
@@ -26,7 +27,6 @@ class INET_API FlatReceiverBase : public NarrowbandReceiverBase
     virtual void initialize(int stage) override;
 
     using NarrowbandReceiverBase::computeIsReceptionPossible;
-    virtual bool computeIsReceptionPossible(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part) const override;
     virtual bool computeIsReceptionSuccessful(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part, const IInterference *interference, const ISnir *snir) const override;
 
     virtual Packet *computeReceivedPacket(const ISnir *snir, bool isReceptionSuccessful) const override;

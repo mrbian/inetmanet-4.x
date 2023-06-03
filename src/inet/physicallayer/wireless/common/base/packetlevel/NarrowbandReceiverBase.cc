@@ -9,8 +9,7 @@
 
 #include "inet/physicallayer/wireless/common/base/packetlevel/ApskModulationBase.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandNoiseBase.h"
-#include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandReceptionBase.h"
-#include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandTransmissionBase.h"
+#include "inet/physicallayer/wireless/common/contract/packetlevel/INarrowbandSignalAnalogModel.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadioMedium.h"
 #include "inet/physicallayer/wireless/common/radio/packetlevel/BandListening.h"
 #include "inet/physicallayer/wireless/common/radio/packetlevel/ListeningDecision.h"
@@ -55,7 +54,7 @@ const IListening *NarrowbandReceiverBase::createListening(const IRadio *radio, c
 bool NarrowbandReceiverBase::computeIsReceptionPossible(const IListening *listening, const ITransmission *transmission) const
 {
     // TODO check if modulation matches?
-    const NarrowbandTransmissionBase *narrowbandTransmission = check_and_cast<const NarrowbandTransmissionBase *>(transmission);
+    auto narrowbandTransmission = check_and_cast<const INarrowbandSignalAnalogModel *>(transmission->getAnalogModel());
     return centerFrequency == narrowbandTransmission->getCenterFrequency() && bandwidth >= narrowbandTransmission->getBandwidth();
 }
 
@@ -63,7 +62,7 @@ bool NarrowbandReceiverBase::computeIsReceptionPossible(const IListening *listen
 bool NarrowbandReceiverBase::computeIsReceptionPossible(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part) const
 {
     const BandListening *bandListening = check_and_cast<const BandListening *>(listening);
-    const NarrowbandReceptionBase *narrowbandReception = check_and_cast<const NarrowbandReceptionBase *>(reception);
+    auto narrowbandReception = check_and_cast<const INarrowbandSignalAnalogModel *>(reception->getAnalogModel());
     if (bandListening->getCenterFrequency() != narrowbandReception->getCenterFrequency() || bandListening->getBandwidth() < narrowbandReception->getBandwidth()) {
         EV_DEBUG << "Computing whether reception is possible: listening and reception bands are different -> reception is impossible" << endl;
         return false;
@@ -74,12 +73,12 @@ bool NarrowbandReceiverBase::computeIsReceptionPossible(const IListening *listen
 
 const IReceptionDecision *NarrowbandReceiverBase::computeReceptionDecision(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part, const IInterference *interference, const ISnir *snir) const
 {
-    const BandListening *bandListening = check_and_cast<const BandListening *>(listening);
-    const NarrowbandReceptionBase *narrowbandReception = check_and_cast<const NarrowbandReceptionBase *>(reception);
-    if (bandListening->getCenterFrequency() == narrowbandReception->getCenterFrequency() && bandListening->getBandwidth() >= narrowbandReception->getBandwidth())
+//    const BandListening *bandListening = check_and_cast<const BandListening *>(listening);
+//    const NarrowbandReceptionBase *narrowbandReception = check_and_cast<const NarrowbandReceptionBase *>(reception);
+//    if (bandListening->getCenterFrequency() == narrowbandReception->getCenterFrequency() && bandListening->getBandwidth() >= narrowbandReception->getBandwidth())
         return SnirReceiverBase::computeReceptionDecision(listening, reception, part, interference, snir);
-    else
-        return new ReceptionDecision(reception, part, false, false, false);
+//    else
+//        return new ReceptionDecision(reception, part, false, false, false);
 }
 
 } // namespace physicallayer

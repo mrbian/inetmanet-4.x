@@ -14,15 +14,14 @@ import inet.physicallayer.wireless.common.base.packetlevel.FlatRadioBase;
 // well-known modulations without utilizing other techiques such as forward
 // error correction, interleaving, spreading, etc.
 //
-// @see ~ApskScalarRadio, ~ApskScalarRadioMedium.
+// @see ~ApskScalarRadio, ~ScalarRadioMedium.
 //
 module ApskRadio extends FlatRadioBase
 {
     parameters:
         string protocol = default("");
-        string signalAnalogRepresentation @enum("scalar", "dimensional") = default("scalar");
-        transmitter.typename = default(signalAnalogRepresentation == "scalar" ? "ApskScalarTransmitter" : signalAnalogRepresentation == "dimensional" ? "ApskDimensionalTransmitter" : "");
-        receiver.typename = default(signalAnalogRepresentation == "scalar" ? "ApskScalarReceiver" : signalAnalogRepresentation == "dimensional" ? "ApskDimensionalReceiver" : "");
+        transmitter.typename = default("ApskTransmitter");
+        receiver.typename = default("ApskReceiver");
         @class(ApskRadio);
         @signal[packetDropped](type=inet::Packet);
         @statistic[packetDropped](title="packets dropped"; record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);

@@ -14,12 +14,14 @@
 // 
 
 #include "inet/flora/loraphy/LoRaReceiver.h"
+#include "inet/flora/loraphy/LoraScalarReceptionAnalogModel.h"
 #include "inet/flora/loraapp/SimpleLoRaApp.h"
 #include "inet/flora/loraphy/LoRaPhyPreamble_m.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandNoiseBase.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
 #include "inet/common/ProtocolTag_m.h"
 #include "inet/common/ModuleAccess.h"
+#include "inet/physicallayer/wireless/common/radio/packetlevel/Reception.h"
 
 namespace inet {
 
@@ -97,8 +99,7 @@ bool LoRaReceiver::computeIsReceptionPossible(const IListening *listening, const
 
 bool LoRaReceiver::computeIsReceptionPossible(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part) const
 {
-
-    const LoRaReception *loRaReception = dynamic_cast<const LoRaReception *>(reception);
+    auto loRaReception = dynamic_cast<const LoraScalarReceptionAnalogModel *>(reception->getAnalogModel());
     if (loRaReception == nullptr) // it is not a lora reception
         return false;
 
@@ -121,7 +122,7 @@ bool LoRaReceiver::computeIsReceptionPossible(const IListening *listening, const
 
 bool LoRaReceiver::computeIsReceptionAttempted(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part, const IInterference *interference) const
 {
-    const auto loRaReception = dynamic_cast<const LoRaReception *>(reception);
+    auto loRaReception = dynamic_cast<const LoraScalarReceptionAnalogModel *>(reception->getAnalogModel());
     if (loRaReception == nullptr)
         return false; // a non lora packet, ignore it
 
@@ -161,11 +162,11 @@ bool LoRaReceiver::isPacketCollided(const IReception *reception, IRadioSignal::S
     //auto radio = reception->getReceiver();
     //auto radioMedium = radio->getMedium();
     auto interferingReceptions = interference->getInterferingReceptions();
-    const auto loRaReception = check_and_cast<const LoRaReception *>(reception);
+    auto loRaReception = dynamic_cast<const LoraScalarReceptionAnalogModel *>(reception->getAnalogModel());
 
-    simtime_t m_x = (loRaReception->getStartTime() + loRaReception->getEndTime())/2;
-    simtime_t d_x = (loRaReception->getEndTime() - loRaReception->getStartTime())/2;
-    EV << "Czas transmisji to " << loRaReception->getEndTime() - loRaReception->getStartTime() << endl;
+    simtime_t m_x = (reception->getStartTime() + reception->getEndTime())/2;
+    simtime_t d_x = (reception->getEndTime() - reception->getStartTime())/2;
+    EV << "Czas transmisji to " << reception->getEndTime() - reception->getStartTime() << endl;
     //double P_threshold = 6;
     W signalRSSI_w = loRaReception->getPower();
     double signalRSSI_mw = signalRSSI_w.get()*1000;
@@ -179,10 +180,11 @@ bool LoRaReceiver::isPacketCollided(const IReception *reception, IRadioSignal::S
         bool frequencyCollision = false;
         bool captureEffect = false;
         bool timingCollision = false; //Collision is acceptable in first part of preamble
-        const LoRaReception *loRaInterference = check_and_cast<const LoRaReception *>(interferingReception);
+        const ISignalAnalogModel *signalAnalogModel = reception->getAnalogModel();
+        const auto loRaInterference = check_and_cast<const LoraScalarReceptionAnalogModel *>(signalAnalogModel);
 
-        simtime_t m_y = (loRaInterference->getStartTime() + loRaInterference->getEndTime())/2;
-        simtime_t d_y = (loRaInterference->getEndTime() - loRaInterference->getStartTime())/2;
+        simtime_t m_y = (reception->getStartTime() + reception->getEndTime())/2;
+        simtime_t d_y = (reception->getEndTime() - reception->getStartTime())/2;
         if(omnetpp::fabs(m_x - m_y) < d_x + d_y)
         {
             overlap = true;
@@ -216,8 +218,8 @@ bool LoRaReceiver::isPacketCollided(const IReception *reception, IRadioSignal::S
         /* If last 6 symbols of preamble are received, no collision*/
         double nPreamble = 8; //from the paper "Do Lora networks..."
         simtime_t Tsym = (pow(2, loRaReception->getLoRaSF()))/(loRaReception->getLoRaBW().get()/1000)/1000;
-        simtime_t csBegin = loRaReception->getPreambleStartTime() + Tsym * (nPreamble - 6);
-        if(csBegin < loRaInterference->getEndTime())
+        simtime_t csBegin = reception->getPreambleStartTime() + Tsym * (nPreamble - 6);
+        if(csBegin < reception->getEndTime())
         {
             timingCollision = true;
         }
@@ -270,7 +272,8 @@ const IReceptionResult *LoRaReceiver::computeReceptionResult(const IListening *l
     auto packet = computeReceivedPacket(snir, isReceptionSuccessful);
 
     auto signalPowerInd = packet->addTagIfAbsent<SignalPowerInd>();
-    const LoRaReception *loRaReception = check_and_cast<const LoRaReception *>(reception);
+    const ISignalAnalogModel *signalAnalogModel = reception->getAnalogModel();
+     const auto loRaReception = check_and_cast<const LoraScalarReceptionAnalogModel *>(signalAnalogModel);
     W signalRSSI_w = loRaReception->getPower();
     signalPowerInd->setPower(signalRSSI_w);
 
@@ -312,9 +315,9 @@ const IListening *LoRaReceiver::createListening(const IRadio *radio, const simti
 
 const IListeningDecision *LoRaReceiver::computeListeningDecision(const IListening *listening, const IInterference *interference) const
 {
-    const IRadio *receiver = listening->getReceiver();
-    const IRadioMedium *radioMedium = receiver->getMedium();
-    const IAnalogModel *analogModel = radioMedium->getAnalogModel();
+    auto receiver = listening->getReceiverRadio();
+    auto radioMedium = receiver->getMedium();
+    auto analogModel = radioMedium->getAnalogModel();
     const INoise *noise = analogModel->computeNoise(listening, interference);
     const auto loRaNoise = check_and_cast<const NarrowbandNoiseBase *>(noise);
     W maxPower = loRaNoise->computeMaxPower(listening->getStartTime(), listening->getEndTime());
@@ -389,7 +392,7 @@ W LoRaReceiver::getSensitivityBwSf(const Hz &bandwidth, const int &Sf) const
     return sensitivity;
 }
 
-W LoRaReceiver::getSensitivity(const LoRaReception *reception) const
+W LoRaReceiver::getSensitivity(const LoraScalarReceptionAnalogModel *reception) const
 {
     //function returns sensitivity -- according to LoRa documentation, it changes with LoRa parameters
     //Sensitivity values from Semtech SX1272/73 datasheet, table 10, Rev 3.1, March 2017

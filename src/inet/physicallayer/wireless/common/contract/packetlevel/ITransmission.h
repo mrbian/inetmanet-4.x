@@ -13,6 +13,10 @@
 #include "inet/common/geometry/common/Coord.h"
 #include "inet/common/geometry/common/Quaternion.h"
 #include "inet/common/packet/Packet.h"
+#include "inet/physicallayer/wireless/common/contract/bitlevel/ISignalBitModel.h"
+#include "inet/physicallayer/wireless/common/contract/bitlevel/ISignalPacketModel.h"
+#include "inet/physicallayer/wireless/common/contract/bitlevel/ISignalSampleModel.h"
+#include "inet/physicallayer/wireless/common/contract/bitlevel/ISignalSymbolModel.h"
 #include "inet/physicallayer/wireless/common/contract/bitlevel/ISignalAnalogModel.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IAntennaGain.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadioSignal.h"
@@ -30,7 +34,7 @@ class IRadioMedium;
  *
  * This interface is strictly immutable to safely support parallel computation.
  */
-class INET_API ITransmission : public IPrintableObject
+class INET_API ITransmission : public virtual IPrintableObject
 {
   protected:
     uint64_t& nextId = SIMULATION_SHARED_COUNTER(nextId);
@@ -43,16 +47,16 @@ class INET_API ITransmission : public IPrintableObject
     virtual int getId() const = 0;
 
     /**
-     * Returns the transmitter that transmitted this radio signal on the radio
-     * channel. This function may return nullptr.
+     * Returns the radio that transmitted this radio signal on the radio
+     * medium. This function may return nullptr.
      */
-    virtual const IRadio *getTransmitter() const = 0;
+    virtual const IRadio *getTransmitterRadio() const = 0;
 
     /**
-     * Returns the transmitter's id that transmitted this radio signal on the
-     * radio channel.
+     * Returns the radio id for the radio that transmitted this radio signal on
+     * the radio medium.
      */
-    virtual int getTransmitterId() const = 0;
+    virtual int getTransmitterRadioId() const = 0;
 
     /**
      * Returns the gain of the transmitting antenna.
@@ -137,6 +141,11 @@ class INET_API ITransmission : public IPrintableObject
      * Returns the antenna's orientation when the transmitter ended this transmission.
      */
     virtual const Quaternion& getEndOrientation() const = 0;
+
+    virtual const ITransmissionPacketModel *getPacketModel() const = 0;
+    virtual const ITransmissionBitModel *getBitModel() const = 0;
+    virtual const ITransmissionSymbolModel *getSymbolModel() const = 0;
+    virtual const ITransmissionSampleModel *getSampleModel() const = 0;
 
     /**
      * Returns the analog model of the transmitted signal.

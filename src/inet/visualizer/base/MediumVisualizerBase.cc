@@ -11,9 +11,8 @@
 #include "inet/networklayer/common/L3AddressResolver.h"
 
 #ifdef INET_WITH_PHYSICALLAYERWIRELESSCOMMON
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/DimensionalAnalogModel.h"
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/DimensionalReception.h"
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/DimensionalTransmission.h"
+#include "inet/physicallayer/wireless/common/analogmodel/dimensional/DimensionalMediumAnalogModel.h"
+#include "inet/physicallayer/wireless/common/analogmodel/dimensional/DimensionalReceptionAnalogModel.h"
 #endif // INET_WITH_PHYSICALLAYERWIRELESSCOMMON
 
 namespace inet {
@@ -239,7 +238,7 @@ bool MediumVisualizerBase::isSignalTransmissionInProgress(const ITransmission *t
 
 bool MediumVisualizerBase::matchesTransmission(const ITransmission *transmission) const
 {
-    auto radio = dynamic_cast<const cModule *>(transmission->getTransmitter());
+    auto radio = dynamic_cast<const cModule *>(transmission->getTransmitterRadio());
     if (!radio)
         return false;
     auto networkNode = getContainingNode(radio);
@@ -255,9 +254,9 @@ bool MediumVisualizerBase::matchesTransmission(const ITransmission *transmission
 void MediumVisualizerBase::handleSignalAdded(const physicallayer::ITransmission *transmission)
 {
     if (displayMainPowerDensityMap || displayPowerDensityMaps || displaySpectrums || displaySpectrograms) {
-        auto dimensionalTransmission = check_and_cast<const DimensionalTransmission *>(transmission);
+        auto dimensionalTransmission = check_and_cast<const DimensionalSignalAnalogModel *>(transmission->getAnalogModel());
         auto transmissionPowerFunction = dimensionalTransmission->getPower();
-        const auto& transmitterAntennaGain = transmission->getTransmitter()->getAntenna()->getGain();
+        const auto& transmitterAntennaGain = transmission->getTransmitterRadio()->getAntenna()->getGain();
         bool isotropicAntenna = transmitterAntennaGain->getMaxGain() == 1 && transmitterAntennaGain->getMinGain() == 1;
         const auto& transmitterAntennaGainFunction = !isotropicAntenna ? makeShared<AntennaGainFunction>(transmitterAntennaGain.get()) : nullptr;
         mps propagationSpeed = radioMedium->getPropagation()->getPropagationSpeed();
@@ -266,7 +265,7 @@ void MediumVisualizerBase::handleSignalAdded(const physicallayer::ITransmission 
         const auto& startOrientation = transmission->getStartOrientation();
         const auto& propagatedTransmissionPowerFunction = makeShared<PropagatedTransmissionPowerFunction>(transmissionPowerFunction, startPosition, propagationSpeed);
         Ptr<const IFunction<WpHz, Domain<m, m, m, simsec, Hz>>> signalPowerDensityFunction;
-        bool attenuateWithCenterFrequency = check_and_cast<const DimensionalAnalogModel *>(radioMedium->getAnalogModel())->par("attenuateWithCenterFrequency");
+        bool attenuateWithCenterFrequency = check_and_cast<const DimensionalMediumAnalogModel *>(radioMedium->getAnalogModel())->par("attenuateWithCenterFrequency");
         if (attenuateWithCenterFrequency) {
             const auto& attenuationFunction = makeShared<SpaceDependentAttenuationFunction>(transmitterAntennaGainFunction, pathLossFunction, obstacleLossFunction, startPosition, startOrientation, propagationSpeed, dimensionalTransmission->getCenterFrequency());
             signalPowerDensityFunction = propagatedTransmissionPowerFunction->multiply(attenuationFunction);
@@ -343,7 +342,7 @@ void MediumVisualizerBase::handleSignalRemoved(const physicallayer::ITransmissio
 void MediumVisualizerBase::handleSignalArrivalStarted(const physicallayer::IReception *reception)
 {
     if (displayMainPowerDensityMap || displayPowerDensityMaps || displaySpectrums || displaySpectrograms) {
-        auto dimensionalReception = check_and_cast<const DimensionalReception *>(reception);
+        auto dimensionalReception = check_and_cast<const DimensionalReceptionAnalogModel *>(reception->getAnalogModel());
         auto startTime = reception->getStartTime();
         auto receptionPowerFunction = dimensionalReception->getPower();
         if (autoPowerAxis || autoTimeAxis || autoFrequencyAxis) {

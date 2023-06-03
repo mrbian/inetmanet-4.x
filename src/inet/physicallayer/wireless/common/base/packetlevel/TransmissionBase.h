@@ -10,6 +10,7 @@
 
 #include <memory>
 
+#include "inet/physicallayer/wireless/common/contract/bitlevel/ISignalAnalogModel.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadio.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/ITransmission.h"
 
@@ -18,36 +19,44 @@ namespace physicallayer {
 
 class IRadioMedium;
 
-class INET_API TransmissionBase : public virtual ITransmission, public virtual ITransmissionAnalogModel, public cObject
+class INET_API TransmissionBase : public virtual ITransmission, public cObject
 {
   protected:
     const int id;
     const IRadioMedium *radioMedium;
-    const int transmitterId;
+    const int transmitterRadioId;
     Ptr<const IAntennaGain> transmitterGain;
     const Packet *packet;
+
     const simtime_t startTime;
     const simtime_t endTime;
     const simtime_t preambleDuration;
     const simtime_t headerDuration;
     const simtime_t dataDuration;
+
     const Coord startPosition;
     const Coord endPosition;
     const Quaternion startOrientation;
     const Quaternion endOrientation;
 
+    const ITransmissionPacketModel *packetModel = nullptr;
+    const ITransmissionBitModel *bitModel = nullptr;
+    const ITransmissionSymbolModel *symbolModel = nullptr;
+    const ITransmissionSampleModel *sampleModel = nullptr;
+    const ITransmissionAnalogModel *analogModel = nullptr;
+
   public:
-    TransmissionBase(const IRadio *transmitter, const Packet *packet, const simtime_t startTime, const simtime_t endTime, const simtime_t preambleDuration, const simtime_t headerDuration, const simtime_t dataDuration, const Coord& startPosition, const Coord& endPosition, const Quaternion& startOrientation, const Quaternion& endOrientation);
+    TransmissionBase(const IRadio *transmitterRadio, const Packet *packet, const simtime_t startTime, const simtime_t endTime, const simtime_t preambleDuration, const simtime_t headerDuration, const simtime_t dataDuration, const Coord& startPosition, const Coord& endPosition, const Quaternion& startOrientation, const Quaternion& endOrientation, const ITransmissionPacketModel *packetModel, const ITransmissionBitModel *bitModel, const ITransmissionSymbolModel *symbolModel, const ITransmissionSampleModel *sampleModel, const ITransmissionAnalogModel *analogModel);
 
     virtual int getId() const override { return id; }
 
     virtual std::ostream& printToStream(std::ostream& stream, int level, int evFlags = 0) const override;
 
-    virtual const IRadio *getTransmitter() const override;
-    virtual int getTransmitterId() const override { return transmitterId; }
+    virtual const IRadio *getTransmitterRadio() const override;
+    virtual int getTransmitterRadioId() const override { return transmitterRadioId; }
     virtual const IAntennaGain *getTransmitterAntennaGain() const override { return transmitterGain.get(); }
     virtual const IRadioMedium *getMedium() const override { return radioMedium; }
-    virtual const Packet *getPacket() const override { return packet; }
+    virtual const Packet *getPacket() const override { return packetModel != nullptr ? packetModel->getPacket() : packet; }
 
     virtual const simtime_t getStartTime() const override { return startTime; }
     virtual const simtime_t getEndTime() const override { return endTime; }
@@ -74,7 +83,11 @@ class INET_API TransmissionBase : public virtual ITransmission, public virtual I
     virtual const Quaternion& getStartOrientation() const override { return startOrientation; }
     virtual const Quaternion& getEndOrientation() const override { return endOrientation; }
 
-    virtual const ITransmissionAnalogModel *getAnalogModel() const override { return check_and_cast<const ITransmissionAnalogModel *>(this); }
+    virtual const ITransmissionPacketModel *getPacketModel() const override { return packetModel; }
+    virtual const ITransmissionBitModel *getBitModel() const override { return bitModel; }
+    virtual const ITransmissionSymbolModel *getSymbolModel() const override { return symbolModel; }
+    virtual const ITransmissionSampleModel *getSampleModel() const override { return sampleModel; }
+    virtual const ITransmissionAnalogModel *getAnalogModel() const override { return analogModel; }
 };
 
 } // namespace physicallayer

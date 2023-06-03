@@ -127,6 +127,8 @@ const Protocol Protocol::igp("igp", "IGP");
 const Protocol Protocol::ipv4("ipv4", "IPv4", Protocol::NetworkLayer);
 const Protocol Protocol::ipv6("ipv6", "IPv6", Protocol::NetworkLayer);
 const Protocol Protocol::sixlowpan("sixlowpan", "6 Low Pan", Protocol::NetworkLayer);
+const Protocol Protocol::ipsecAh("ipsecAh", "IPsec AH", Protocol::NetworkLayer);
+const Protocol Protocol::ipsecEsp("ipsecEsp", "IPsec ESP", Protocol::NetworkLayer);
 const Protocol Protocol::isis("isis", "IS-IS");
 const Protocol Protocol::l2isis("l2isis", "L2 IS-IS");
 const Protocol Protocol::lldp("lldp", "LLDP", Protocol::NetworkLayer);
@@ -165,7 +167,7 @@ const Protocol Protocol::nextHopForwarding("nexthopforwarding", "Next Hop Forwar
 const Protocol Protocol::probabilistic("probabilistic", "Probabilistic", Protocol::NetworkLayer); // Probabilistic Network Protocol
 const Protocol Protocol::shortcutMac("shortcutmac", "Shortcut MAC");
 const Protocol Protocol::shortcutPhy("shortcutphy", "Shortcut PHY", Protocol::PhysicalLayer);
-const Protocol Protocol::unitDisk("unitdisk", "UnitDisk");
+const Protocol Protocol::genericPhy("genericphy", "Generic PHY");
 const Protocol Protocol::unknown("unknown", "Unknown");
 const Protocol Protocol::wiseRoute("wiseroute", "WiseRoute"); // WiseRoute Network Protocol
 const Protocol Protocol::gptp("gptp", "gPTP");

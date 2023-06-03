@@ -22,7 +22,7 @@ module LoRaMedium extends RadioMedium
     parameters:
         mediumLimitCache.typename = default("LoRaMediumCache");
         propagation.typename = default("ConstantSpeedPropagation");
-        analogModel.typename = default("LoRaAnalogModel");
+        analogModel.typename = default("LoRaMediumAnalogModel");
         //backgroundNoiseType = default("LoRaBackgroundNoise");
 
         // 802.15.4-2006, page 266

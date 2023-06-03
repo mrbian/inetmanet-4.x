@@ -16,27 +16,31 @@ namespace inet {
 
 namespace physicallayer {
 
-class INET_API ReceptionBase : public virtual IReception, public virtual IReceptionAnalogModel, public cObject
+class INET_API ReceptionBase : public virtual IReception, public cObject
 {
   protected:
-    const IRadio *receiver;
+    const IRadio *receiverRadio;
     const ITransmission *transmission;
+
     const simtime_t startTime;
     const simtime_t endTime;
     const simtime_t preambleDuration;
     const simtime_t headerDuration;
     const simtime_t dataDuration;
+
     const Coord startPosition;
     const Coord endPosition;
     const Quaternion startOrientation;
     const Quaternion endOrientation;
 
+    const IReceptionAnalogModel *analogModel = nullptr;
+
   public:
-    ReceptionBase(const IRadio *receiver, const ITransmission *transmission, const simtime_t startTime, const simtime_t endTime, const Coord& startPosition, const Coord& endPosition, const Quaternion& startOrientation, const Quaternion& endOrientation);
+    ReceptionBase(const IRadio *receiverRadio, const ITransmission *transmission, const simtime_t startTime, const simtime_t endTime, const Coord& startPosition, const Coord& endPosition, const Quaternion& startOrientation, const Quaternion& endOrientation, const IReceptionAnalogModel *analogModel);
 
     virtual std::ostream& printToStream(std::ostream& stream, int level, int evFlags = 0) const override;
 
-    virtual const IRadio *getReceiver() const override { return receiver; }
+    virtual const IRadio *getReceiverRadio() const override { return receiverRadio; }
     virtual const ITransmission *getTransmission() const override { return transmission; }
 
     virtual const simtime_t getStartTime() const override { return startTime; }
@@ -64,7 +68,7 @@ class INET_API ReceptionBase : public virtual IReception, public virtual IRecept
     virtual const Quaternion& getStartOrientation() const override { return startOrientation; }
     virtual const Quaternion& getEndOrientation() const override { return endOrientation; }
 
-    virtual const IReceptionAnalogModel *getAnalogModel() const override { return check_and_cast<const IReceptionAnalogModel *>(this); }
+    virtual const IReceptionAnalogModel *getAnalogModel() const override { return analogModel; }
 };
 
 } // namespace physicallayer

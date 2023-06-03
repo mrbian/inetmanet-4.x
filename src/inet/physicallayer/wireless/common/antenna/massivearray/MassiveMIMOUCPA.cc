@@ -150,8 +150,8 @@ double MassiveMIMOUCPA::AntennaGain::computeGain(const Quaternion &direction) co
         gain = 1;
     if (gain > maxGain)
         gain = maxGain;
-    Ieee80211ScalarReceiver * rec =
-            dynamic_cast<Ieee80211ScalarReceiver *>(const_cast<IReceiver *>(radio->getReceiver()));
+    Ieee80211Receiver * rec =
+            dynamic_cast<Ieee80211Receiver *>(const_cast<IReceiver *>(radio->getReceiver()));
     if (rec != nullptr) {
         // is of type Ieee80211ScalarReceiver
         if (phiz >= 0)

@@ -18,7 +18,7 @@
 #include "inet/flora/lorabase/LoRaTagInfo_m.h"
 #include "inet/flora/loraphy/LoRaModulation.h"
 #include "inet/flora/loraphy/LoRaPhyPreamble_m.h"
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/ScalarTransmission.h"
+#include "inet/physicallayer/wireless/common/analogmodel/scalar/ScalarTransmissionAnalogModel.h"
 
 
 namespace inet {
@@ -143,6 +143,8 @@ const ITransmission *LoRaTransmitter::createTransmission(const IRadio *transmitt
         LoRaRadio *radio = check_and_cast<LoRaRadio *>(getParentModule());
         radio->setCurrentTxPower(transmissionPower.get());
     }
+    auto analogModel = getAnalogModel()->createAnalogModel(Tpreamble, Theader, Tpayload, centerFrequency, bandwidth, transmissionPower);
+
     return new LoRaTransmission(transmitter,
             macFrame,
             startTime,
@@ -154,10 +156,15 @@ const ITransmission *LoRaTransmitter::createTransmission(const IRadio *transmitt
             endPosition,
             startOrientation,
             endOrientation,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr,
+            analogModel,
             transmissionPower,
             frame->getCenterFrequency(),
-            frame->getSpreadFactor(),
             frame->getBandwidth(),
+            frame->getSpreadFactor(),
             frame->getCodeRendundance());
 }
 #endif

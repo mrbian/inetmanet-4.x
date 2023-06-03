@@ -19,8 +19,10 @@
 
 #include "inet/physicallayer/wireless/ieee802154/bitlevel/Ieee802154UwbIrTransmitter.h"
 
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/DimensionalTransmission.h"
+#include "inet/common/math/Functions.h"
+#include "inet/physicallayer/wireless/common/analogmodel/dimensional/DimensionalTransmissionAnalogModel.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadio.h"
+#include "inet/physicallayer/wireless/ieee802154/packetlevel/Ieee802154Transmission.h"
 
 namespace inet {
 namespace physicallayer {
@@ -191,7 +193,8 @@ const ITransmission *Ieee802154UwbIrTransmitter::createTransmission(const IRadio
     const Quaternion& startOrientation = mobility->getCurrentAngularPosition();
     const Quaternion& endOrientation = mobility->getCurrentAngularPosition();
     const Ptr<const IFunction<WpHz, Domain<simsec, Hz>>>& powerFunction = generateIEEE802154AUWBSignal(startTime, bits);
-    return new DimensionalTransmission(transmitter, packet, startTime, endTime, -1, -1, -1, startPosition, endPosition, startOrientation, endOrientation, packet->getDataLength(), b(-1), nullptr, -1, cfg.centerFrequency, cfg.bandwidth, cfg.bitrate, NaN, powerFunction);
+    auto analogModel = new DimensionalTransmissionAnalogModel(-1, -1, duration, cfg.centerFrequency, cfg.bandwidth, powerFunction);
+    return new Ieee802154Transmission(transmitter, packet, startTime, endTime, -1, -1, -1, startPosition, endPosition, startOrientation, endOrientation, nullptr, nullptr, nullptr, nullptr, analogModel, b(-1), b(-1), nullptr, Hz(NaN), bps(NaN));
 }
 
 } // namespace physicallayer

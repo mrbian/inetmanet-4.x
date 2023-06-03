@@ -6,12 +6,12 @@
 //
 
 #include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpReceiverBase.h"
-
-#include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandReceptionBase.h"
-#include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandTransmissionBase.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/FlatReceiverBase.h"
-#include "inet/physicallayer/wireless/common/base/packetlevel/FlatReceptionBase.h"
-#include "inet/physicallayer/wireless/common/base/packetlevel/FlatTransmissionBase.h"
+#include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpTransmission.h"
+#include "inet/wirelesspan/wakeup/packetlevelradio/WakeUpTransmission.h"
+#include "inet/physicallayer/wireless/common/analogmodel/scalar/ScalarReceptionAnalogModel.h"
+#include "inet/physicallayer/wireless/common/analogmodel/scalar/ScalarMediumAnalogModel.h"
+#include "inet/physicallayer/wireless/common/analogmodel/scalar/ScalarReceptionAnalogModel.h"
 
 namespace inet {
 namespace wirelesspan {
@@ -36,17 +36,17 @@ bool WakeUpReceiverBase::computeIsReceptionPossible(const IListening *listening,
 {
     // TODO check if modulation matches?
 
-    const NarrowbandTransmissionBase *narrowbandTransmission = check_and_cast<const NarrowbandTransmissionBase *>(transmission);
+    const WakeUpTransmission *wakeUpTransmission = check_and_cast<const WakeUpTransmission *>(transmission);
     if (!bandwithList.empty()) {
         for (const auto &e : bandwithList) {
-            if (e.getCenterFrequency() == narrowbandTransmission->getCenterFrequency() && e.getBandwidth() >= narrowbandTransmission->getBandwidth()) {
+            if (e.getCenterFrequency() == wakeUpTransmission->getCenterFrequency() && e.getBandwidth() >= wakeUpTransmission->getBandwidth()) {
                 return true;
             }
         }
         return false;
     }
     else {
-        return centerFrequency == narrowbandTransmission->getCenterFrequency() && bandwidth >= narrowbandTransmission->getBandwidth();
+        return centerFrequency == wakeUpTransmission->getCenterFrequency() && bandwidth >= wakeUpTransmission->getBandwidth();
     }
 }
 
@@ -54,26 +54,29 @@ bool WakeUpReceiverBase::computeIsReceptionPossible(const IListening *listening,
 bool WakeUpReceiverBase::computeIsReceptionPossible(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part) const
 {
     const WakeUpBandListening *bandListening = check_and_cast<const WakeUpBandListening *>(listening);
-    const NarrowbandReceptionBase *narrowbandReception = check_and_cast<const NarrowbandReceptionBase *>(reception);
+    auto wakeUpTransmission = dynamic_cast<const WakeUpTransmission *>(reception->getTransmission());
+    if (wakeUpTransmission == nullptr)
+        return false;
+
     auto list = bandListening->getBandList();
     bool itIsPossible = false;
     if (!list.empty()) {
         for (const auto &e : list) {
-            if (e.getCenterFrequency() == narrowbandReception->getCenterFrequency() && e.getBandwidth() >= narrowbandReception->getBandwidth()) {
+            if (e.getCenterFrequency() == wakeUpTransmission->getCenterFrequency() && e.getBandwidth() >= wakeUpTransmission->getBandwidth()) {
                 itIsPossible = true;
             }
         }
     }
     else {
-        if (bandListening->getCenterFrequency() == narrowbandReception->getCenterFrequency() && bandListening->getBandwidth() >= narrowbandReception->getBandwidth()) {
+        if (bandListening->getCenterFrequency() == wakeUpTransmission->getCenterFrequency() && bandListening->getBandwidth() >= wakeUpTransmission->getBandwidth()) {
             itIsPossible = true;
         }
     }
     if (!itIsPossible)
         return false;
 
-    const FlatReceptionBase *flatReception = check_and_cast<const FlatReceptionBase *>(reception);
-    W minReceptionPower = flatReception->computeMinPower(reception->getStartTime(part), reception->getEndTime(part));
+    const INarrowbandSignalAnalogModel *narrowbandSignalAnalogModel = check_and_cast<const INarrowbandSignalAnalogModel *>(reception->getAnalogModel());
+    W minReceptionPower = narrowbandSignalAnalogModel->computeMinPower(reception->getStartTime(), reception->getEndTime());
     ASSERT(W(0.0) <= minReceptionPower);
     bool isReceptionPossible = minReceptionPower >= sensitivity;
     EV_DEBUG << "Computing whether reception is possible" << EV_FIELD(minReceptionPower) << EV_FIELD(sensitivity) << " -> reception is " << (isReceptionPossible ? "possible" : "impossible") << endl;

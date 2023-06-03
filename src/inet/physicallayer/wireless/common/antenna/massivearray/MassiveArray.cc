@@ -3,7 +3,7 @@
 #include "inet/physicallayer/wireless/common/base/packetlevel/AntennaBase.h"
 #include "inet/physicallayer/wireless/common/antenna/massivearray/MassiveArray.h"
 #include "inet/physicallayer/wireless/common/medium/RadioMedium.h"
-#include "inet/physicallayer/wireless/ieee80211/packetlevel/Ieee80211ScalarReceiver.h"
+#include "inet/physicallayer/wireless/ieee80211/packetlevel/Ieee80211Receiver.h"
 
 #include "inet/common/ModuleAccess.h"
 

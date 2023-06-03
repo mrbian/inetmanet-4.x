@@ -563,9 +563,9 @@ Packet* H_StorageManager_Base::migrationToDiskContents(Packet* pktMi) {
     pktNew->copyTags(*pktMi);
 
     // Copy the control info, if exists!
-    if (pktMi->getControlInfo() != nullptr) {
+/*    if (pktMi->getControlInfo() != nullptr) {
         pktNew->setControlInfo(pktMi->getControlInfo()->dup());
-    }
+    }*/
     pktNew->insertAtFront(newMessage);
     return (pktNew);
 }

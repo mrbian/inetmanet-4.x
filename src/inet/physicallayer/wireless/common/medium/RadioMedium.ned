@@ -7,7 +7,7 @@
 
 package inet.physicallayer.wireless.common.medium;
 
-import inet.physicallayer.wireless.common.contract.packetlevel.IAnalogModel;
+import inet.physicallayer.wireless.common.contract.packetlevel.IMediumAnalogModel;
 import inet.physicallayer.wireless.common.contract.packetlevel.ICommunicationCache;
 import inet.physicallayer.wireless.common.contract.packetlevel.IMediumLimitCache;
 import inet.physicallayer.wireless.common.contract.packetlevel.INeighborCache;
@@ -28,7 +28,7 @@ module RadioMedium like IRadioMedium
 {
     parameters:
         string physicalEnvironmentModule = default("physicalEnvironment"); // module path of the physical environment model
-        string signalAnalogRepresentation @enum("unitDisk","scalar","dimensional") = default("scalar");
+        string signalAnalogRepresentation @enum("unitDiskLoss", "unitDisk","scalar","dimensional") = default("scalar");
 
         // filter parameters that control when signals are sent to receiver radios
         string rangeFilter = default("");       // when either set to 'interferenceRange' or 'communicationRange' the radio medium doesn't send signals to a radio if it's outside the provided range
@@ -57,7 +57,7 @@ module RadioMedium like IRadioMedium
             parameters:
                 @display("p=100,100");
         }
-        analogModel: <default(signalAnalogRepresentation == "unitDisk" ? "UnitDiskAnalogModel" : signalAnalogRepresentation == "scalar" ? "ScalarAnalogModel" : signalAnalogRepresentation == "dimensional" ? "DimensionalAnalogModel" : "")> like IAnalogModel {
+        analogModel: <default(signalAnalogRepresentation == "unitDiskLoss" ? "UnitDiskMediumAnalogModelLoss" : signalAnalogRepresentation == "unitDisk" ? "UnitDiskMediumAnalogModel" : signalAnalogRepresentation == "scalar" ? "ScalarMediumAnalogModel" : signalAnalogRepresentation == "dimensional" ? "DimensionalMediumAnalogModel" : "")> like IMediumAnalogModel {
             parameters:
                 @display("p=100,200");
         }

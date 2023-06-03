@@ -217,7 +217,7 @@ class AODVUU : public ManetRoutingBase
     std::map<PacketDestOrigin,RREPProcessed> rrepProc;
     std::map<PacketDestOrigin,RREQProcessed*> rreqProc;
 
-    struct DelayInfo : public cObject
+    struct DelayInfo : public cMessage
     {
         struct in_addr dst;
         int len;

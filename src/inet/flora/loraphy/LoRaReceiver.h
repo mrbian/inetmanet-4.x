@@ -22,15 +22,14 @@
 #include "inet/flora/loraphy/LoRaBandListening.h"
 #include "inet/flora/loraphy/LoRaModulation.h"
 #include "inet/flora/loraphy/LoRaRadioControlInfo_m.h"
-#include "inet/flora/loraphy/LoRaReception.h"
 #include "inet/flora/loraphy/LoRaTransmission.h"
+#include "inet/flora/loraphy/LoraScalarReceptionAnalogModel.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadioMedium.h"
 #include "inet/physicallayer/wireless/common/radio/packetlevel/ReceptionResult.h"
 #include "inet/physicallayer/wireless/common/radio/packetlevel/BandListening.h"
 #include "inet/physicallayer/wireless/common/radio/packetlevel/ListeningDecision.h"
 #include "inet/physicallayer/wireless/common/radio/packetlevel/ReceptionDecision.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/NarrowbandNoiseBase.h"
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/ScalarSnir.h"
 #include "inet/physicallayer/wireless/common/base/packetlevel/FlatReceiverBase.h"
 
 //based on Ieee802154UWBIRReceiver
@@ -92,12 +91,12 @@ public:
 
   virtual bool computeIsReceptionSuccessful(const IListening *listening, const IReception *reception, IRadioSignal::SignalPart part, const IInterference *interference, const ISnir *snir) const override;
 
-  virtual double getSNIRThreshold() const override { return snirThreshold; }
+  virtual double getSnirThreshold() const override { return snirThreshold; }
   virtual const IListening *createListening(const IRadio *radio, const simtime_t startTime, const simtime_t endTime, const Coord& startPosition, const Coord& endPosition) const override;
 
   virtual const IListeningDecision *computeListeningDecision(const IListening *listening, const IInterference *interference) const override;
 
-  W getSensitivity(const LoRaReception *loRaReception) const;
+  W getSensitivity(const LoraScalarReceptionAnalogModel *loRaReception) const;
 
   bool isPacketCollided(const IReception *reception, IRadioSignal::SignalPart part, const IInterference *interference) const;
 

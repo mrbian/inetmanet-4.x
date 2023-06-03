@@ -27,7 +27,7 @@ package inet.physicallayer.wireless.ieee80211.packetlevel;
 // See also ~Ieee80211ScalarTransmitter, ~Ieee80211ScalarRadio, and
 // ~Ieee80211ScalarRadioMedium.
 //
-module Ieee80211ScalarReceiverLoss extends Ieee80211ScalarReceiver
+module Ieee80211ReceiverLoss extends Ieee80211Receiver
 {
     parameters:
         double perUniLinks = default(0);

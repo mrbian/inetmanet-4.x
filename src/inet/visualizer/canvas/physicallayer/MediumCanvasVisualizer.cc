@@ -14,10 +14,7 @@
 #include "inet/common/figures/SignalFigure.h"
 
 #ifdef INET_WITH_PHYSICALLAYERWIRELESSCOMMON
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/DimensionalReception.h"
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/DimensionalTransmission.h"
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/ScalarReception.h"
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/ScalarTransmission.h"
+#include "inet/physicallayer/wireless/common/analogmodel/scalar/ScalarReceptionAnalogModel.h"
 #endif // INET_WITH_PHYSICALLAYERWIRELESSCOMMON
 
 namespace inet {
@@ -1045,14 +1042,14 @@ void MediumCanvasVisualizer::handleSignalDepartureStarted(const ITransmission *t
         if (displaySignals || displayMainPowerDensityMap || displayPowerDensityMaps)
             setAnimationSpeed();
         if (displaySignalDepartures) {
-            auto transmitter = transmission->getTransmitter();
+            auto transmitter = transmission->getTransmitterRadio();
             if (!transmitter) return;
             auto figure = getSignalDepartureFigure(transmitter);
             auto networkNode = getContainingNode(check_and_cast<const cModule *>(transmitter));
             auto networkNodeVisualization = networkNodeVisualizer->getNetworkNodeVisualization(networkNode);
             networkNodeVisualization->setAnnotationVisible(figure, true);
             auto labelFigure = check_and_cast<LabeledIconFigure *>(figure)->getLabelFigure();
-            if (auto scalarTransmission = dynamic_cast<const ScalarTransmission *>(transmission)) {
+            if (auto scalarTransmission = dynamic_cast<const ScalarSignalAnalogModel *>(transmission->getAnalogModel())) {
                 char tmp[32];
                 sprintf(tmp, "%.4g dBW", fraction2dB(W(scalarTransmission->getPower()).get()));
                 labelFigure->setText(tmp);
@@ -1071,7 +1068,7 @@ void MediumCanvasVisualizer::handleSignalDepartureEnded(const ITransmission *tra
         if (displaySignals || displayMainPowerDensityMap || displayPowerDensityMaps)
             setAnimationSpeed();
         if (displaySignalDepartures) {
-            auto transmitter = transmission->getTransmitter();
+            auto transmitter = transmission->getTransmitterRadio();
             if (!transmitter) return;
             auto figure = getSignalDepartureFigure(transmitter);
             auto networkNode = getContainingNode(check_and_cast<const cModule *>(transmitter));
@@ -1090,14 +1087,14 @@ void MediumCanvasVisualizer::handleSignalArrivalStarted(const IReception *recept
         if (displaySignals || displayMainPowerDensityMap || displayPowerDensityMaps)
             setAnimationSpeed();
         if (displaySignalArrivals) {
-            auto receiver = reception->getReceiver();
+            auto receiver = reception->getReceiverRadio();
             if (networkNodeFilter.matches(check_and_cast<const cModule *>(receiver))) {
                 auto figure = getSignalArrivalFigure(receiver);
                 auto networkNode = getContainingNode(check_and_cast<const cModule *>(receiver));
                 auto networkNodeVisualization = networkNodeVisualizer->getNetworkNodeVisualization(networkNode);
                 networkNodeVisualization->setAnnotationVisible(figure, true);
                 auto labelFigure = check_and_cast<LabeledIconFigure *>(figure)->getLabelFigure();
-                if (auto scalarReception = dynamic_cast<const ScalarReception *>(reception)) {
+                if (auto scalarReception = dynamic_cast<const ScalarReceptionAnalogModel *>(reception->getAnalogModel())) {
                     char tmp[32];
                     sprintf(tmp, "%.4g dBW", fraction2dB(W(scalarReception->getPower()).get()));
                     labelFigure->setText(tmp);
@@ -1129,7 +1126,7 @@ void MediumCanvasVisualizer::handleSignalArrivalEnded(const IReception *receptio
         if (displaySignals || displayMainPowerDensityMap || displayPowerDensityMaps)
             setAnimationSpeed();
         if (displaySignalArrivals) {
-            auto receiver = reception->getReceiver();
+            auto receiver = reception->getReceiverRadio();
             if (networkNodeFilter.matches(check_and_cast<const cModule *>(receiver))) {
                 auto figure = getSignalArrivalFigure(receiver);
                 auto networkNode = getContainingNode(check_and_cast<const cModule *>(receiver));

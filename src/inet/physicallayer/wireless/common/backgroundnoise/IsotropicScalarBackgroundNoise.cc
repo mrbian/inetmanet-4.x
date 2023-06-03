@@ -7,7 +7,8 @@
 
 #include "inet/physicallayer/wireless/common/backgroundnoise/IsotropicScalarBackgroundNoise.h"
 
-#include "inet/physicallayer/wireless/common/analogmodel/packetlevel/ScalarNoise.h"
+#include "inet/common/math/Functions.h"
+#include "inet/physicallayer/wireless/common/analogmodel/scalar/ScalarNoise.h"
 #include "inet/physicallayer/wireless/common/radio/packetlevel/BandListening.h"
 
 namespace inet {
