@@ -5,7 +5,6 @@ import inet.node.ethernet.Eth100M;
 import inet.wirelesspan.nodes.WakeUpSensorNode;
 import inet.node.inet.StandardHost;
 import inet.node.inet.WirelessHost;
-import inet.physicallayer.wireless.apsk.packetlevel.ApskScalarRadioMedium;
 import inet.physicallayer.wireless.ieee802154.bitlevel.Ieee802154UwbIrRadioMedium;
 import inet.physicallayer.wireless.ieee802154.packetlevel.Ieee802154NarrowbandScalarRadioMedium;
 import inet.visualizer.common.IntegratedMultiVisualizer;

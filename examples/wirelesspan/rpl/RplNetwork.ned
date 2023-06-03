@@ -1,7 +1,7 @@
 package inet.examples.wirelesspan.rpl;
 
 import inet.common.scenario.ScenarioManager;
-import inet.physicallayer.wireless.unitdisk.UnitDiskRadioMedium;
+import inet.physicallayer.wireless.common.medium.UnitDiskRadioMedium;
 import inet.physicallayer.wireless.common.contract.packetlevel.IRadioMedium;
 import inet.visualizer.contract.IIntegratedVisualizer;
 import inet.wirelesspan.nodes.RplRouter;
