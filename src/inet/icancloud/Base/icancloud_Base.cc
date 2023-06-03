@@ -215,7 +215,10 @@ void icancloud_Base::sendRequestMessage(Packet * pkt, cGate* gate) {
 
     if (pkt->getKind() == TCP_C_CLOSE) {
         // send close request
+        EV_DEBUG << "IcanClod closing connection \n";
         auto request = new Request("close", TCP_C_CLOSE);
+        TcpCommand *cmd = new TcpCommand();
+        request->setControlInfo(cmd);
         request->addTag<SocketReq>()->setSocketId(pkt->getTag<SocketReq>()->getSocketId());
         send(request, gate);
         delete pkt;

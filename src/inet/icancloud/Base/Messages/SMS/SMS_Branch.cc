@@ -37,13 +37,7 @@ void SMS_Branch::splitRequest(cMessage *msg) {
         // Creates a new subRequest message with the corresponding parameters
         // subRequestMsg = (icancloud_BlockList_Message *) sm_bl->dup();
         auto pktBl = pkt->dup();
-#ifdef COPYCONTROLINFO
-        // I am not sure if it is necessary to copy the control info, the original code copy it, I cannot find sense
-        if (pkt->getControlInfo()) {
-            auto controlOld = check_and_cast<TcpCommand *>(pkt->getControlInfo());
-            pktBl->setControlInfo (controlOld->dup());
-        }
-#endif
+
         pktBl->trimFront();
         auto subRequestMsg = pktBl->removeAtFront<icancloud_BlockList_Message>();
 

@@ -74,13 +74,6 @@ void SMS_NFS::splitRequest(cMessage *msg) {
                             requestSizeNFS : (requestSize - currentSize);
 
             auto pktSub = pkt->dup();
-#ifdef COPYCONTROLINFO
-            // I am not sure if it is necessary to copy the control info, the original code copy it, I cannot find sense
-            if (pkt->getControlInfo()) {
-                auto controlOld = check_and_cast<TcpCommand *>(pkt->getControlInfo());
-                pktSub->setControlInfo (controlOld->dup());
-            }
-#endif
 
             // Copy the message and set new values!
             pktSub->trimFront();
@@ -117,13 +110,6 @@ void SMS_NFS::splitRequest(cMessage *msg) {
         // Copy the message!
         //subRequestMsg = (icancloud_App_IO_Message *) sm_io->dup();
         auto pktSub = pkt->dup();
-#ifdef COPYCONTROLINFO
-        // I am not sure if it is necessary to copy the control info, the original code copy it, I cannot find sense
-        if (pkt->getControlInfo()) {
-            auto controlOld = check_and_cast<TcpCommand *>(pkt->getControlInfo());
-            pktSub->setControlInfo (controlOld->dup());
-        }
-#endif
         // Copy the message and set new values!
         pktSub->trimFront();
         auto subRequestMsg = pktSub->removeAtFront<icancloud_App_IO_Message>();

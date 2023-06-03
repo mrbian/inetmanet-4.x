@@ -182,14 +182,6 @@ void H_MemoryManager_Base::processRequestMessage (Packet *pkt){
         auto pktMem = new Packet("icancloud_App_MEM_Message");
         pktMem->insertAtFront(sm_mem);
 
-#ifdef COPYCONTROLINFO
-        // I am not sure if it is necessary to copy the control info, the original code copy it, I cannot find sense
-        if (pkt->getControlInfo()) {
-            auto controlOld = check_and_cast<TcpCommand *>(pkt->getControlInfo());
-            pktMem->setControlInfo (controlOld->dup());
-        }
-#endif
-
         // Perform the I/O Operation
         schedulingMemory(pktMem);
     }
