@@ -53,7 +53,7 @@ moduleinterface INode
         int numExtInterfaces;
         int numPppInterfaces;  // minimum number of PPP interfaces
         int numTunInterfaces;
-        int numVlanInterfaces;
+        int numVirtInterfaces;
         
         // Main Hardware subsystems
         // CPU        

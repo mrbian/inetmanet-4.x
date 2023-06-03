@@ -63,20 +63,20 @@ module VmOperatingSystemModule like IOperatingSystem
 
         cpuScheduler: <cpuSchedulerType> like ICPU_Scheduler {
             parameters:
-                numCPUs = numCPUs;
+                numCPUs = parent.numCPUs;
                 @display("p=74,62");
             gates:
-                fromCPU[numCPUs];
-                toCPU[numCPUs];
+                fromCPU[this.numCPUs];
+                toCPU[this.numCPUs];
         }
 
         vfs: <vfsType> like IVirtualFileSystem {
             parameters:
-                numFS = numFS;
+                numFS = parent.numFS;
                 @display("p=63,256");
             gates:
-                fromFS[numFS];
-                toFS[numFS];
+                fromFS[this.numFS];
+                toFS[this.numFS];
         }
 
         fsModule[numFS]: FSModule {
@@ -85,17 +85,17 @@ module VmOperatingSystemModule like IOperatingSystem
 
         vmModule: VolumeManagerModule {
             parameters:
-                numStorageSystems = numStorageSystems;
-                numFS = numFS;
+                numStorageSystems = parent.numStorageSystems;
+                numFS = parent.numFS;
                 storageManagerType = default("NullStorageManager");		// Storage Manager type		
                 schedulerType = default("NullStorageScheduler");			// Storage Scheduler Type		
                 cacheType = default("NullCache");					// Cache Type
                 @display("p=252,262");
             gates:
-                fromFS[numFS];
-                toFS[numFS];
-                fromStorageSystem[numStorageSystems];
-                toStorageSystem[numStorageSystems];
+                fromFS[this.numFS];
+                toFS[this.numFS];
+                fromStorageSystem[this.numStorageSystems];
+                toStorageSystem[this.numStorageSystems];
         }
 
         vmMsgController: VmMsgController {

@@ -45,12 +45,12 @@ module VolumeManagerModule
 
         storageManager: <storageManagerType> like IStorageManager {
             parameters:
-                numStorageSystems = numStorageSystems;
+                numStorageSystems = parent.numStorageSystems;
                 @display("i=icons/Redirector;p=100,100");
 
             gates:
-                fromStorageSystem[numStorageSystems];
-                toStorageSystem[numStorageSystems];
+                fromStorageSystem[this.numStorageSystems];
+                toStorageSystem[this.numStorageSystems];
         }
         scheduler: <schedulerType> like IStorageScheduler {
             parameters:
@@ -59,13 +59,13 @@ module VolumeManagerModule
         }
         cache: <cacheType> like ICache {
             parameters:
-                numInputs = numFS;
+                numInputs = parent.numFS;
                 @display("i=icons/chip;p=100,300");
 
 
             gates:
-                fromInput[numFS];
-                toInput[numFS];
+                fromInput[numInputs];
+                toInput[numInputs];
         }
     connections allowunconnected:
 

@@ -64,20 +64,20 @@ module OperatingSystemModule
 
         cpuScheduler: <cpuSchedulerType> like ICPU_Scheduler {
             parameters:
-                numCPUs = numCPUs;
+                numCPUs = parent.numCPUs;
                 @display("p=74,62");
             gates:
-                fromCPU[numCPUs];
-                toCPU[numCPUs];
+                fromCPU[this.numCPUs];
+                toCPU[this.numCPUs];
         }
 
         node_vfs: <vfsType> like IVirtualFileSystem {
             parameters:
-                numFS = numFS;
+                numFS = parent.numFS;
                 @display("p=66,259");
             gates:
-                fromFS[numFS];
-                toFS[numFS];
+                fromFS[this.numFS];
+                toFS[this.numFS];
         }
 
         fsModule[numFS]: FSModule {
@@ -86,14 +86,14 @@ module OperatingSystemModule
 
         vmModule: VolumeManagerModule {
             parameters:
-                numStorageSystems = numStorageSystems;
-                numFS = numFS;
+                numStorageSystems = parent.numStorageSystems;
+                numFS = parent.numFS;
                 @display("p=261,261");
             gates:
-                fromFS[numFS];
-                toFS[numFS];
-                fromStorageSystem[numStorageSystems];
-                toStorageSystem[numStorageSystems];
+                fromFS[this.numFS];
+                toFS[this.numFS];
+                fromStorageSystem[this.numStorageSystems];
+                toStorageSystem[this.numStorageSystems];
         }
 
         nodeStates: StatesApplication {

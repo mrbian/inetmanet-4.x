@@ -43,9 +43,9 @@ module H_StorageManagerModule
             parameters:
 
                 // Network file system parameters
-                requestSize_KB = requestSize_KB;
+                requestSize_KB = parent.requestSize_KB;
                 // Parallel file system parameters
-                strideSize_KB = strideSize_KB;
+                strideSize_KB = parent.strideSize_KB;
 
                 @display("i=msg/job;p=80,160,row");
             gates:
@@ -55,18 +55,18 @@ module H_StorageManagerModule
 
         storageManager: <storageManagerSched> like IH_StorageManager {
             parameters:
-                numStorageServers = numStorageServers;
-                storageCellType = storageCellType;
+                numStorageServers = parent.numStorageServers;
+                storageCellType = parent.storageCellType;
                 // Storage remote parameters                        
-                requestSize_KB = requestSize_KB;
-                strideSize_KB = strideSize_KB;
-                ioOverhead = ioOverhead;
+                requestSize_KB = parent.requestSize_KB;
+                strideSize_KB = parent.strideSize_KB;
+                ioOverhead = parent.ioOverhead;
                 @display("i=icons/Redirector;p=80,67");
             gates:
                 fromVMStorageServers[];
                 toVMStorageServers[];
-                fromNodeStorageServers[numStorageServers];
-                toNodeStorageServers[numStorageServers];
+                fromNodeStorageServers[this.numStorageServers];
+                toNodeStorageServers[this.numStorageServers];
                 fromNET_Manager;
                 toNET_Manager;
                 from_storageCell[];

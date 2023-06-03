@@ -90,6 +90,12 @@ vector<string> CfgDataCenter::generateStructureOfStorageNodes  (int index){
 
     names.clear();
 
+
+    if (index < 0) {
+        names.push_back(st_nodes.front()->nodeType);
+        return names;
+    }
+
     structure = (*(st_nodes.begin()+index));
     for (j = 0; j < structure->quantity; j++){
         str.str("");

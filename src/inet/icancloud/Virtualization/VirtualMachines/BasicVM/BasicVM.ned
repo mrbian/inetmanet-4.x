@@ -25,17 +25,17 @@ module BasicVM extends VM like IVM
 
         osModule: <osModuleType> like IOperatingSystem {
             parameters:
-                numCPUs = numCores;
-                numStorageSystems = numStorageSystems;
+                numCPUs = parent.numCores;
+                numStorageSystems = parent.numStorageSystems;
 
                 @display("p=108,64");
             gates:
                 fromApps[];
                 toApps[];
-                fromCPU[numCores];
-                toCPU[numCores];
-                fromStorageSystem[numStorageSystems];
-                toStorageSystem[numStorageSystems];
+                fromCPU[numCPUs];
+                toCPU[numCPUs];
+                fromStorageSystem[this.numStorageSystems];
+                toStorageSystem[this.numStorageSystems];
                 //***/
                 fromInputMemory;   				 // Input gates from imputs
                 fromOutputMemory;					 // Input gate from output

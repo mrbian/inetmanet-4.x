@@ -159,6 +159,13 @@ void AbstractUserGenerator::initialize(int stage) {
             auxMod =
                     getParentModule()->getSubmodule("appDefinition")->getSubmodule(
                             "application", i)->getSubmodule("app");
+            if (auxMod == nullptr) {
+                // try adding 0,
+                auxMod =
+                        getParentModule()->getSubmodule("appDefinition")->getSubmodule(
+                                "application", i)->getSubmodule("app0");
+            }
+
             jobSel->job = dynamic_cast<UserJob*>(auxMod);
 
             jobSel->job->setOriginalName(jobSel->appName);
@@ -273,13 +280,23 @@ void AbstractUserGenerator::createUser() {
             bool br = false;
             vmImages = getParentModule()->getParentModule()->getParentModule()->getSubmodule("vmSet");
 
-            for (int k = 0; (k < vmImages->getVectorSize()) && (!br); k++) {
+
+            auto vmSizeArray = vmImages->getSubmoduleVectorSize("vmImage");
+            for (unsigned int k = 0; (k < vmSizeArray) && (!br); k++) {
                 vm = vmImages->getSubmodule("vmImage", k);
                 if (strcmp(vm->par("id").stringValue(), vmSelectionType.c_str())
                         == 0) {
                     br = true;
                 }
             }
+
+//            for (int k = 0; (k < vmImages->getVectorSize()) && (!br); k++) {
+//                vm = vmImages->getSubmodule("vmImage", k);
+//                if (strcmp(vm->par("id").stringValue(), vmSelectionType.c_str())
+//                        == 0) {
+//                    br = true;
+//                }
+//            }
 
             //vm = getParentModule()->getParentModule()->getParentModule()->getSubmodule("vmSet")->getSubmodule(vmSelectionType.c_str());
             if (vm == nullptr) {
@@ -447,7 +464,15 @@ UserJob* AbstractUserGenerator::cloneJob (UserJob* app, cModule* userMod, string
             cloneApp->par(i) = app->par(i);
         }
 
-        cloneApp->setName("app");
+        // Create a unique name for this clone
+        std::string baseName("app");
+        std::string modName = baseName;
+        int index = 0;
+        modName = baseName+ std::to_string(index++);
+        while (userMod->hasSubmodule(modName.c_str())) {
+            modName = baseName+ std::to_string(index++);
+        }
+        cloneApp->setName(modName.c_str());
 
     // Finalize and build the module
         cloneApp->finalizeParameters();

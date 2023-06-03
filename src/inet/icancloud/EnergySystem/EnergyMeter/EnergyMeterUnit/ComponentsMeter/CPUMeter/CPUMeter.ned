@@ -29,8 +29,8 @@ module CPUMeter like IEnergyMeterUnit
 
     submodules:
         core: CPUMeterCore {
-			componentType = componentType;
-			componentName = componentName;
+			componentType = parent.componentType;
+			componentName = parent.componentName;
             @display("p=149,143");
         }
         state[numEnergyStates]: EState {

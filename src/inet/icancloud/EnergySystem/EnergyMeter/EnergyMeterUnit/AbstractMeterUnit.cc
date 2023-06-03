@@ -209,7 +209,14 @@ void AbstractMeterUnit::activateMeter(unsigned componentIndex, bool heterogeneou
             mod = getParentModule()->getParentModule()->getParentModule()->getSubmodule("memory");
         }
         else if (strcmp(type.c_str(), "storage") == 0){
-            mod = getParentModule()->getParentModule()->getParentModule()->getSubmodule("storageSystem",0)->getSubmodule("eController");
+            auto modAux = getParentModule()->getParentModule()->getParentModule()->getSubmodule("storageSystem",0);
+            if (modAux == nullptr) {
+                modAux = getParentModule()->getParentModule()->getParentModule()->getSubmodule("storageSystem");
+                if (modAux == nullptr)
+                    throw cRuntimeError("storageSystem not found");
+            }
+
+            mod = modAux->getSubmodule("eController");
         }
         else if (strcmp(type.c_str(), "network") == 0){
            mod = getParentModule()->getParentModule()->getParentModule()->getSubmodule("hypervisor")->getSubmodule("networkService");

@@ -76,7 +76,16 @@ UserJob::~UserJob() {
              cloneApp->par(i) = this->par(i);
          }
 
-         cloneApp->setName("app");
+         // Create a unique name for this clone
+         std::string baseName("app");
+         std::string modName = baseName;
+         int index = 0;
+         modName = baseName+ std::to_string(index++);
+         while (userMod->hasSubmodule(modName.c_str())) {
+             modName = baseName+ std::to_string(index++);
+         }
+
+         cloneApp->setName(modName.c_str());
 
      // Finalize and build the module
          cloneApp->finalizeParameters();

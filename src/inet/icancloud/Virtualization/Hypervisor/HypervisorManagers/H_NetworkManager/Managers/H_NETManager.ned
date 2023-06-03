@@ -42,10 +42,10 @@ module H_NETManager like IH_NETManager
 
         netManager: <schedulerType> like IH_NETManager{
             parameters:
-        		networkOverhead = networkOverhead;        		
-                storageApp_ModuleIndex = storageApp_ModuleIndex;
-                connectionTimeOut = connectionTimeOut;
-                routingTableModule = routingTableModule;
+        		networkOverhead = parent.networkOverhead;        		
+                storageApp_ModuleIndex = parent.storageApp_ModuleIndex;
+                connectionTimeOut = parent.connectionTimeOut;
+                routingTableModule = parent.routingTableModule;
                 @display("i=icons/Redirector;p=77,73");
             gates:
 

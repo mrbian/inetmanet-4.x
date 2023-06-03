@@ -40,7 +40,7 @@ module UserGenerator_cell
     submodules:
         vmDefinition: VmDefinition {
             parameters:
-                vmsToRentTypesQuantity = vmsToRentTypesQuantity;
+                vmsToRentTypesQuantity = parent.vmsToRentTypesQuantity;
                 @display("p=57,171;is=vl");
         }
 
@@ -58,15 +58,15 @@ module UserGenerator_cell
 
         core: <cell_type> like IUserGenerator {
             parameters:
-                name = name;
-                behavior = behavior;
-                quantity_user_preloaded = quantity_user_preloaded;							// Users preloaded at the system before the distribution begins
-                total_users = total_users;										// Total users to be created per total time creation.
-                time_creation = time_creation;									// Time creation in hours of users in the system in hours
-                remoteServers = remoteServers;
-                vmsToRentTypesQuantity = vmsToRentTypesQuantity;
-                printResults = printResults;
-                repetitions = repetitions;
+                name = parent.name;
+                behavior = parent.behavior;
+                quantity_user_preloaded = parent.quantity_user_preloaded;							// Users preloaded at the system before the distribution begins
+                total_users = parent.total_users;										// Total users to be created per total time creation.
+                time_creation = parent.time_creation;									// Time creation in hours of users in the system in hours
+                remoteServers = parent.remoteServers;
+                vmsToRentTypesQuantity = parent.vmsToRentTypesQuantity;
+                printResults = parent.printResults;
+                repetitions = parent.repetitions;
                 @display("p=226,171;is=vl");
         }
 

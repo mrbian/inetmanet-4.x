@@ -739,6 +739,7 @@ void AbstractDCManager::freeComputingBookByTimeout(int messageID){
           }
 
       }
+      EV_DEBUG << "numCores : "<< numCores <<endl;
 }
 
 connection_T* AbstractDCManager::bookStorageResources(int uid, int jobId, int nodeSet, int nodeID, double storage){
@@ -815,6 +816,7 @@ void AbstractDCManager::freeStorageBook(int messageID, int uid, int jobId, strin
           }
 
       }
+      EV_DEBUG << "storageSize : "<< storageSize <<endl;
 }
 
 void AbstractDCManager::processRollBack(int uid, int jobId){
@@ -854,7 +856,7 @@ void AbstractDCManager::processRollBack(int uid, int jobId){
         else
             i++;
     }
-
+    EV_DEBUG << "Num cores: " << numCores << " storeageSize: " << storageSize <<endl;
     freeUserComputeEntry(uid,jobId);
 }
 
@@ -1043,6 +1045,9 @@ void AbstractDCManager::configureMap (MachinesMap* map){
                 //Activate network nodes
 
                 nodeMod = getParentModule()->getSubmodule(node->getName(), j);
+                // it is possible that it is not a vector, try it
+                if (nodeMod == nullptr && nodeSetQuantity == 1)
+                    nodeMod = getParentModule()->getSubmodule(node->getName());
 
                 if (nodeMod != nullptr){
 

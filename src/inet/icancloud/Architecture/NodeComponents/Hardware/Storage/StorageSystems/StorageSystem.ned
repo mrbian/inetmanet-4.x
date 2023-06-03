@@ -36,7 +36,7 @@ module StorageSystem
         eController: StorageController {
             parameters:
                 @display("p=103,158");
-                numStorageSystems = numStorageSystems;
+                numStorageSystems = parent.numStorageSystems;
                 
         }
     connections allowunconnected:

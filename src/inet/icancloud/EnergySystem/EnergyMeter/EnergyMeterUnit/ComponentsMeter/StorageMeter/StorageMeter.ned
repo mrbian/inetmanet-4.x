@@ -34,8 +34,8 @@ module StorageMeter like IEnergyMeterUnit
         }
 
         core: StorageMeterCore {
-            componentName = componentName;
-            componentType = componentType;
+            componentName = parent.componentName;
+            componentType = parent.componentType;
             @display("p=296,67");
         }
 }

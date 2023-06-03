@@ -265,7 +265,9 @@ void AbstractCloudManager::initManager (int totalNodes){
                 // Get the Storage Nodes
                     storageSetSize = config->getNumberOfStorageNodeTypes();
 
+                    auto baseName = config->generateStructureOfStorageNodes(-1);
                     for (int j = 0; j < storageSetSize; j++){
+
 
                         nodeNames = config->generateStructureOfStorageNodes(j);
 
@@ -274,10 +276,20 @@ void AbstractCloudManager::initManager (int totalNodes){
                         componentsLoaded = false;
 
                         // link all the created nodes by omnet in the vector nodeSet.
-                          for (i = 0 ; i < (int)nodeNames.size(); i++){
+                        for (i = 0 ; i < (int)nodeNames.size(); i++){
 
                               auto nodeName = (*(nodeNames.begin() + i));
-                              auto nodeMod = getSimulation()->getActiveSimulation()->getModuleByPath(nodeName.c_str());
+                              auto nodeMod = getSimulation()->getActiveSimulation()->findModuleByPath(nodeName.c_str());
+                              if (nodeMod == nullptr) {
+                                  // try to find using base name
+                                  auto nodeNameAux = baseName.front();
+                                  auto nodeModAux = getSimulation()->getActiveSimulation()->findModuleByPath(nodeNameAux.c_str());
+                                  if (nodeModAux == nullptr) {
+                                      throw cRuntimeError("Node with name %s or %s not found", nodeName.c_str(), nodeNameAux.c_str());
+                                  }
+                                  nodeName = nodeNameAux;
+                                  nodeMod = nodeModAux;
+                              }
                               //nodeMod = getParentModule()->getParentModule()->getModuleByPath(nodeName.c_str());
 
                               auto nodeChecked = check_and_cast<Node*>(nodeMod);

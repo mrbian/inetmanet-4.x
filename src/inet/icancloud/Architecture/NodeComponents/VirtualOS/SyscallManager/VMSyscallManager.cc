@@ -55,7 +55,7 @@ void VMSyscallManager::processRequestMessage (Packet *pktSm){
         else {
             for (cModule::SubmoduleIterator i(getParentModule()); !i.end() && !found; i++) {
                 cModule* currentApp = *i;
-                if (strcmp(currentApp->getFullName(), "app" ) == 0) {// if submod() is in the same vector as this module
+                if (strncmp(currentApp->getFullName(), "app", strlen("app")) == 0) {// if submod() is in the same vector as this module
                     if (currentApp->hasPar("myRank")){
                         int currentRank = currentApp->par("myRank");
 

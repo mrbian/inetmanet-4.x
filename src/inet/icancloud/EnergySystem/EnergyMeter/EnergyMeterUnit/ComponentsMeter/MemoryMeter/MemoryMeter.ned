@@ -35,10 +35,10 @@ module MemoryMeter like IEnergyMeterUnit
 
         core: MemoryMeterCore {
             parameters:
-                componentName = componentName;
-                componentType = componentType;
-                numModules = numModules;
-                numDRAMChips = numDRAMChips;
+                componentName = parent.componentName;
+                componentType = parent.componentType;
+                numModules = parent.numModules;
+                numDRAMChips = parent.numDRAMChips;
 
                 @display("p=266,59");
         }

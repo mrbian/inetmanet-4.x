@@ -82,9 +82,9 @@ module MainHypervisor like IHypervisor
 
         memoryManager: <memScheduler> like IH_MemoryManager {
             parameters:
-				blockSize_KB = blockSize_KB;
-				memorySize_MB = memorySize_MB;
-				memoryOverhead_MB = memoryOverhead_MB;
+				blockSize_KB = parent.blockSize_KB;
+				memorySize_MB = parent.memorySize_MB;
+				memoryOverhead_MB = parent.memoryOverhead_MB;
                 @display("i=icons/Redirector;p=365,72");
             gates:
                 fromVMMemoryI[];
@@ -100,48 +100,48 @@ module MainHypervisor like IHypervisor
 
         storageManager:  H_StorageManagerModule { 
             parameters:
-                numStorageServers = numStorageServers;
+                numStorageServers = parent.numStorageServers;
                 // Storage remote parameters                        
-                requestSize_KB = requestSize_KB;
-                strideSize_KB = strideSize_KB;
-                storageManagerSched = storageScheduler;
-                ioOverhead = ioOverhead;
+                requestSize_KB = parent.requestSize_KB;
+                strideSize_KB = parent.strideSize_KB;
+                storageManagerSched = parent.storageScheduler;
+                ioOverhead = parent.ioOverhead;
                 @display("i=icons/Redirector;p=77,182");
             gates:
                 fromVMStorageServers[];
                 toVMStorageServers[];
-                fromNodeStorageServers[numStorageServers];
-                toNodeStorageServers[numStorageServers];
+                fromNodeStorageServers[this.numStorageServers];
+                toNodeStorageServers[this.numStorageServers];
                 fromNET_Manager;
                 toNET_Manager;
         }
 
         cpuManager: <cpuScheduler> like IH_CPUManager {
             parameters:
-                numCPUs = numCPUs;
-                computingOverhead = computingOverhead;
+                numCPUs = parent.numCPUs;
+                computingOverhead = parent.computingOverhead;
                 @display("i=icons/Redirector;p=365,182");
             gates:
                 fromVMCPU[];
                 toVMCPU[];
 
-                fromNodeCPU[numCPUs];
-                toNodeCPU[numCPUs];
+                fromNodeCPU[this.numCPUs];
+                toNodeCPU[this.numCPUs];
         }
 
         networkService: <networkServiceType> like INetworkService {
             parameters:
-                localIP = ip;
+                localIP = parent.ip;
                 @display("i=icons/Redirector;p=214,72");
         }
 
         netManager: H_NETManager {
             parameters:
-                networkOverhead = networkOverhead;
-                routingTableModule = routingTableModule;
-                storageApp_ModuleIndex = storageApp_ModuleIndex;
-                connectionTimeOut = connectionTimeOut;
-                schedulerType = netScheduler;
+                networkOverhead = parent.networkOverhead;
+                routingTableModule = parent.routingTableModule;
+                storageApp_ModuleIndex = parent.storageApp_ModuleIndex;
+                connectionTimeOut = parent.connectionTimeOut;
+                schedulerType = parent.netScheduler;
                 @display("i=icons/Redirector;p=77,72");
             gates:
 

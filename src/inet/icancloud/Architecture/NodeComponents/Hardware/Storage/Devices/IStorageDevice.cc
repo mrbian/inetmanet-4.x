@@ -9,9 +9,15 @@ void IStorageDevice::initialize(int stage){
 
     HWEnergyInterface::initialize(stage);
     if (stage == INITSTAGE_PHYSICAL_ENVIRONMENT) {
-
         storageMod = check_and_cast<StorageController*> (getParentModule()->getParentModule()->getSubmodule("eController"));
-        storageMod->registerDevice(this, getIndex());
+        if (this->isVector()) {
+            storageMod->registerDevice(this, getIndex());
+        }
+        else
+            storageMod->registerDevice(this, getParentModule()->getIndex());
+
+
+
     }
 }
 

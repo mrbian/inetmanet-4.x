@@ -38,8 +38,8 @@ module CPU_Module like ICPU_Module
 
         eController: CPUController {
             parameters:
-                numCPUs = numCPUs;
-                indepentCores = indepentCores;
+                numCPUs = parent.numCPUs;
+                indepentCores = parent.indepentCores;
                 @display("p=229,54");
         }
 

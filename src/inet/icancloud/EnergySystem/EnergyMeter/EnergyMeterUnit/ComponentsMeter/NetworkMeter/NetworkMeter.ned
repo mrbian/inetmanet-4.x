@@ -31,8 +31,8 @@ module NetworkMeter like IEnergyMeterUnit
             @display("p=149,59");
         }
         core: NetworkMeterCore {
-            componentName = componentName;
-            componentType = componentType;
+            componentName = parent.componentName;
+            componentType = parent.componentType;
             @display("p=292,59");
         }
 }

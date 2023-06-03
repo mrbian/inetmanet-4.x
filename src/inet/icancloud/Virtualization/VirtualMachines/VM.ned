@@ -47,8 +47,8 @@ module VM like IVM
         output toNodeStorageSystem[numStorageSystems]@loose;
 
         //cpu        
-        input fromNodeCPU[numCores]@loose;
-        output toNodeCPU[numCores]@loose;
+        input fromNodeCPU[this.numCores]@loose;
+        output toNodeCPU[this.numCores]@loose;
 
 		//memory
         input fromNodeMemoryI@loose;

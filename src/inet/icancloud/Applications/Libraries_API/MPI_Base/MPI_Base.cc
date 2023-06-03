@@ -352,7 +352,7 @@ bool MPI_Base::isProcessInThisNode(unsigned int processID) {
     for (cModule::SubmoduleIterator i(getParentModule()); !i.end(); i++) {
         currentApp = *i;
 
-        if (strcmp(currentApp->getFullName(), "app") == 0) // if submod() is in the same vector as this module
+        if (strncmp(currentApp->getFullName(), "app", strlen("app")) == 0) // if submod() is in the same vector as this module
                 {
 
             if (currentApp->hasPar("myRank")) {
