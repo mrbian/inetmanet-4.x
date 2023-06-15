@@ -5,8 +5,8 @@
 //
 
 
-#ifndef __INET_POSITIONTABLE_H
-#define __INET_POSITIONTABLE_H
+#ifndef __INET_GPSRPOSITIONTABLE_H
+#define __INET_GPSRPOSITIONTABLE_H
 
 #include <map>
 #include <vector>
@@ -19,7 +19,7 @@ namespace inet {
 /**
  * This class provides a mapping between node addresses and their positions.
  */
-class INET_API PositionTable
+class INET_API GpsrPositionTable
 {
   private:
     typedef std::pair<simtime_t, Coord> AddressToPositionMapValue;
@@ -27,22 +27,12 @@ class INET_API PositionTable
     AddressToPositionMap addressToPositionMap;
 
   public:
-    PositionTable() {}
-
-    std::vector<L3Address> getAddresses() const;
-
-    bool hasPosition(const L3Address& address) const;
     Coord getPosition(const L3Address& address) const;
     void setPosition(const L3Address& address, const Coord& coord);
 
-    void removePosition(const L3Address& address);
-    void removeOldPositions(simtime_t timestamp);
-
     void clear();
 
-    simtime_t getOldestPosition() const;
-
-    friend std::ostream& operator<<(std::ostream& o, const PositionTable& t);
+    friend std::ostream& operator<<(std::ostream& o, const GpsrPositionTable& t);
 };
 
 } // namespace inet
