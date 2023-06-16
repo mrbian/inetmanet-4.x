@@ -50,6 +50,7 @@ void PreemptingServer::endStreaming()
 {
     auto packet = provider.pullPacketEnd();
     take(packet);
+    EV_INFO << "Ending streaming packet" << EV_FIELD(packet) << EV_ENDL;
     delete streamedPacket;
     streamedPacket = packet;
     EV_INFO << "Ending streaming packet" << EV_FIELD(packet, *streamedPacket) << EV_ENDL;
@@ -61,6 +62,7 @@ void PreemptingServer::endStreaming()
 void PreemptingServer::handleCanPushPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPushPacketChanged");
+    EV_DEBUG << "Checking if packet streaming should be started" << EV_ENDL;
     if (!isStreaming() && canStartStreaming())
         startStreaming();
 }
@@ -68,11 +70,8 @@ void PreemptingServer::handleCanPushPacketChanged(const cGate *gate)
 void PreemptingServer::handleCanPullPacketChanged(const cGate *gate)
 {
     Enter_Method("handleCanPullPacketChanged");
-    if (isStreaming()) {
-        endStreaming();
-        cancelClockEvent(timer);
-    }
-    else if (canStartStreaming())
+    EV_DEBUG << "Checking if packet streaming should be started" << EV_ENDL;
+    if (!isStreaming() && canStartStreaming())
         startStreaming();
 }
 
@@ -87,6 +86,18 @@ void PreemptingServer::handlePushPacketProcessed(Packet *packet, const cGate *ga
         delete streamedPacket;
         streamedPacket = nullptr;
     }
+}
+
+void PreemptingServer::pushPacketEnd(Packet *packet, const cGate *gate)
+{
+    Enter_Method("pushPacketEnd");
+    ASSERT(isStreaming());
+    EV_INFO << "Ending packet streaming, requested by packet producer" << EV_FIELD(packet) << EV_ENDL;
+    take(packet);
+    consumer.pushPacketEnd(packet);
+    cancelEvent(timer);
+    streamedPacket = nullptr;
+    updateDisplayString();
 }
 
 } // namespace queueing

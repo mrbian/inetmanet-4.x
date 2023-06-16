@@ -19,7 +19,6 @@ void PacketGateBase::initialize(int stage)
         bitrate = bps(par("bitrate"));
         extraLength = b(par("extraLength"));
         extraDuration = par("extraDuration");
-        getDisplayString().setTagArg("i", 2, 20);
         WATCH(isOpen_);
     }
     else if (stage == INITSTAGE_LAST)
@@ -58,6 +57,13 @@ void PacketGateBase::close()
 {
     ASSERT(isOpen_);
     EV_DEBUG << "Closing gate" << EV_ENDL;
+    if (isStreamingPacket()) {
+        auto packet = provider.pullPacketEnd();
+        EV_INFO << "Ending packet streaming" << EV_FIELD(packet) << EV_ENDL;
+        take(packet);
+        endPacketStreaming(packet);
+        consumer.pushPacketEnd(packet);
+    }
     isOpen_ = false;
     if (producer != nullptr)
         producer.handleCanPushPacketChanged();
