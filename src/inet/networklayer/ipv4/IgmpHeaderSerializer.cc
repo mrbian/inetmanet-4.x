@@ -40,7 +40,7 @@ void IgmpHeaderSerializer::serialize(MemoryOutputStream& stream, const Ptr<const
             stream.writeIpv4Address(check_and_cast<const IgmpQuery *>(igmpMessage.get())->getGroupAddress());
             if (auto igmpv3Query = dynamicPtrCast<const Igmpv3Query>(igmpMessage)) {
                 ASSERT(igmpv3Query->getRobustnessVariable() <= 7);
-                stream.writeNBitsOfUint64Be(igmpv3Query->getResv(), 4);
+                stream.writeUint4(igmpv3Query->getResv());
                 stream.writeBit(igmpv3Query->getSuppressRouterProc());
                 stream.writeNBitsOfUint64Be(igmpv3Query->getRobustnessVariable(), 3);
                 stream.writeByte(igmpv3Query->getQueryIntervalCode());
@@ -131,7 +131,7 @@ const Ptr<Chunk> IgmpHeaderSerializer::deserialize(MemoryInputStream& stream) co
                 igmpv3Query->setCrc(chksum);
                 igmpv3Query->setCrcMode(CRC_COMPUTED);
                 igmpv3Query->setGroupAddress(stream.readIpv4Address());
-                igmpv3Query->setResv(stream.readNBitsToUint64Be(4));
+                igmpv3Query->setResv(stream.readUint4());
                 igmpv3Query->setSuppressRouterProc(stream.readBit());
                 igmpv3Query->setRobustnessVariable(stream.readNBitsToUint64Be(3));
                 igmpv3Query->setQueryIntervalCode(stream.readByte());

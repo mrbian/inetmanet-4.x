@@ -132,8 +132,8 @@ void Ieee80211MacHeaderSerializer::serialize(MemoryOutputStream& stream, const P
     B startPos = stream.getLength();
     auto macHeader = dynamicPtrCast<const Ieee80211MacHeader>(chunk);
     stream.writeUint4(macHeader->getSubType());
-    stream.writeNBitsOfUint64Be(macHeader->getFrameType(), 2);
-    stream.writeNBitsOfUint64Be(macHeader->getProtocolVersion(), 2);
+    stream.writeUint2(macHeader->getFrameType());
+    stream.writeUint2(macHeader->getProtocolVersion());
     stream.writeBit(macHeader->getOrder());
     stream.writeBit(macHeader->getProtectedFrame());
     stream.writeBit(macHeader->getMoreData());
@@ -332,7 +332,7 @@ void Ieee80211MacHeaderSerializer::serialize(MemoryOutputStream& stream, const P
             if (type == ST_DATA_WITH_QOS) {
                 stream.writeUint4(dataHeader->getTid());
                 stream.writeBit(true);
-                stream.writeNBitsOfUint64Be(dataHeader->getAckPolicy(), 2);
+                stream.writeUint2(dataHeader->getAckPolicy());
                 stream.writeBit(dataHeader->getAMsduPresent());
                 stream.writeByte(0);
             }
@@ -353,8 +353,8 @@ const Ptr<Chunk> Ieee80211MacHeaderSerializer::deserialize(MemoryInputStream& st
 {
     auto macHeader = makeShared<Ieee80211MacHeader>();
     uint8_t subType = stream.readUint4();
-    uint8_t frameType = stream.readNBitsToUint64Be(2);
-    uint8_t protocolVersion = stream.readNBitsToUint64Be(2);
+    uint8_t frameType = stream.readUint2();
+    uint8_t protocolVersion = stream.readUint2();
     macHeader->setType(protocolVersion, frameType, subType);
     bool order = stream.readBit();
     macHeader->setOrder(order);
@@ -579,7 +579,7 @@ const Ptr<Chunk> Ieee80211MacHeaderSerializer::deserialize(MemoryInputStream& st
             if (type == ST_DATA_WITH_QOS) {
                 dataHeader->setTid(stream.readUint4());
                 stream.readBit();
-                dataHeader->setAckPolicy(static_cast<AckPolicy>(stream.readNBitsToUint64Be(2)));
+                dataHeader->setAckPolicy(static_cast<AckPolicy>(stream.readUint2()));
                 dataHeader->setAMsduPresent(stream.readBit());
                 stream.readByte();
             }

@@ -103,8 +103,8 @@ void PimPacketSerializer::serialize(MemoryOutputStream& stream, const Ptr<const 
     const auto& pimPacket = staticPtrCast<const PimPacket>(chunk);
     // PIM header common to all PIM messages:
     // | PIM version (4 bits) | Type (4 bits) | Reserved (8 bits) | Checksum (16 bits) |
-    stream.writeNBitsOfUint64Be(pimPacket->getVersion(), 4);
-    stream.writeNBitsOfUint64Be(pimPacket->getType(), 4);
+    stream.writeUint4(pimPacket->getVersion());
+    stream.writeUint4(pimPacket->getType());
     stream.writeByte(pimPacket->getReserved());
     stream.writeUint16Be(pimPacket->getCrc());
     switch (pimPacket->getType()) {
@@ -219,8 +219,8 @@ const Ptr<Chunk> PimPacketSerializer::deserialize(MemoryInputStream& stream) con
     auto pimPacket = makeShared<PimPacket>();
     // PIM header common to all PIM messages:
     // | PIM version (4 bits) | Type (4 bits) | Reserved (8 bits) | Checksum (16 bits) |
-    pimPacket->setVersion(stream.readNBitsToUint64Be(4));
-    pimPacket->setType(static_cast<PimPacketType>(stream.readNBitsToUint64Be(4)));
+    pimPacket->setVersion(stream.readUint4());
+    pimPacket->setType(static_cast<PimPacketType>(stream.readUint4()));
     pimPacket->setReserved(stream.readByte());
     pimPacket->setCrc(stream.readUint16Be());
     pimPacket->setCrcMode(CRC_COMPUTED);

@@ -77,9 +77,9 @@ class INET_API MemoryOutputStream
 
     void copyData(std::vector<uint8_t>& result, B offset = B(0), B length = B(-1)) const {
         auto end = length == B(-1) ? B(data.size()) : offset + length;
-        assert(b(0) <= offset && offset <= B(data.size()));
-        assert(b(0) <= end && end <= B(data.size()));
-        assert(offset <= end);
+        ASSERT(b(0) <= offset && offset <= B(data.size()));
+        ASSERT(b(0) <= end && end <= B(data.size()));
+        ASSERT(offset <= end);
         result.insert(result.begin(), data.begin() + B(offset).get(), data.begin() + B(end).get());
     }
     //@}
@@ -150,13 +150,18 @@ class INET_API MemoryOutputStream
      * byte order and in MSB to LSB bit order.
      */
     void writeBytes(const std::vector<uint8_t>& bytes, B offset = B(0), B length = B(-1)) {
-        assert(isByteAligned());
         auto end = length == B(-1) ? B(bytes.size()) : offset + length;
-        assert(b(0) <= offset && offset <= B(bytes.size()));
-        assert(b(0) <= end && end <= B(bytes.size()));
-        assert(offset <= end);
-        data.insert(data.end(), bytes.begin() + B(offset).get(), bytes.begin() + B(end).get());
-        this->length += end - offset;
+        ASSERT(b(0) <= offset && offset <= B(bytes.size()));
+        ASSERT(b(0) <= end && end <= B(bytes.size()));
+        ASSERT(offset <= end);
+        if (isByteAligned()) {
+            data.insert(data.end(), bytes.begin() + B(offset).get(), bytes.begin() + B(end).get());
+            this->length += end - offset;
+        }
+        else {
+            for (size_t i = B(offset).get(); i < B(end).get(); i++)
+                writeByte(bytes.at(i));
+        }
     }
 
     /**
@@ -164,9 +169,14 @@ class INET_API MemoryOutputStream
      * byte order and in MSB to LSB bit order.
      */
     void writeBytes(const uint8_t *buffer, B length) {
-        assert(isByteAligned());
-        data.insert(data.end(), buffer, buffer + B(length).get());
-        this->length += length;
+        if (isByteAligned()) {
+            data.insert(data.end(), buffer, buffer + B(length).get());
+            this->length += length;
+        }
+        else {
+            for (size_t i = 0; i < B(length).get(); i++)
+                writeByte(buffer[i]);
+        }
     }
     //@}
 
@@ -363,7 +373,7 @@ class INET_API MemoryOutputStream
     void writeNBitsOfUint64Be(uint64_t value, uint8_t n) {
         if (n == 0 || n > 64)
             throw cRuntimeError("Can not write 0 bit or more than 64 bits.");
-        uint64_t mul = 1 << (n - 1);
+        uint64_t mul = (uint64_t)1 << (n - 1);
         for (int i = 0; i < n; ++i) {
             writeBit((value & mul) != 0);
             mul >>= 1;

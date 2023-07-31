@@ -61,8 +61,8 @@ class INET_API MemoryInputStream
         length(length == b(-1) ? b(data.size() * 8) : length),
         position(position)
     {
-        assert(b(0) <= this->length);
-        assert(b(0) <= position && position <= this->length);
+        ASSERT(b(0) <= this->length);
+        ASSERT(b(0) <= position && position <= this->length);
     }
 
     MemoryInputStream(const uint8_t *buffer, b length, b position = b(0)) :
@@ -70,8 +70,8 @@ class INET_API MemoryInputStream
         length(length),
         position(position)
     {
-        assert(b(0) <= this->length);
-        assert(b(0) <= position && position <= this->length);
+        ASSERT(b(0) <= this->length);
+        ASSERT(b(0) <= position && position <= this->length);
     }
 
     /** @name Stream querying functions */
@@ -112,9 +112,9 @@ class INET_API MemoryInputStream
 
     void copyData(std::vector<uint8_t>& result, B offset = B(0), B length = B(-1)) const {
         auto end = length == B(-1) ? B(data.size()) : offset + length;
-        assert(b(0) <= offset && offset <= B(data.size()));
-        assert(b(0) <= end && end <= B(data.size()));
-        assert(offset <= end);
+        ASSERT(b(0) <= offset && offset <= B(data.size()));
+        ASSERT(b(0) <= end && end <= B(data.size()));
+        ASSERT(offset <= end);
         result.insert(result.begin(), data.begin() + B(offset).get(), data.begin() + B(end).get());
     }
     //@}
@@ -125,7 +125,7 @@ class INET_API MemoryInputStream
      * Updates the read position of the stream.
      */
     void seek(b position) {
-        assert(b(0) <= position && position <= length);
+        ASSERT(b(0) <= position && position <= length);
         this->position = position;
     }
     //@}
@@ -218,17 +218,22 @@ class INET_API MemoryInputStream
      * the original byte order in MSB to LSB bit order.
      */
     B readBytes(std::vector<uint8_t>& bytes, B length) {
-        assert(isByteAligned());
         if (position + length > this->length) {
             length = this->length - position;
             isReadBeyondEnd_ = true;
         }
         auto end = position + length;
-        assert(b(0) <= position && position <= B(data.size()));
-        assert(b(0) <= end && end <= B(data.size()));
-        assert(position <= end);
-        bytes.insert(bytes.end(), data.begin() + B(position).get(), data.begin() + B(end).get());
-        position += length;
+        ASSERT(b(0) <= position && position <= B(data.size()));
+        ASSERT(b(0) <= end && end <= B(data.size()));
+        ASSERT(position <= end);
+        if (isByteAligned()) {
+            bytes.insert(bytes.end(), data.begin() + B(position).get(), data.begin() + B(end).get());
+            position += length;
+        }
+        else {
+            for (size_t i = 0; i < B(length).get(); i++)
+                bytes.push_back(readByte());
+        }
         return length;
     }
 
@@ -237,13 +242,18 @@ class INET_API MemoryInputStream
      * the original byte order in MSB to LSB bit order.
      */
     B readBytes(uint8_t *buffer, B length) {
-        assert(isByteAligned());
         if (position + length > this->length) {
             length = this->length - position;
             isReadBeyondEnd_ = true;
         }
-        std::copy(data.begin() + B(position).get(), data.begin() + B(position + length).get(), buffer);
-        position += length;
+        if (isByteAligned()) {
+            std::copy(data.begin() + B(position).get(), data.begin() + B(position + length).get(), buffer);
+            position += length;
+        }
+        else {
+            for (size_t i = 0; i < B(length).get(); i++)
+                *buffer++ = readByte();
+        }
         return length;
     }
     //@}
@@ -471,7 +481,7 @@ class INET_API MemoryInputStream
     uint64_t readNBitsToUint64Be(uint8_t n) {
         if (n == 0 || n > 64)
             throw cRuntimeError("Can not read 0 bit or more than 64 bits.");
-        uint64_t mul = 1 << (n - 1);
+        uint64_t mul = (uint64_t)1 << (n - 1);
         uint64_t num = 0;
         for (int i = 0; i < n; ++i) {
             if (readBit())

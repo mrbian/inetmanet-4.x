@@ -40,8 +40,8 @@ needs_sphinx = '3.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'IPython.sphinxext.ipython_console_highlighting',
-    'IPython.sphinxext.ipython_directive',
+#    'IPython.sphinxext.ipython_console_highlighting',
+#    'IPython.sphinxext.ipython_directive',
     'sphinx.ext.mathjax',
     'sphinx.ext.extlinks',
     'sphinx.ext.ifconfig',
@@ -207,7 +207,7 @@ html_theme_options = {
     'show_footer': False,
 
     # google analytics
-    'googleanalytics_id': 'UA-240922-3'
+    'googleanalytics_id': 'G-WPFKHJQDQW'
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

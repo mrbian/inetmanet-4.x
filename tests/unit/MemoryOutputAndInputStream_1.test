@@ -1,10 +1,26 @@
 %description:
-Test MemoryOutputStream
+Test MemoryOutputStream and MemoryInputStream
+
+Write data to MemoryOutputStream, read back and write to a second MemoryOutputStream.
+Checks the two MemoryOutputStreams are have same content.
 
 %includes:
 
+#include "inet/common/MemoryInputStream.h"
 #include "inet/common/MemoryOutputStream.h"
 #include <iomanip>
+
+static std::ostream& operator<<(std::ostream& os, const ::inet::MemoryInputStream& stream)
+{
+    const std::vector<uint8_t>& data = stream.getData();
+    const char *sep = "";
+    for (auto b: data) {
+        os << sep << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)b;
+        sep = " ";
+    }
+    os << std::dec;
+    return os;
+}
 
 static std::ostream& operator<<(std::ostream& os, const ::inet::MemoryOutputStream& stream)
 {
@@ -20,13 +36,48 @@ static std::ostream& operator<<(std::ostream& os, const ::inet::MemoryOutputStre
 
 %global:
 
-#define Bit(x) s.writeBit(x)
-#define BitR(x, y) s.writeBitRepeatedly(x, y)
-#define BitN(x, y) s.writeNBitsOfUint64Be(x, y)
-#define Byte(x) s.writeByte(x)
-#define ByteR(x, y) s.writeByteRepeatedly(x, y)
-#define Bytes(x, y) s.writeBytes(x, inet::B(y))
-#define TEST(x, y, z) { inet::MemoryOutputStream s; try { x; } catch(const std::exception& e) { EV << e.what(); }; EV << "    TEST(" << #x << ", " << #y << ", " << s << ");\n"; }
+using namespace inet;
+
+class WriteTest {
+  public:
+    MemoryOutputStream s;
+    void _Bit(bool x) { s.writeBit(x); }
+    void _BitR(bool x, size_t y) { s.writeBitRepeatedly(x, y); }
+    void _BitN(uint64_t x, uint8_t y) { s.writeNBitsOfUint64Be(x, y); }
+    void _Byte(uint8_t x) { s.writeByte(x); }
+    void _ByteR(uint8_t x, uint8_t y) { s.writeByteRepeatedly(x, y); }
+    void _Bytes(const uint8_t *x, uint8_t y) { s.writeBytes(x, B(y)); }
+};
+
+class ReadTest {
+  public:
+    ReadTest(const std::vector<uint8_t>& data, b len) : is(data, len) {}
+    MemoryInputStream is;
+    MemoryOutputStream os;
+    bool ok = true;
+    void _Bit(bool x) { bool v = is.readBit(); os.writeBit(v); }
+    void _BitR(bool x, size_t y) { os.writeBitRepeatedly(is.readBitRepeatedly(x, y) ? x : !x, y); }
+    void _BitN(uint64_t x, uint8_t y) { uint64_t n = is.readNBitsToUint64Be(y); os.writeNBitsOfUint64Be(n, y); }
+    void _Byte(uint8_t x) { os.writeByte(is.readByte()); }
+    void _ByteR(uint8_t x, uint8_t y) { os.writeByteRepeatedly(is.readByteRepeatedly(x, y) ? x : ~x, y); }
+    void _Bytes(const uint8_t *x, uint8_t y) { std::vector<uint8_t> vec; B l = is.readBytes(vec, B(y)); os.writeBytes(vec, B(0), l); }
+};
+
+#define Bit(x)      test._Bit(x)
+#define BitR(x, y)  test._BitR(x, y)
+#define BitN(x, y)  test._BitN(x, y)
+#define Byte(x)     test._Byte(x)
+#define ByteR(x, y) test._ByteR(x, y)
+#define Bytes(x, y) test._Bytes(x, y)
+#define TEST(x, y, z) { \
+    std::vector<uint8_t> vec; b len; \
+    { WriteTest test; try { x; } catch(const std::exception& e) { EV << e.what(); }; vec = test.s.getData(); len = test.s.getLength(); } \
+    { ReadTest test(vec, len); try { x; } catch(const std::exception& e) { EV << e.what(); }; \
+      EV << "    TEST(" << #x << ", " << #y << ", " << test.is; \
+      if (test.is.getData() != test.os.getData()) \
+        EV << "->" << test.os; \
+      EV << ");\n"; \
+    } }
 
 %activity:
     EV << "Start:\n";
