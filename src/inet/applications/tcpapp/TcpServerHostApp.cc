@@ -26,17 +26,19 @@ void TcpServerHostApp::handleStartOperation(LifecycleOperation *operation)
 {
     const char *localAddress = par("localAddress");
     int localPort = par("localPort");
+    bool autoRead = par("autoRead");
 
     serverSocket.setOutputGate(gate("socketOut"));
     serverSocket.setCallback(this);
     serverSocket.bind(localAddress[0] ? L3Address(localAddress) : L3Address(), localPort);
+    serverSocket.setAutoRead(autoRead);
     serverSocket.listen();
 }
 
 void TcpServerHostApp::handleStopOperation(LifecycleOperation *operation)
 {
     for (auto thread : threadSet)
-        thread->getSocket()->close();
+        thread->close();
     serverSocket.close();
     delayActiveOperationFinish(par("stopOperationTimeout"));
 }
@@ -47,7 +49,7 @@ void TcpServerHostApp::handleCrashOperation(LifecycleOperation *operation)
     while (!threadSet.empty()) {
         auto thread = *threadSet.begin();
         // TODO destroy!!!
-        thread->getSocket()->close();
+        thread->close();
         removeThread(thread);
     }
     // TODO always?
@@ -124,6 +126,7 @@ void TcpServerHostApp::socketClosed(TcpSocket *socket)
 
 void TcpServerHostApp::removeThread(TcpServerThreadBase *thread)
 {
+    Enter_Method("removeThread");
     // remove socket
     socketMap.removeSocket(thread->getSocket());
     threadSet.erase(thread);
@@ -134,6 +137,7 @@ void TcpServerHostApp::removeThread(TcpServerThreadBase *thread)
 
 void TcpServerHostApp::threadClosed(TcpServerThreadBase *thread)
 {
+    Enter_Method("threadClosed");
     // remove socket
     socketMap.removeSocket(thread->getSocket());
     threadSet.erase(thread);
@@ -146,6 +150,7 @@ void TcpServerHostApp::threadClosed(TcpServerThreadBase *thread)
 
 void TcpServerThreadBase::socketDeleted(TcpSocket *socket)
 {
+    Enter_Method("socketDeleted");
     if (socket == sock) {
         sock = nullptr;
         hostmod->socketDeleted(socket);
@@ -155,6 +160,65 @@ void TcpServerThreadBase::socketDeleted(TcpSocket *socket)
 void TcpServerThreadBase::refreshDisplay() const
 {
     getDisplayString().setTagArg("t", 0, TcpSocket::stateName(sock->getState()));
+}
+
+void TcpServerThreadBase::socketDataArrived(TcpSocket *socket, Packet *msg, bool urgent)
+{
+    dataArrived(msg, urgent);
+}
+
+void TcpServerThreadBase::socketAvailable(TcpSocket *socket, TcpAvailableInfo *availableInfo)
+{
+    socket->accept(availableInfo->getNewSocketId());
+}
+
+void TcpServerThreadBase::socketEstablished(TcpSocket *socket)
+{
+    established();
+}
+
+void TcpServerThreadBase::socketPeerClosed(TcpSocket *socket)
+{
+    peerClosed();
+}
+
+void TcpServerThreadBase::socketClosed(TcpSocket *socket)
+{
+    hostmod->threadClosed(this);
+}
+
+void TcpServerThreadBase::socketFailure(TcpSocket *socket, int code)
+{
+    hostmod->removeThread(this);
+}
+
+void TcpServerThreadBase::socketStatusArrived(TcpSocket *socket, TcpStatusInfo *status)
+{
+    statusArrived(status);
+}
+
+TcpServerThreadBase::TcpServerThreadBase()
+{
+    sock = nullptr;
+    hostmod = nullptr;
+}
+
+TcpServerThreadBase::~TcpServerThreadBase()
+{
+    delete sock;
+}
+
+void TcpServerThreadBase::init(TcpServerHostApp *hostmodule, TcpSocket *socket)
+{
+    hostmod = hostmodule;
+    sock = socket;
+}
+
+void TcpServerThreadBase::close()
+{
+    omnetpp::cMethodCallContextSwitcher __ctx(hostmod);
+    __ctx.methodCall("TcpSocket::close");
+    sock->close();
 }
 
 } // namespace inet

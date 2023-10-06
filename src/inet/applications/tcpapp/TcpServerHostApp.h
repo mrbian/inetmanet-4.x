@@ -14,12 +14,10 @@
 
 namespace inet {
 
-// forward declaration:
 class TcpServerThreadBase;
 
 /**
- * Hosts a server application, to be subclassed from TCPServerProcess (which
- * is a sSimpleModule). Creates one instance (using dynamic module creation)
+ * Opens a TCP server socket, and launches one dynamically created module
  * for each incoming connection. More info in the corresponding NED file.
  */
 class INET_API TcpServerHostApp : public ApplicationBase, public TcpSocket::ICallback
@@ -58,8 +56,7 @@ class INET_API TcpServerHostApp : public ApplicationBase, public TcpSocket::ICal
 };
 
 /**
- * Abstract base class for server processes to be used with TcpServerHostApp.
- * Subclasses need to be registered using the Register_Class() macro.
+ * Abstract base class for server process modules to be used with TcpServerHostApp.
  *
  * @see TcpServerHostApp
  */
@@ -70,24 +67,26 @@ class INET_API TcpServerThreadBase : public cSimpleModule, public TcpSocket::ICa
     TcpSocket *sock; // ptr into socketMap managed by TcpServerHostApp
 
     // internal: TcpSocket::ICallback methods
-    virtual void socketDataArrived(TcpSocket *socket, Packet *msg, bool urgent) override { dataArrived(msg, urgent); }
-    virtual void socketAvailable(TcpSocket *socket, TcpAvailableInfo *availableInfo) override { socket->accept(availableInfo->getNewSocketId()); }
-    virtual void socketEstablished(TcpSocket *socket) override { established(); }
-    virtual void socketPeerClosed(TcpSocket *socket) override { peerClosed(); }
-    virtual void socketClosed(TcpSocket *socket) override { hostmod->threadClosed(this); }
-    virtual void socketFailure(TcpSocket *socket, int code) override { failure(code); }
-    virtual void socketStatusArrived(TcpSocket *socket, TcpStatusInfo *status) override { statusArrived(status); }
+    virtual void socketDataArrived(TcpSocket *socket, Packet *msg, bool urgent) override;
+    virtual void socketAvailable(TcpSocket *socket, TcpAvailableInfo *availableInfo) override;
+    virtual void socketEstablished(TcpSocket *socket) override;
+    virtual void socketPeerClosed(TcpSocket *socket) override;
+    virtual void socketClosed(TcpSocket *socket) override;
+    virtual void socketFailure(TcpSocket *socket, int code) override;
+    virtual void socketStatusArrived(TcpSocket *socket, TcpStatusInfo *status) override;
     virtual void socketDeleted(TcpSocket *socket) override;
 
     virtual void refreshDisplay() const override;
 
   public:
 
-    TcpServerThreadBase() { sock = nullptr; hostmod = nullptr; }
-    virtual ~TcpServerThreadBase() { delete sock; }
+    TcpServerThreadBase();
+    virtual ~TcpServerThreadBase();
 
     // internal: called by TcpServerHostApp after creating this module
-    virtual void init(TcpServerHostApp *hostmodule, TcpSocket *socket) { hostmod = hostmodule; sock = socket; }
+    virtual void init(TcpServerHostApp *hostmodule, TcpSocket *socket);
+
+    virtual void close();
 
     /*
      * Returns the socket object
@@ -118,13 +117,7 @@ class INET_API TcpServerThreadBase : public cSimpleModule, public TcpSocket::ICa
      * Called when the client closes the connection. By default it closes
      * our side too, but it can be redefined to do something different.
      */
-    virtual void peerClosed() { getSocket()->close(); }
-
-    /*
-     * Called when the connection breaks (TCP error). By default it deletes
-     * this thread, but it can be redefined to do something different.
-     */
-    virtual void failure(int code) { hostmod->removeThread(this); }
+    virtual void peerClosed() { close(); }
 
     /*
      * Called when a status arrives in response to getSocket()->getStatus().

@@ -10,45 +10,30 @@ package inet.applications.tcpapp;
 import inet.applications.contract.IApp;
 
 //
-// Client for a generic request-response style protocol over TCP.
-// May be used as a rough model of HTTP or FTP users.
+// Client for a generic request-response style protocol over TCP, to be used
+// with ~TcpGenericServerApp.
+//
+// The model communicates with the server in sessions. During a session, the
+// client opens a single TCP connection to the server, sends several requests
+// (always waiting for the complete reply to arrive before sending a new
+// request), and closes the connection. Requests and responses are represented
+// by messages of class ~GenericAppMsg.
+//
+// By default, reading from the socket is not rate limited. To allow rate
+// limiting, set autoRead=false, and use the readSize and readDelay parameters
+// to set a rate limit. This will allow TCP flow control to come into effect.
+//
 // Compatible with both IPv4 (~Ipv4) and IPv6 (~Ipv6).
 //
-// The model communicates with the server in sessions. During a session,
-// the client opens a single TCP connection to the server, sends several
-// requests (always waiting for the complete reply to arrive before
-// sending a new request), and closes the connection.
+// As an example, the following parameterization can be used as a very rough
+// model of an HTTP session where the client downloads a file, or several files.
 //
-// The server app should be ~TcpGenericServerApp; the model sends ~GenericAppMsg
-// messages.
-//
-// Example settings:
-//
-// FTP:
-// <pre>
-//    numRequestsPerSession = exponential(3)
-//    requestLength = 1B*int(truncnormal(20,5))
-//    replyLength = 1B*int(exponential(1000000))
-// </pre>
-//
-// Note that this module doesn't open separate TCP connections for commands
-// and data transfer as the FTP protocol.
-//
-// HTTP:
 // <pre>
 //    numRequestsPerSession = 1 <i>(HTTP 1.0)</i>
 //    numRequestsPerSession = exponential(5) <i>(HTTP 1.1, with keepalive)</i>
 //    requestLength = 1B*int(truncnormal(350,20))
 //    replyLength = 1B*int(exponential(2000))
 // </pre>
-//
-// Note that since most web pages contain images and may contain frames,
-// applets etc, possibly from various servers, and browsers usually download
-// these items in parallel to the main HTML document, this module cannot
-// serve as a realistic web client.
-//
-// Also, with HTTP 1.0 it is the server that closes the connection after
-// sending the response, while in this model it is the client.
 //
 // @see ~TcpGenericServerApp, ~GenericAppMsg, ~TelnetApp
 //
@@ -59,6 +44,9 @@ simple TcpBasicClientApp like IApp
         int localPort = default(-1); // port number to listen on
         string connectAddress = default("");  // server address (may be symbolic)
         int connectPort = default(1000); // port number to connect to
+        bool autoRead = default(true); // whether to use "autoread" or "explicit-read" mode for TCP connection
+        volatile int readSize @unit(B) = default(-1B);    // used only with autoRead==false
+        volatile double readDelay @unit(s) = default(-1s);    // used only with autoRead==false; delay for issuing a READ command after previous READ was satisfied; -1 means immediately, 0 means zero delay
         double startTime @unit(s) = default(1s); // time first session begins
         double stopTime @unit(s) = default(-1s);  // time of finishing sending, negative values mean forever
         volatile int numRequestsPerSession = default(1);  // number of requests sent per session

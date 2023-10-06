@@ -545,9 +545,9 @@ TcpEventCode TcpConnection::processSegment1stThru8th(Packet *tcpSegment, const P
                     // as many bytes as requested. rcv_wnd should be decreased
                     // accordingly!
                     //
-                    if (!isToBeAccepted())
+                    if (!isToBeAccepted()) {
                         sendAvailableDataToApp();
-
+                    }
                     // if this segment "filled the gap" until the previously arrived segment
                     // that carried a FIN (i.e.rcv_nxt == rcv_fin_seq), we have to advance
                     // rcv_nxt over the FIN.
@@ -1131,7 +1131,7 @@ bool TcpConnection::processAckInEstabEtc(Packet *tcpSegment, const Ptr<const Tcp
     int payloadLength = tcpSegment->getByteLength() - B(tcpHeader->getHeaderLength()).get();
 
     // ECN
-    TcpStateVariables *state = getState();
+    TcpStateVariables *state = getStateForUpdate();
     if (state && state->ect) {
         if (tcpHeader->getEceBit() == true)
             EV_INFO << "Received packet with ECE\n";

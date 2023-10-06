@@ -13,7 +13,7 @@ standard OMNeT++ message passing interface for several communication
 protocols.
 
 Sockets are most often used by applications and routing protocols to
-acccess the corresponding protocol services. Sockets are capable of
+access the corresponding protocol services. Sockets are capable of
 communicating with the underlying protocol in a bidirectional way. They
 can assemble and send service requests and packets, and they can also
 receive service indications and packets.
@@ -21,7 +21,7 @@ receive service indications and packets.
 Applications can simply call the socket class member functions (e.g.
 :fun:`bind()`, :fun:`connect()`, :fun:`send()`, :fun:`close()`) to
 create and configure sockets, and to send and receive packets. They may
-also use several different sockets simulatenously.
+also use several different sockets simultaneously.
 
 The following sections first introduce the shared functionality of
 sockets, and then list all INET sockets in detail, mostly by shedding
@@ -416,10 +416,19 @@ over time according to the protocol logic.
 Receiving Data
 ~~~~~~~~~~~~~~
 
-Receiving data is as simple as implementing the corresponding method of
+The socket can be in one of two modes: "autoread" and "explicit-read". In
+"autoread" mode, TCP immediately forwards received data to the socket, whereas
+in "explicit-read" mode, the application must explicitly request data by calling
+the :cpp:`read()` method of :cpp:`TcpSocket`. By default, the socket is created
+in "autoread" mode; "explicit-read" mode can be selected by calling
+:cpp:`setAutoRead(false)` before the connection is established. Note that
+sockets created by forking off a listening socket inherit the mode from the
+listening socket.
+
+Receiving data is done by implementing the corresponding method of
 the :cpp:`TcpSocket::ICallback` interface. One caveat is that packet
 data may arrive in different chunk sizes (but the same order) than they
-were sent due to the nature of :protocol:`TCP` protocol.
+were sent, due to the nature of :protocol:`TCP` protocol.
 
 For example, the application may directly implement the
 :cpp:`TcpSocket::ICallback` interface and print the received data as
@@ -523,7 +532,7 @@ Sending Data
 ~~~~~~~~~~~~
 
 After the connection has been established, applications can send data to
-the remote applica- tion via a simple function call:
+the remote application via a simple function call:
 
 .. literalinclude:: lib/Snippets.cc
    :language: cpp

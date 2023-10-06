@@ -63,19 +63,62 @@ void TcpSinkAppThread::initialize(int stage)
     }
 }
 
+void TcpSinkAppThread::handleMessage(cMessage *msg)
+{
+    if(msg->isSelfMessage()) {
+        timerExpired(msg);
+    }
+    else
+        throw cRuntimeError("Received a non-self message.");
+}
+
+void TcpSinkAppThread::timerExpired(cMessage *timer)
+{
+    ASSERT(getSimulation()->getContext() == this);
+
+    if (timer == readDelayTimer) {
+        // send read message to TCP
+        read();
+    }
+    else
+        throw cRuntimeError("Model error: unknown timer message arrived");
+}
+
+void TcpSinkAppThread::sendOrScheduleReadCommandIfNeeded()
+{
+    if (!sock->getAutoRead() && sock->isOpen()) {
+        simtime_t delay = hostmod->par("readDelay");
+        if (delay >= SIMTIME_ZERO) {
+            if (readDelayTimer == nullptr) {
+                readDelayTimer = new cMessage("readDelayTimer");
+                readDelayTimer->setContextPointer(this);
+            }
+            scheduleAfter(delay, readDelayTimer);
+        }
+        else {
+            // send read message to TCP
+            read();
+        }
+    }
+}
+
 void TcpSinkAppThread::established()
 {
+    Enter_Method("established");
     bytesRcvd = 0;
+    sendOrScheduleReadCommandIfNeeded();
 }
 
 void TcpSinkAppThread::dataArrived(Packet *pk, bool urgent)
 {
+    Enter_Method("dataArrived");
     long packetLength = pk->getByteLength();
     bytesRcvd += packetLength;
     sinkAppModule->bytesRcvd += packetLength;
 
     emit(packetReceivedSignal, pk);
     delete pk;
+    sendOrScheduleReadCommandIfNeeded();
 }
 
 void TcpSinkAppThread::refreshDisplay() const
@@ -83,6 +126,13 @@ void TcpSinkAppThread::refreshDisplay() const
     std::ostringstream os;
     os << (sock ? TcpSocket::stateName(sock->getState()) : "NULL_SOCKET") << "\nrcvd: " << bytesRcvd << " bytes";
     getDisplayString().setTagArg("t", 0, os.str().c_str());
+}
+
+void TcpSinkAppThread::read()
+{
+    omnetpp::cMethodCallContextSwitcher __ctx(hostmod);
+    __ctx.methodCall("TcpSocket::read");
+    sock->read(hostmod->par("readSize"));
 }
 
 } // namespace inet
