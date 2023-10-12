@@ -40,6 +40,7 @@ snapshot-file = "${resultdir}/${configname}-${runnumber}.sna"
 **.client.app[0].connectPort = 1000
 **.client.app[0].numRequestsPerSession = 1000
 **.client.app[0].requestLength = 100B
+**.client.app[0].replyLength = 100B
 **.client.app[0].idleInterval = 1000000s
 **.client.app[0].thinkTime = 100ms
 
@@ -80,8 +81,6 @@ network Test
 </scenario>
 
 %contains-regex: stdout
-
-.*
 Test.client shutting down
 .*
 Test.client shut down
@@ -91,7 +90,6 @@ Test.server shutting down
 Test.server shut down
 .*
 Test.client.app\[0\]: received 1000 bytes in 10 packets
-.*
 
 %#--------------------------------------------------------------------------------------------------------------
 %postrun-command: grep "undisposed object:" test.out > test_undisposed.out || true
