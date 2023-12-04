@@ -116,10 +116,8 @@ Packet *PacketQueue::pullPacket(const cGate *gate)
     else
         queue.pop();
     auto queueingTime = simTime() - packet->getArrivalTime();
-    auto packetEvent = new PacketQueuedEvent();
-    packetEvent->setQueuePacketLength(getNumPackets());
-    packetEvent->setQueueDataLength(getTotalLength());
-    insertPacketEvent(this, packet, PEK_QUEUED, queueingTime, packetEvent);
+    auto packetEvent = new PacketEvent();
+    insertPacketEvent(this, packet, PEK_QUEUED, 0, queueingTime, packetEvent);
     increaseTimeTag<QueueingTimeTag>(packet, queueingTime, queueingTime);
     emit(packetPulledSignal, packet);
     if (collector != nullptr)
