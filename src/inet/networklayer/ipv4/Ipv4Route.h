@@ -58,9 +58,6 @@ class INET_API Ipv4Route : public cObject, public IRoute
     virtual void setRoutingTable(IIpv4RoutingTable *rt) { this->rt = rt; }
     IIpv4RoutingTable *getRoutingTable() const { return rt; }
 
-    /** test validity of route entry, e.g. check expiry */
-    virtual bool isValid() const { return true; }
-
     virtual void setDestination(Ipv4Address _dest) { if (dest != _dest) { dest = _dest; changed(F_DESTINATION); } }
     virtual void setNetmask(Ipv4Address _netmask) { if (netmask != _netmask) { netmask = _netmask; changed(F_PREFIX_LENGTH); } }
     virtual void setGateway(Ipv4Address _gateway) { if (gateway != _gateway) { gateway = _gateway; changed(F_NEXTHOP); } }
@@ -167,9 +164,6 @@ class INET_API Ipv4MulticastRoute : public cObject, public IMulticastRoute
     virtual void setRoutingTable(IIpv4RoutingTable *rt) { this->rt = rt; }
     IIpv4RoutingTable *getRoutingTable() const { return rt; }
 
-    /** test validity of route entry, e.g. check expiry */
-    virtual bool isValid() const { return true; }
-
     virtual bool matches(const Ipv4Address& origin, const Ipv4Address& group) const;
 
     virtual void setOrigin(Ipv4Address _origin) { if (origin != _origin) { origin = _origin; changed(F_ORIGIN); } }
@@ -211,13 +205,10 @@ class INET_API Ipv4MulticastRoute : public cObject, public IMulticastRoute
     cObject *getSource() const override { return source; }
 
     virtual IRoutingTable *getRoutingTableAsGeneric() const override;
-    virtual void setEnabled(bool enabled) override { /*TODO setEnabled(enabled);*/ }
     virtual void setOrigin(const L3Address& origin) override { setOrigin(origin.toIpv4()); }
     virtual void setPrefixLength(int len) override { setOriginNetmask(Ipv4Address::makeNetmask(len)); } // TODO inconsistent naming
     virtual void setMulticastGroup(const L3Address& group) override { setMulticastGroup(group.toIpv4()); }
 
-    virtual bool isEnabled() const override { return true; /*TODO isEnabled();*/ }
-    virtual bool isExpired() const override { return !isValid(); } // TODO rename Ipv4 method
     virtual L3Address getOriginAsGeneric() const override { return getOrigin(); }
     virtual int getPrefixLength() const override { return getOriginNetmask().getNetmaskLength(); } // TODO inconsistent naming
     virtual L3Address getMulticastGroupAsGeneric() const override { return getMulticastGroup(); }
