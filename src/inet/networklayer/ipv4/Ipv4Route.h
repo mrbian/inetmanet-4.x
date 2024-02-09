@@ -37,7 +37,6 @@ class INET_API Ipv4Route : public cObject, public IRoute
 
   private:
     // copying not supported: following are private and also left undefined
-    Ipv4Route(const Ipv4Route& obj);
     Ipv4Route& operator=(const Ipv4Route& obj);
 
   protected:
@@ -46,6 +45,7 @@ class INET_API Ipv4Route : public cObject, public IRoute
   public:
     Ipv4Route() : rt(nullptr), interfacePtr(nullptr), sourceType(MANUAL), adminDist(dUnknown),
         metric(0), source(nullptr), protocolData(nullptr) {}
+    Ipv4Route(const Ipv4Route& obj);
     virtual ~Ipv4Route();
     virtual std::string str() const override;
     virtual std::string detailedInfo() const;
@@ -194,6 +194,8 @@ class INET_API Ipv4MulticastRoute : public cObject, public IMulticastRoute
 
     /** The kth out interface */
     OutInterface *getOutInterface(unsigned int k) const { return outInterfaces.at(k); }
+
+    bool hasOutInterface(const NetworkInterface *networkInterface) const;
 
     /** Source of route. MANUAL (read from file), from routing protocol, etc */
     SourceType getSourceType() const override { return sourceType; }
