@@ -264,6 +264,30 @@ void PimDm::receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj
         for (auto it : routes)
             it.second->updateIpv4Route();
     }
+    else if (signalID == interfaceStateChangedSignal) {
+        const auto *ieChangeDetails = check_and_cast<const NetworkInterfaceChangeDetails *>(obj);
+        auto fieldId = ieChangeDetails->getFieldId();
+        if (fieldId == NetworkInterface::F_STATE || fieldId == NetworkInterface::F_CARRIER) {
+            auto ie = ieChangeDetails->getNetworkInterface();
+            for (auto it : routes) {
+                auto route = it.second;
+                auto& dis = route->downstreamInterfaces;
+                auto predicate = [&] (const DownstreamInterface *di) { return di->ie == ie; };
+                if (ie->isUp() && ie->hasCarrier()) {
+                    // mark the interface as pruned
+                    if (std::find_if(dis.begin(), dis.end(), predicate) == dis.end()) {
+                        DownstreamInterface *downstream = route->createDownstreamInterface(ie);
+                        downstream->pruneState = DownstreamInterface::PRUNED;
+                        downstream->startPruneTimer(pruneInterval);
+                    }
+                }
+                else {
+                    // delete PIM state to avoid using it when interface comes back UP again
+                    dis.erase(std::remove_if(dis.begin(), dis.end(), predicate), dis.end());
+                }
+            }
+        }
+    }
 }
 
 // ---- handle timers ----
@@ -1121,11 +1145,12 @@ void PimDm::unroutableMulticastPacketArrived(Ipv4Address source, Ipv4Address gro
         bool hasPIMNeighbors = pimNbt->getNumNeighbors(pimInterface->getInterfaceId()) > 0;
         bool hasConnectedReceivers = pimInterface->getInterfacePtr()->getProtocolData<Ipv4InterfaceData>()->hasMulticastListener(group);
 
+        // create new outgoing interface
+        DownstreamInterface *downstream = route->createDownstreamInterface(pimInterface->getInterfacePtr());
+        downstream->setHasConnectedReceivers(hasConnectedReceivers);
+
         // if there are neighbors on interface, we will forward
         if (hasPIMNeighbors || hasConnectedReceivers) {
-            // create new outgoing interface
-            DownstreamInterface *downstream = route->createDownstreamInterface(pimInterface->getInterfacePtr());
-            downstream->setHasConnectedReceivers(hasConnectedReceivers);
             allDownstreamInterfacesArePruned = false;
         }
     }
@@ -1146,12 +1171,8 @@ void PimDm::unroutableMulticastPacketArrived(Ipv4Address source, Ipv4Address gro
     newRoute->setSourceType(IMulticastRoute::PIM_DM);
     newRoute->setSource(this);
     newRoute->setInInterface(new IMulticastRoute::InInterface(route->upstreamInterface->ie));
-    for (auto& elem : route->downstreamInterfaces) {
-        DownstreamInterface *downstream = elem;
-        newRoute->addOutInterface(new Ipv4MulticastRoute::OutInterface(downstream->ie));
-    }
-
     rt->addMulticastRoute(newRoute);
+    route->updateIpv4Route();
     EV_DETAIL << "New route was added to the multicast routing table.\n";
 }
 
@@ -1651,6 +1672,16 @@ void PimDm::sendToIP(Packet *packet, Ipv4Address srcAddr, Ipv4Address destAddr, 
 //           Helpers
 //----------------------------------------------------------------------------
 
+bool PimDm::isMulticastGroupJoined(Ipv4Address group)
+{
+    for (int i = 0; i < ift->getNumInterfaces(); i++) {
+        auto ipv4InterfaceData = ift->getInterface(i)->getProtocolData<Ipv4InterfaceData>();
+        if (ipv4InterfaceData != nullptr && ipv4InterfaceData->isMemberOfMulticastGroup(group))
+            return true;
+    }
+    return false;
+}
+
 // The set of interfaces defined by the olist(S,G) macro becomes
 // null, indicating that traffic from S addressed to group G should
 // no longer be forwarded.
@@ -1813,6 +1844,9 @@ PimDm::DownstreamInterface *PimDm::Route::removeDownstreamInterface(int interfac
 
 bool PimDm::Route::isOlistNull()
 {
+    // the multicast tree cannot be pruned if local delivery is needed, so we pretend there's an out interface
+    if (static_cast<PimDm *>(owner)->isMulticastGroupJoined(group))
+        return false;
     for (auto& elem : downstreamInterfaces) {
         if (elem->isInOlist())
             return false;
