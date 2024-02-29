@@ -178,8 +178,10 @@ void Ipv4NetworkConfigurator::configureRoutingTable(IIpv4RoutingTable *routingTa
     // TODO avoid linear search
     for (int i = 0; i < topology.getNumNodes(); i++) {
         Node *node = (Node *)topology.getNode(i);
-        if (node->routingTable == routingTable)
+        if (node->routingTable == routingTable) {
             configureRoutingTable(node);
+            break;
+        }
     }
 }
 
@@ -239,7 +241,7 @@ void Ipv4NetworkConfigurator::configureRoutingTable(Node *node)
     auto nodePath = node->getModule()->getFullPath();
     EV_DETAIL << "Configuring routing table" << EV_FIELD(nodePath) << endl;
     EV_DETAIL << "Removing extra routes from routing table" << EV_FIELD(nodePath) << endl;
-    for (size_t i = 0; i < routingTable->getNumRoutes();) {
+    for (int i = 0; i < routingTable->getNumRoutes();) {
         auto route = check_and_cast<Ipv4Route *>(routingTable->getRoute(i));
         if (route->getSourceType() == IRoute::MANUAL && route->getSource() == this) {
             auto predicate = [&] (const Ipv4Route *other) { return equalRoutes(route, other); };
@@ -257,7 +259,7 @@ void Ipv4NetworkConfigurator::configureRoutingTable(Node *node)
             i++;
     }
     EV_DETAIL << "Removing all routes from multicast routing table" << EV_FIELD(nodePath) << endl;
-    for (size_t i = 0; i < routingTable->getNumMulticastRoutes();) {
+    for (int i = 0; i < routingTable->getNumMulticastRoutes();) {
         auto route = routingTable->getMulticastRoute(i);
         if (route->getSourceType() == IMulticastRoute::MANUAL && route->getSource() == this) {
             EV_DETAIL << "Removing multicast route" << EV_FIELD(route) << EV_FIELD(nodePath) << endl;
@@ -293,7 +295,7 @@ void Ipv4NetworkConfigurator::configureRoutingTable(Node *node)
                 used = true;
         if (used) {
             Ipv4MulticastRoute *route = new Ipv4MulticastRoute(*original);
-            for (int j = 0; j < route->getNumOutInterfaces();) {
+            for (unsigned int j = 0; j < route->getNumOutInterfaces();) {
                 if (!contains(node->routingTableNetworkInterfaces, route->getOutInterface(j)->getInterface()))
                     route->removeOutInterface(j);
                 else
@@ -1972,9 +1974,11 @@ void Ipv4NetworkConfigurator::addStaticMulticastRoutes(Topology& topology, Node 
         }
 
         bool foundOutInterface = false;
-        for (int i = 0; i < route->getNumOutInterfaces(); i++)
-            if (route->getOutInterface(i)->getInterface() == outInterfaceInfo->networkInterface)
+        for (unsigned int i = 0; i < route->getNumOutInterfaces(); i++)
+            if (route->getOutInterface(i)->getInterface() == outInterfaceInfo->networkInterface) {
                 foundOutInterface = true;
+                break;
+            }
         if (!foundOutInterface) {
             route->addOutInterface(new Ipv4MulticastRoute::OutInterface(outInterfaceInfo->networkInterface, false /*TODOisLeaf*/));
             EV_INFO << "Extending static multicast route " << *route << " in " << node->module->getFullPath() << endl;

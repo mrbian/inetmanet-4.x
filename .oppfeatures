@@ -254,6 +254,7 @@
         requires = "Ipv4 Ipv6"
         labels = ""
         nedPackages = "
+                       inet.node.eigrp
                        inet.routing.eigrp
                       "
         extraSourceFolders = ""
@@ -287,6 +288,7 @@
         nedPackages = "
                        inet.applications.ethernet
                        inet.linklayer.ethernet
+                       inet.networks.ethernet
                        inet.node.ethernet
                        inet.physicallayer.wired.ethernet
                       "
@@ -299,9 +301,36 @@
         name = "Ethernet examples"
         description = "Examples for Ethernet."
         requires = "Ethernet Ipv4 TcpInet"
-        labels = "protocols"
+        labels = ""
         nedPackages = "
                        inet.examples.ethernet
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
+        id = "EthernetTests"
+        name = "Ethernet tests"
+        description = "Tests for Ethernet."
+        requires = "Ethernet Ipv4 TcpInet"
+        labels = ""
+        nedPackages = "
+                       inet.tests.ethernet
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
+        id = "FingerprintTutorial"
+        name = "Fingerprint tutorial"
+        description = "A step-by-step tutorial for fingerprint testing."
+        initiallyEnabled = "true"
+        requires = "Ethernet Ieee80211 Ipv4 Udp"
+        labels = "tutorial"
+        nedPackages = "
+                       inet.tutorials.fingerprint
                       "
         extraSourceFolders = ""
         compileFlags = ""
@@ -370,6 +399,20 @@
         linkerFlags = ""
         />
     <feature
+        id = "Ieee802"
+        name = "IEEE 802"
+        description = "IEEE 802 common"
+        initiallyEnabled = "true"
+        requires = ""
+        labels = ""
+        nedPackages = "
+                       inet.linklayer.ieee802
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
         id = "Ieee80211"
         name = "IEEE 802.11"
         description = "Provides IEEE 802.11 (a/b/g/e/p/n) Ad-hoc and Infrastucture mode NICs."
@@ -426,6 +469,21 @@
                       "
         extraSourceFolders = ""
         compileFlags = "-DINET_WITH_IEEE8021AS"
+        linkerFlags = ""
+        />
+    <feature
+        id = "Ieee8021asExamples"
+        name = "IEEE 802.1as examples"
+        description = "Provides IEEE 802.1as examples."
+        initiallyEnabled = "true"
+        requires = "Ieee8021as"
+        labels = ""
+        nedPackages = "
+                       inet.examples.gptp
+                       inet.examples.ieee8021as
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
         linkerFlags = ""
         />
     <feature
@@ -551,6 +609,7 @@
         requires = ""
         labels = ""
         nedPackages = "
+                       inet.applications.ipapp
                        inet.networklayer.arp.ipv4
                        inet.networklayer.configurator.ipv4
                        inet.networklayer.ipv4
@@ -614,11 +673,24 @@
         labels = "protocols examples"
         nedPackages = "
                        inet.examples.wirelesspan.sixlowpan
-                      "
         extraSourceFolders = ""
         compileFlags = ""
         linkerFlags = ""
         />        
+    <feature
+        id = "LinkLayerConfiguratorsCommon"
+        name = "Link layer configurators common"
+        description = "Various link layer configurators"
+        initiallyEnabled = "true"
+        requires = "Ieee8021d"
+        labels = ""
+        nedPackages = "
+                       inet.linklayer.configurator.common
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
     <feature
         id = "LMac"
         name = "L-MAC"
@@ -631,6 +703,34 @@
                       "
         extraSourceFolders = ""
         compileFlags = "-DINET_WITH_LMAC"
+        linkerFlags = ""
+        />
+    <feature
+        id = "Loopback"
+        name = "Loopback"
+        description = "Loopback network interface."
+        initiallyEnabled = "true"
+        requires = ""
+        labels = ""
+        nedPackages = "
+                       inet.linklayer.loopback
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
+        id = "MeasurementShowcases"
+        name = "Measurement showcases"
+        description = "Showcases that demonstrate various common measurements."
+        initiallyEnabled = "true"
+        requires = "Ethernet Ieee80211 Ipv4 Udp"
+        labels = ""
+        nedPackages = "
+                       inet.showcases.measurement
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
         linkerFlags = ""
         />
     <feature
@@ -781,11 +881,25 @@
         linkerFlags = ""
         />
     <feature
+        id = "OspfCommon"
+        name = "OSPF common"
+        description = "OSPF common."
+        initiallyEnabled = "true"
+        requires = ""
+        labels = ""
+        nedPackages = "
+                       inet.routing.ospf_common
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
         id = "Ospfv2"
         name = "OSPFv2 routing"
         description = "OSPFv2 routing."
         initiallyEnabled = "true"
-        requires = "Ipv4"
+        requires = "OspfCommon Ipv4"
         labels = ""
         nedPackages = "
                        inet.node.ospfv2
@@ -814,7 +928,7 @@
         name = "OSPFv3 routing"
         description = "OSPFv3 support."
         initiallyEnabled = "true"
-        requires = "Ipv4 Ipv6"
+        requires = "OspfCommon Ipv4 Ipv6"
         labels = ""
         nedPackages = "
                        inet.node.ospfv3
@@ -833,6 +947,39 @@
         labels = ""
         nedPackages = "
                        inet.examples.ospfv3
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
+        id = "OtherExamples"
+        name = "Other examples"
+        description = "A collection of unsorted examples"
+        initiallyEnabled = "true"
+        requires = ""
+        labels = ""
+        nedPackages = "
+                       inet.examples.communicationcache
+                       inet.examples.manetrouting
+                       inet.examples.openstreetmap
+                       inet.examples.seaport
+                       inet.examples.timing
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
+        id = "OtherApplications"
+        name = "Other applications"
+        description = "A collection of unsorted applications"
+        initiallyEnabled = "true"
+        requires = ""
+        labels = ""
+        nedPackages = "
+                       inet.applications.generic
+                       inet.applications.netperfmeter
                       "
         extraSourceFolders = ""
         compileFlags = ""
@@ -925,6 +1072,20 @@
                       "
         extraSourceFolders = ""
         compileFlags = "-DINET_WITH_PHYSICALLAYERWIRELESSCOMMON"
+        linkerFlags = ""
+        />
+    <feature
+        id = "PingApplication"
+        name = "Ping application"
+        description = "Ping application for IPv4 and IPv6 networks"
+        initiallyEnabled = "true"
+        requires = ""
+        labels = ""
+        nedPackages = "
+                       inet.applications.pingapp
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
         linkerFlags = ""
         />
     <feature
@@ -1041,9 +1202,11 @@
         labels = ""
         nedPackages = "
                        inet.queueing.buffer
+                       inet.queueing.common
                        inet.queueing.classifier
                        inet.queueing.filter
                        inet.queueing.flow
+                       inet.queueing.function
                        inet.queueing.gate
                        inet.queueing.marker
                        inet.queueing.meter
@@ -1168,7 +1331,7 @@
         description = "Examples for SCTP."
         initiallyEnabled = "true"
         requires = "Ipv4 Sctp"
-        labels = "protocols"
+        labels = ""
         nedPackages = "
                        inet.examples.sctp
                       "
@@ -1292,6 +1455,20 @@
         linkerFlags = ""
         />
     <feature
+        id = "TSNTests"
+        name = "TSN Tests"
+        description = "Tests for Time-Sensitive Networking (TSN)."
+        initiallyEnabled = "false"
+        requires = "TSN"
+        labels = ""
+        nedPackages = "
+                       inet.validation.tsn
+                      "
+        extraSourceFolders = ""
+        compileFlags = ""
+        linkerFlags = ""
+        />
+    <feature
         id = "Tun"
         name = "TUN/TAP virtual network interface"
         description = "TUN/TAP virtual network interface."
@@ -1357,9 +1534,9 @@
         requires = "Queueing"
         labels = "information"
         nedPackages = "
+                       inet.common.figures
                        inet.visualizer.base
                        inet.visualizer.common
-                       inet.visualizer.contract
                        inet.visualizer.util
                       "
         extraSourceFolders = ""
@@ -1563,7 +1740,7 @@
         description = "Examples for Mobile IPv6 support (xMIPv6)."
         initiallyEnabled = "true"
         requires = "Ethernet Ieee80211 Mobility Ppp TcpInet Udp Xmipv6"
-        labels = "protocols"
+        labels = ""
         nedPackages = "
                        inet.examples.mobileipv6
                       "
