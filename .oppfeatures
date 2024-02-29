@@ -673,6 +673,7 @@
         labels = "protocols examples"
         nedPackages = "
                        inet.examples.wirelesspan.sixlowpan
+                       "
         extraSourceFolders = ""
         compileFlags = ""
         linkerFlags = ""
