@@ -26,10 +26,10 @@ import inet.linklayer.contract.IWirelessInterface;
 import inet.linklayer.contract.IVirtualInterface;
 import inet.networklayer.common.InterfaceTable;
 import inet.transportlayer.contract.ITcp;
-import inet.linklayer.ethernet.contract.IEthernetLayer;
-import inet.linklayer.ieee8021q.IIeee8021qLayer;
-import inet.linklayer.ieee8021r.IIeee8021rLayer;
-import inet.linklayer.ieee8022.IIeee8022Llc;
+import inet.linklayer.contract.IEthernetLayer;
+import inet.linklayer.contract.IIeee8021qLayer;
+import inet.linklayer.contract.IIeee8021rLayer;
+import inet.linklayer.contract.IIeee8022Llc;
 import inet.node.contract.IEthernetNetworkNode;
 import inet.protocolelement.contract.IProtocolLayer;
 
