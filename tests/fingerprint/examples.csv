@@ -16,7 +16,7 @@
 /examples/aodv/,                     -f omnetpp.ini -c IPv4FastMobility -r 0,          50s,          0a51-d5eb/tplx;229c-a326/~tNl;0080-a508/~tND, PASS, wireless adhoc AckingWirelessInterface Ipv4
 /examples/aodv/,                     -f omnetpp.ini -c Static -r 0,                    50s,          13b7-47d5/tplx;c303-2955/~tNl;2afc-1d49/~tND;94da-5b7d/tyf, PASS, wireless adhoc Ipv4
 /examples/aodv/,                     -f omnetpp.ini -c Dynamic -r 0,                   60s,          e512-2d23/tplx;6384-47ee/~tNl;a0c5-c0af/~tND, PASS, wireless adhoc AckingWirelessInterface Ipv4
-/examples/aodv/,                     -f omnetpp.ini -c MoreDynamic -r 0,              100s,          504e-6cb4/tplx;1d56-5fe3/~tNl;010b-7256/~tND;cc1e-9db7/tyf, PASS, wireless adhoc Ipv4
+/examples/aodv/,                     -f omnetpp.ini -c MoreDynamic -r 0,              100s,          eb61-fec0/tplx;1d56-5fe3/~tNl;010b-7256/~tND;cc1e-9db7/tyf, PASS, wireless adhoc Ipv4
 /examples/aodv/,                     -f omnetpp.ini -c SimpleRREQ -r 0,               100s,          ee50-6b3e/tplx;d2e6-a947/~tNl;1966-9603/~tND, PASS, wireless adhoc Ipv4
 /examples/aodv/,                     -f omnetpp.ini -c SimpleRREQ2 -r 0,              100s,          bbe1-7a30/tplx;a64f-8746/~tNl;cd90-e7f0/~tND;cbba-88ae/tyf, PASS, wireless adhoc Ipv4
 /examples/aodv/,                     -f omnetpp.ini -c SimpleLifecycle -r 0,          100s,          2169-1021/tplx;a20d-c44b/~tNl;1f24-1ef2/~tND;5eaf-2277/tyf, PASS, wireless adhoc Ipv4
@@ -102,9 +102,9 @@
 
 /examples/geometry/,                 -f omnetpp.ini -c General -r 0,                100s,            75d0-cba9/tplx;ce1d-d136/~tNl;51b3-9d40/~tND;900d-aaeb/tyf, PASS, wireless Ipv4
 
-/examples/ieee8021as/,               -f omnetpp.ini -c Network -r 0,                     200s,       1415-776b/tplx;71e8-0ad4/~tNl;0ae6-86e4/~tND;2f64-3e50/tyf, PASS, gptp
-/examples/ieee8021as/,               -f omnetpp.ini -c Network_with_cross_traffic -r 0,  200s,       8f0f-0156/tplx;d994-07a5/~tNl;868f-fd0d/~tND;8d31-254b/tyf, PASS, gptp Ipv4
-/examples/ieee8021as/,               -f omnetpp.ini -c Network_daisy_chain -r 0,         200s,       5570-c31b/tplx;235a-595e/~tNl;358e-383e/~tND;6ff7-a656/tyf, PASS, gptp
+/examples/ieee8021as/,               -f omnetpp.ini -c Network -r 0,                     200s,       0a4c-a794/tplx;6aae-53b2/~tNl;ac2f-3420/~tND;2f64-3e50/tyf, PASS, gptp
+/examples/ieee8021as/,               -f omnetpp.ini -c Network_with_cross_traffic -r 0,  200s,       60a8-5ab3/tplx;1f03-d915/~tNl;c238-33ce/~tND;8d31-254b/tyf, PASS, gptp Ipv4
+/examples/ieee8021as/,               -f omnetpp.ini -c Network_daisy_chain -r 0,         200s,       59c5-f301/tplx;72b9-b32f/~tNl;d606-aec0/~tND;6ff7-a656/tyf, PASS, gptp
 
 # /examples/ieee8021d/,                -f omnetpp.ini -c LargeNet -r 0,               100s,            0, ERROR,   # abstract-config
 # /examples/ieee8021d/,                -f omnetpp.ini -c RSTP -r 0,                   100s,            0, ERROR,   # abstract-config
@@ -433,8 +433,8 @@
 /examples/ospfv2/dynamictest/,       -f omnetpp.ini -c dynamic2 -r 0,               1000s,           ba7a-6695/tplx;11a0-f9f8/~tNl;cb3e-c8e5/~tND;d95e-3ff2/tyf, PASS, EthernetMac Ipv4
 /examples/ospfv2/fulltest/,          -f omnetpp.ini -c General -r 0,                100s,            4597-c734/tplx;1471-dd80/~tNl;d192-f40f/~tND;107b-1ada/tyf, PASS, EthernetMac Ipv4
 /examples/ospfv2/simpletest/,        -f omnetpp.ini -c AlwaysUp -r 0,               500s,            bfe7-b113/tplx;a9e5-bd53/~tNl;c470-a004/~tND;948a-5447/tyf, PASS, EthernetMac Ipv4
-/examples/ospfv2/simpletest/,        -f omnetpp.ini -c ShutdownAndRestart -r 0,     500s,            fbe5-93ad/tplx;bc6e-6aa5/~tNl;1700-f363/~tND;79b8-a305/tyf, PASS, EthernetMac Ipv4
-/examples/ospfv2/simpletest/,        -f omnetpp.ini -c CrashAndReboot -r 0,         500s,            73cc-e6f7/tplx;bc6e-6aa5/~tNl;1700-f363/~tND;faf0-ff2d/tyf, PASS, EthernetMac Ipv4
+/examples/ospfv2/simpletest/,        -f omnetpp.ini -c ShutdownAndRestart -r 0,     500s,            7b39-a6d6/tplx;b0ae-a6a5/~tNl;0705-9ca2/~tND;79b8-a305/tyf, PASS, EthernetMac Ipv4
+/examples/ospfv2/simpletest/,        -f omnetpp.ini -c CrashAndReboot -r 0,         500s,            f310-d38c/tplx;b0ae-a6a5/~tNl;0705-9ca2/~tND;faf0-ff2d/tyf, PASS, EthernetMac Ipv4
 
 /examples/ospfv3/multiple_areas_FINAL/, -f omnetpp.ini -c General -r 0,             500s,            3a05-c4c3/tplx;9f43-61da/~tNl;454e-0952/tyf, PASS, EthernetMac
 /examples/ospfv3/multiple_areas_FINAL/, -f omnetpp.ini -c LinkDown -r 0,            500s,            212f-4dc3/tplx;25ba-8706/~tNl;ee58-1fb6/tyf, PASS, EthernetMac

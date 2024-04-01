@@ -12,7 +12,10 @@
 
 #include <cstdio>
 #include <fcntl.h>
+
+#ifdef __linux__
 #include <sys/mount.h>
+#endif
 
 namespace inet {
 
@@ -20,6 +23,7 @@ std::map<std::string, int> localNetworkNamespaces; // network namespace which ar
 
 void createNetworkNamespace(const char *name, bool global)
 {
+#ifdef __linux__
     if (global) {
         std::string fullPath = std::string("/var/run/netns/") + name;
         int fd = open(fullPath.c_str(), O_RDONLY | O_CREAT | O_EXCL, 0);
@@ -40,10 +44,14 @@ void createNetworkNamespace(const char *name, bool global)
         // switch back to the original namespace that was used before unshare
         setns(oldFd, 0);
     }
+#else
+    throw cRuntimeError("Network namespaces are only supported on Linux");
+#endif
 }
 
 bool existsNetworkNamespace(const char *name)
 {
+#ifdef __linux__
     auto it = localNetworkNamespaces.find(name);
     if (it != localNetworkNamespaces.end())
         return true;
@@ -56,9 +64,13 @@ bool existsNetworkNamespace(const char *name)
         }
     }
     return false;
+#else
+    throw cRuntimeError("Network namespaces are only supported on Linux");
+#endif
 }
 
 void deleteNetworkNamespace(const char *name) {
+#ifdef __linux__
     auto it = localNetworkNamespaces.find(name);
     if (it != localNetworkNamespaces.end()) {
         auto it = localNetworkNamespaces.find(name);
@@ -72,6 +84,9 @@ void deleteNetworkNamespace(const char *name) {
         if (unlink(path.c_str()) != 0)
             throw cRuntimeError("Cannot unlink file: %s", path.c_str());
     }
+#else
+    throw cRuntimeError("Network namespaces are only supported on Linux");
+#endif
 }
 
 NetworkNamespaceContext::NetworkNamespaceContext(const char *name)
@@ -95,7 +110,7 @@ NetworkNamespaceContext::NetworkNamespaceContext(const char *name)
                 throw cRuntimeError("Cannot open network namespace: %s, errno=%d (%s)", name, errno, strerror(errno));
             global = true;
         }
-        EV_INFO << "Switching to network namespace" << EV_FIELD(name) << EV_FIELD(newFd) << std::endl;
+        EV_TRACE << "Switching to network namespace" << EV_FIELD(name) << EV_FIELD(newFd) << std::endl;
         if (setns(newFd, 0) != 0)
             throw cRuntimeError("Cannot switch to network namespace: %s, errno=%d (%s)", name, errno, strerror(errno));
 #else
@@ -108,7 +123,7 @@ NetworkNamespaceContext::~NetworkNamespaceContext()
 {
     if (newFd != -1) {
 #ifdef __linux__
-        EV_INFO << "Switching back to network namespace" << EV_FIELD(name) << EV_FIELD(oldFd) << std::endl;
+        EV_TRACE << "Switching back to network namespace" << EV_FIELD(name) << EV_FIELD(oldFd) << std::endl;
         if (setns(oldFd, 0) != 0)
             EV_FATAL << "Cannot switch to network namespace: " << name << ", errno=" << errno << " (" << strerror(errno) << ")" << EV_ENDL;
         if (global) {

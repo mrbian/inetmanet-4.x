@@ -15,10 +15,16 @@ Register_GlobalConfigOption(CFGID_UNSHARE_USER_NAMESPACE, "unshare-user-namespac
 
 UnsharedNamespaceInitializer UnsharedNamespaceInitializer::singleton;
 
+#ifdef __linux__
+#if OMNETPP_VERSION < 0x0700
 EXECUTE_ON_STARTUP(getEnvir()->addLifecycleListener(&UnsharedNamespaceInitializer::singleton));
+#endif
+#endif
 
 void UnsharedNamespaceInitializer::lifecycleEvent(SimulationLifecycleEventType eventType, cObject *details)
 {
+#if OMNETPP_VERSION < 0x0700
+    // TODO KLUDGE LF_ON_STARTUP removed
     if (eventType == LF_ON_STARTUP) {
         auto config = cSimulation::getActiveEnvir()->getConfig();
         if (config->getAsBool(CFGID_UNSHARE_USER_NAMESPACE)) {
@@ -31,10 +37,12 @@ void UnsharedNamespaceInitializer::lifecycleEvent(SimulationLifecycleEventType e
             unshareNetworkNamespace();
         }
     }
+#endif
 }
 
 void UnsharedNamespaceInitializer::unshareUserNamespace()
 {
+#ifdef __linux__
     pid_t originalUid = getuid();
     pid_t originalGid = getgid();
     if (unshare(CLONE_NEWUSER) < 0)
@@ -52,13 +60,16 @@ void UnsharedNamespaceInitializer::unshareUserNamespace()
     // change effective user to root
     if (seteuid(0) < 0)
         throw cRuntimeError("Failed to switch to the root user");
+#endif
 }
 
 void UnsharedNamespaceInitializer::unshareNetworkNamespace()
 {
+#ifdef __linux__
     if (unshare(CLONE_NEWNET) < 0)
         throw cRuntimeError("Failed to unshare network namespace");
     originalNetworkNamespaceFd = open("/proc/self/ns/net", O_RDONLY);
+#endif
 }
 
 void UnsharedNamespaceInitializer::writeMapping(const char* path, const char* mapping)
@@ -73,3 +84,4 @@ void UnsharedNamespaceInitializer::writeMapping(const char* path, const char* ma
 }
 
 } // namespace inet
+
