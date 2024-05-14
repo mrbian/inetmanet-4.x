@@ -11,7 +11,7 @@ package inet.visualizer.base;
 // This is a base module for medium visualizer simple modules. It keeps track
 // of ongoing signal departures, ongoing signal arrivals, and propagating signals.
 //
-// It subscribes for signalSourceAdded, signalSourceRemoved, signalAdded,
+// It subscribes to signalSourceAdded, signalSourceRemoved, signalAdded,
 // signalRemoved, signalDepartureStarted, signalDepartureEnded, signalArrivalStarted,
 // signalArrivalEnded simulation signals at the module determined by the mediumModule
 // parameter. The actual visualization of the medium is done in derived modules.
@@ -29,7 +29,7 @@ simple MediumVisualizerBase extends VisualizerBase
         object packetFilter @mutable = default("*"); // which packets are considered, matches all packets by default
 
         bool displaySignals = default(false); // display signals propagating through the medium, disabled by default
-        string signalColor @enum("light", "dark") = default("dark"); // signal color is a list of colors, a set of dark colors by default
+        string signalColor = default("dark"); // signal color is a list of colors or a color group name (e.g. dark, light), a set of dark colors by default
         double signalPropagationAnimationSpeed @mutable = default(nan); // animation speed while the very beginning or end of a signal is propagating on the medium, value must be in the range (0, +inf) or NaN, the latter means automatic setting
         double signalPropagationAnimationTime @unit(s) = default(1s); // signal propagation animation duration when signalPropagationAnimationSpeed is unspecified
         double signalPropagationAdditionalTime @unit(s) = default(0s); // additional simulation time to animate signal propagation after leaving last receiver
