@@ -14,11 +14,16 @@ import inet.physicallayer.wireless.common.contract.packetlevel.IMediumAnalogMode
 // words, the signal power does not change over time or frequency, except for
 // the boundaries of the signal.
 //
-module ScalarMediumAnalogModel like IMediumAnalogModel
+module ScalarMediumAnalogModelLoss like IMediumAnalogModel
 {
     parameters:
+        double perUniLinks = default(0);
+        double perLosLinks = default(0);
+        double errorProb = default(0);
+        bool  forceUni = default(true);
+        bool checkMobility = default(false);
         bool ignorePartialInterference = default(false); // enabled means interference only partially overlapping with the signal being received is ignored, otherwise the simulation stops with an error
         @display("i=block/tunnel");
-        @class(ScalarMediumAnalogModel);
+        @class(ScalarMediumAnalogModelLoss);
 }
 
