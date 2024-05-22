@@ -7,7 +7,7 @@
 package inet.protocolelement.shaper;
 
 //
-// This module extends the EligibilityTimeMeter with scheduler groups.
+// This module extends the `EligibilityTimeMeter` with scheduler groups.
 // The calculation of the eligibility time takes into account the eligibility times of all
 // streams of the same group.
 //
@@ -15,10 +15,10 @@ package inet.protocolelement.shaper;
 //
 // @see ~ATS8021qFilter, ~EligibilityTimeGate, ~EligibilityTimeFilter, ~EligibilityTimeQueue, ~EligibilityTimeTag
 //
- 
+
 simple GroupEligibilityTimeMeter extends EligibilityTimeMeter
 {
-	parameters: 
-        string groupEligibilityTimeTableModule; // relative path to the eligibilityTimeTable
+	parameters:
+        string groupEligibilityTimeTableModule; // Relative path to the eligibilityTimeTable
         @class(inet::MyEligibilityTimeMeter);
 }

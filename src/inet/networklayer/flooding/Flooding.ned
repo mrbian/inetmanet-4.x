@@ -30,10 +30,10 @@ import inet.networklayer.contract.INetworkProtocol;
 // rebroadcast them again if it gets another copy of that message.
 //
 // The maximum number of entries for that list can be defined in the
-// .ini file (bcMaxEntries parameter) as well as the time after which an entry
-// is deleted (bcDelTime parameter).
+// .ini file (`bcMaxEntries` parameter) as well as the time after which an entry
+// is deleted (`bcDelTime` parameter).
 //
-// If you prefer a memory-less version, you should set the plainFlooding bool parameter to false.
+// If you prefer a memory-less version, you should set the `plainFlooding` bool parameter to false.
 //
 // @author Daniel Willkomm
 //
@@ -43,13 +43,12 @@ simple Flooding extends NetworkProtocolBase like INetworkProtocol
 {
     parameters:
         @display("i=block/fork");
-        int headerLength @unit(b) = default(96b); // length of the network packet header (in bits)
-        bool plainFlooding = default(true); // flag whether to use plain flooding
+        int headerLength @unit(b) = default(96b); // Length of the network packet header (in bits)
+        bool plainFlooding = default(true); // Flag whether to use plain flooding
         // Max number of entries in the list of already broadcasted messages
         int bcMaxEntries = default(100);
         // Time after which an entry for an already broadcasted msg can be deleted
         double bcDelTime @unit(s) = default(100 s);
-        int defaultTtl = default(10); // Default time-to-live (ttl) used for this module expressed in  number of hops.
+        int defaultTtl = default(10); // Default time-to-live (ttl) used for this module expressed in number of hops.
         @class(Flooding);
 }
-

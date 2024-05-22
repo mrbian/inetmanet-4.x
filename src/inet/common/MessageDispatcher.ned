@@ -25,8 +25,8 @@ import inet.queueing.base.PacketProcessorBase;
 //  - socket mapping specifies which gate should be used when dispatching towards a specific socket
 //
 // To configure the dispatch mechanism:
-//  - protocol modules must register using the registerService() and/or registerProtocol() functions
-//  - network interface modules must register using the registerInterface() function
+//  - protocol modules must register using the `registerService()` and/or `registerProtocol()` functions
+//  - network interface modules must register using the `registerInterface()` function
 //  - sockets must use the ~SocketReq or ~SocketInd tags when sending socket open/close commands
 //  - manual configuration is also possible using the module's mapping parameters
 //
@@ -40,12 +40,12 @@ import inet.queueing.base.PacketProcessorBase;
 simple MessageDispatcher extends PacketProcessorBase
 {
     parameters:
-        string interfaceTableModule; // module path to the ~InterfaceTable module
+        string interfaceTableModule; // Module path to the ~InterfaceTable module
         bool forwardServiceRegistration = default(true);
         bool forwardProtocolRegistration = default(true);
-        object interfaceMapping = default({}); // maps network interface names to connected submodule names (e.g. {"eth0": "bridging"}), overrides automatically learned dispatching; * overrides all learned network interfaces, ? overrides default
-        object serviceMapping = default({}); // maps protocols to connected submodule names (e.g. {"ethernetmac": "bridging"}), overrides automatically learned dispatching; * overrides all learned services, ? overrides default
-        object protocolMapping = default({}); // maps protocols to connected submodule names (e.g. {"ipv4": "bridging"}), overrides automatically learned dispatching; * overrides all learned protocols, ? overrides default
+        object interfaceMapping = default({}); // Maps network interface names to connected submodule names (e.g. {"eth0": "bridging"}), overrides automatically learned dispatching; * overrides all learned network interfaces, ? overrides default
+        object serviceMapping = default({}); // Maps protocols to connected submodule names (e.g. {"ethernetmac": "bridging"}), overrides automatically learned dispatching; * overrides all learned services, ? overrides default
+        object protocolMapping = default({}); // Maps protocols to connected submodule names (e.g. {"ipv4": "bridging"}), overrides automatically learned dispatching; * overrides all learned protocols, ? overrides default
         @class(MessageDispatcher);
         @display("i=-;b=100,5,,,,1;");
     gates:
