@@ -24,11 +24,7 @@ individually turned on or off:
    ipv6: <default("Ipv6NetworkLayer")> like INetworkLayer if hasIpv6;
    generic: <default("")> like INetworkLayer if hasGn;
 
-In the default configuration, only IPv4 is turned on. If you want to use
-an alternative network layer protocol instead of IPv4/IPv6, your
-configuration will look something like this:
-
-
+In the default configuration, only IPv4 is turned on. If an alternative network layer protocol is desired instead of IPv4/IPv6, the configuration should look something like this:
 
 .. code-block:: ini
 
@@ -73,8 +69,7 @@ addresses, use MAC address as a network address (this is sometimes useful
 in WSNs), or use synthetic addresses that only make sense within the
 simulation.  [1]_
 
-In apps, you need to specify which network layer protocol you want to
-use. For example:
+In apps, the network layer protocol to be used needs to be specified. For example:
 
 
 
@@ -93,8 +88,8 @@ Flooding
 ~~~~~~~~
 
 :ned:`Flooding` is a simple flooding protocol for network-level
-broadcast. It remembers already broadcast messages and does not
-rebroadcast them if it gets another copy of that message.
+broadcast. Already broadcast messages are remembered and not
+rebroadcasted if another copy of that message is received.
 
 .. _ug:sec:networkprotocols:probabilisticbroadcast:
 
@@ -104,7 +99,7 @@ ProbabilisticBroadcast
 :ned:`ProbabilisticBroadcast` is a multi-hop ad-hoc data dissemination
 protocol based on probabilistic broadcast.
 
-This method reduces the number of packets sent on the channel (reducing
+The number of packets sent on the channel is reduced (reducing
 the broadcast storm problem) at the risk of some nodes not receiving the
 data. It is particularly interesting for mobile networks.
 
@@ -131,8 +126,7 @@ algorithm that builds a routing tree from a central network point,
 designed for sensor networks and convergecast traffic (Wireless Sensor
 routing).
 
-The sink (the device at the center of the network) broadcasts a route
-building message. Each network node that receives it selects the sink as
+A route building message is broadcasted by the sink (the device at the center of the network). Each network node that receives it selects the sink as
 a parent in the routing tree and rebroadcasts the route building message.
 This procedure maximizes the probability that all network nodes can join
 the network and avoids loops.
@@ -142,7 +136,7 @@ The :par:`sinkAddress` parameter specifies the sink network address,
 low RSSI values) for routing, and :par:`routeFloodsInterval` should be
 set to zero for all nodes except the sink. Each
 :par:`routeFloodsInterval`, the sink restarts the tree building
-procedure. Set it to a large value if you do not want the tree to be
+procedure. Set it to a large value if the tree should not be
 rebuilt.
 
 .. _ug:sec:networkprotocols:nexthopforwarding:
