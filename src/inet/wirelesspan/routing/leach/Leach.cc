@@ -34,7 +34,7 @@ double threshold;
 double randNo;
 Ipv4Address idealCH;
 
-Register_Enum(inet::wirelesspan::routing::Leach, (inet::wirelesspan::routing::Leach::ch, inet::wirelesspan::routing::Leach::nch));
+Register_Enum(Leach::LeachState, (Leach::ch, Leach::nch));
 Define_Module(Leach);
 
 Leach::ForwardEntry::~ForwardEntry()
