@@ -320,14 +320,16 @@ void PARRoT::purgeNeighbors() {
 	for (std::map<Ipv4Address, std::map<Ipv4Address, PCE*>>::iterator t =
 	        Gateways.begin(); t != Gateways.end(); t++) {
 		Ipv4Address target = t->first;
+		std::map<Ipv4Address, PCE*> record = t->second;
 
-		for (std::map<Ipv4Address, PCE*>::iterator act =
-		        Gateways.find(target)->second.begin();
-		        act != Gateways.find(target)->second.end(); act++) {
+		for (std::map<Ipv4Address, PCE*>::iterator act = record.begin();
+		        act != record.end();
+		        act++) {
 			double deltaT = simTime().dbl() - act->second->lastSeen();
 			if (deltaT > std::min(std::max(neighborReliabilityTimeout, mhChirpInterval), Gamma_Pos(act->first))){
-				delete act->second;
-				Gateways.at(target).erase(act);
+//                delete act->second;
+//				Gateways.at(target).erase(act);
+//                act = record.erase(act);
 			}
 		}
 	}

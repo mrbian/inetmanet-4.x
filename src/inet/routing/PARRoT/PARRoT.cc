@@ -63,8 +63,9 @@ void PARRoT::initialize(int stage) {
 		destinationReminder = new cMessage("destinationReminder");
 	}
 	else if (stage == INITSTAGE_ROUTING_PROTOCOLS) {
-		registerService(Protocol::manet, nullptr, gate("ipIn"));
-		registerProtocol(Protocol::manet, gate("ipOut"), nullptr);
+//		registerService(Protocol::manet, nullptr, gate("ipIn"));
+//		registerProtocol(Protocol::manet, gate("ipOut"), nullptr);
+	    registerProtocol(Protocol::manet, gate("ipOut"), gate("ipIn"));
 	}
 }
 

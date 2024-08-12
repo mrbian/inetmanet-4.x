@@ -86,7 +86,7 @@ Ipv4Address PARRoT::getNextHopFor(Ipv4Address target) {
 		double deltaT = simTime().dbl() - act->second->lastSeen();
 		if (deltaT	<= std::min(std::max(neighborReliabilityTimeout, mhChirpInterval), Gamma_Pos(act->first))) {
 
-		if (act == Gateways.find(target)->second.begin()) {
+		    if (act == Gateways.find(target)->second.begin()) {
 //				 First possible action, make sure the result gets this value anyway
 				res = qFunction(target, act->first);
 				a = act->first;
@@ -97,8 +97,8 @@ Ipv4Address PARRoT::getNextHopFor(Ipv4Address target) {
 			}
 		}
 		else {
-			delete act->second;
-			Gateways.at(target).erase(act);
+//			delete act->second;
+//			Gateways.at(target).erase(act);
 		}
 	}
 	}
