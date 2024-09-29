@@ -15,6 +15,7 @@ void PARRoT::handleMessageWhenUp(cMessage *msg) {
 	}
 	else if (check_and_cast<Packet*>(msg)->getTag<PacketProtocolTag>()->getProtocol()
 	        == &Protocol::manet) {
+	    const Protocol* proto = check_and_cast<Packet*>(msg)->getTag<PacketProtocolTag>()->getProtocol();
 		if (strcmp(msg->getName(), "multiHopChirp") == 0) {
 			auto incomingMultiHop =
 			        (staticPtrCast<MultiHopChirp>(
@@ -316,22 +317,41 @@ void PARRoT::refreshRoutingTable(Ipv4Address origin) {
 }
 
 void PARRoT::purgeNeighbors() {
+//    for (const auto& outerPair : Gateways) {
+//        EV_WARN << "Gateway: " << outerPair.first << std::endl;
+//
+//        for (const auto& innerPair : outerPair.second) {
+//            EV_WARN << "inner: " << innerPair.first << std::endl;
+//            EV_WARN << static_cast<PCE*>(innerPair.second)->Q() << std::endl;
+//        }
+//    }
+
 	// First delete invalid entrys
 	for (std::map<Ipv4Address, std::map<Ipv4Address, PCE*>>::iterator t =
 	        Gateways.begin(); t != Gateways.end(); t++) {
 		Ipv4Address target = t->first;
-		std::map<Ipv4Address, PCE*> record = t->second;
+		std::map<Ipv4Address, PCE*> interNodes = t->second;
+		std::vector<Ipv4Address> toDelete;
 
-		for (std::map<Ipv4Address, PCE*>::iterator act = record.begin();
-		        act != record.end();
+		for (std::map<Ipv4Address, PCE*>::iterator act = interNodes.begin();
+		        act != interNodes.end();
 		        act++) {
 			double deltaT = simTime().dbl() - act->second->lastSeen();
 			if (deltaT > std::min(std::max(neighborReliabilityTimeout, mhChirpInterval), Gamma_Pos(act->first))){
-//                delete act->second;
+			    toDelete.push_back(act->first);
+//			    delete act->second;
 //				Gateways.at(target).erase(act);
-//                act = record.erase(act);
 			}
 		}
+
+		for (const auto& addr : toDelete) {
+            auto it = interNodes.find(addr);
+            if (it != interNodes.end()) {
+                // todo: check why delete cause crash
+//                delete static_cast<PCE*>(it->second);  // 释放 PCE 对象的内存
+                interNodes.erase(it);  // 从 map 中删除元素
+            }
+        }
 	}
 
 	// Check if neighbor is still usefull

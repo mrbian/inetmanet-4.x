@@ -36,7 +36,8 @@ double ScalarSnir::computeMin() const
 {
     auto scalarSignalAnalogModel = check_and_cast<const ScalarReceptionAnalogModel *>(reception->getAnalogModel());
     const ScalarNoise *scalarNoise = check_and_cast<const ScalarNoise *>(noise);
-    return unit(scalarSignalAnalogModel->getPower() / scalarNoise->computeMaxPower(reception->getStartTime(), reception->getEndTime())).get();
+    W noise_power = scalarNoise->computeMaxPower(reception->getStartTime(), reception->getEndTime());
+    return unit(scalarSignalAnalogModel->getPower() / noise_power).get();
 }
 
 double ScalarSnir::computeMax() const

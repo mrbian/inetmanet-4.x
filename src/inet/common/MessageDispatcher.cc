@@ -214,6 +214,8 @@ cGate *MessageDispatcher::handlePacket(Packet *packet, const cGate *inGate)
                 servicePrimitive = SP_REQUEST;
         }
         auto protocol = dispatchProtocolReq->getProtocol();
+        if(protocol->getId() == 47)
+            EV << "find manet!" << EV_ENDL;
         if (servicePrimitive == SP_REQUEST) {
             auto it = serviceToGateIndex.find(Key(protocol->getId(), servicePrimitive));
             if (it != serviceToGateIndex.end()) {

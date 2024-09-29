@@ -491,7 +491,16 @@ IInterfaceTable *L3AddressResolver::findInterfaceTableOf(cModule *host)
 IIpv4RoutingTable *L3AddressResolver::findIpv4RoutingTableOf(cModule *host)
 {
 #ifdef INET_WITH_IPv4
-    return dynamic_cast<IIpv4RoutingTable *>(host->findModuleByPath(".ipv4.routingTable"));
+//    return dynamic_cast<IIpv4RoutingTable *>(host->findModuleByPath(".ipv4.routingTable"));
+//    return dynamic_cast<IIpv4RoutingTable *>(host->findModuleByPath(".generic.routingTable"));
+
+    cModule *genericMod = host->getSubmodule("generic");
+    if(genericMod)  {
+        return dynamic_cast<IIpv4RoutingTable *>(host->findModuleByPath(".generic.routingTable"));
+    } else {
+        return dynamic_cast<IIpv4RoutingTable *>(host->findModuleByPath(".ipv4.routingTable"));
+    }
+//    return dynamic_cast<IIpv4RoutingTable *>(host->findModuleByPath(".**.routingTable"));
 #else // ifdef INET_WITH_IPv4
     return nullptr;
 #endif // ifdef INET_WITH_IPv4

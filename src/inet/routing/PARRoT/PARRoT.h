@@ -117,11 +117,13 @@ class PARRoT: public RoutingProtocolBase {
 		double getMaxValueFor(Ipv4Address target);
 		Ipv4Address getNextHopFor(Ipv4Address target);
 		void updateGamma_Mob();
+		double GetMaxCommunicationRange();
 
 		double qFctAlpha;
 		double qFctGamma;
 		double m_Gamma_Mob;
 		std::string combinationMethod;
+		double maxRangeForLET;
 
 
 	// Mobility Prediction
@@ -137,7 +139,6 @@ class PARRoT: public RoutingProtocolBase {
         std::deque<Coord> hist_coord;
 		std::vector<Ipv4Address> lastSetOfNeighbors;
 		std::string predictionMethod;
-
 
 };
 

@@ -11,7 +11,8 @@ import inet.common.MessageDispatcher;
 import inet.networklayer.contract.IArp;
 import inet.networklayer.contract.INetworkLayer;
 import inet.networklayer.contract.INetworkProtocol;
-
+import inet.networklayer.configurator.contract.IIpv4NodeConfigurator;
+import inet.networklayer.ipv4.Ipv4RoutingTable;
 //
 // This module provides a simple network layer.
 //
@@ -19,7 +20,10 @@ module SimpleNetworkLayer like INetworkLayer
 {
     parameters:
         string interfaceTableModule;
+        string routingTableModule;
+        *.arpModule = default(absPath(".arp"));
         *.interfaceTableModule = default(absPath(this.interfaceTableModule));
+        **.routingTableModule = default(absPath(".routingTable"));
         @display("i=block/fork");
 
     gates:
@@ -48,6 +52,14 @@ module SimpleNetworkLayer like INetworkLayer
         lp: MessageDispatcher {
             parameters:
                 @display("p=300,400;b=480,5");
+        }
+        configurator: <default("Ipv4NodeConfigurator")> like IIpv4NodeConfigurator if typename != "" {
+            parameters:
+                @display("p=100,100;is=s");
+        }
+        routingTable: Ipv4RoutingTable {
+            parameters:
+                @display("p=100,200;is=s");
         }
 
     connections allowunconnected:

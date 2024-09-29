@@ -189,7 +189,7 @@ void MobilityBase::updateDisplayStringFromMobilityState() const
     if (subjectModule != nullptr) {
         // position
         auto position = const_cast<MobilityBase *>(this)->getCurrentPosition();
-        EV_TRACE << "current position = " << position << endl;
+//        EV_TRACE << "current position = " << position << endl;
         auto subjectModulePosition = canvasProjection->computeCanvasPoint(position);
         char buf[32];
         snprintf(buf, sizeof(buf), "%lf", subjectModulePosition.x);

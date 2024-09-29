@@ -50,6 +50,7 @@ void PARRoT::initialize(int stage) {
 		qFctAlpha = par("qFctAlpha");
 		qFctGamma = par("qFctGamma");
 		combinationMethod = par("combinationMethod").stdstringValue();
+		maxRangeForLET = par("maxRangeForLET");
 
 		// Mobility Prediction
 		historySize = par("historySize");

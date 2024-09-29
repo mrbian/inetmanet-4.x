@@ -31,5 +31,6 @@ module Ieee80211Receiver extends NarrowbandReceiverBase
         // TODO remove when opMode is removed from the error model
         *.opMode = this.opMode;
         @class(Ieee80211Receiver);
+        @display("bgb=433,471");
 }
 

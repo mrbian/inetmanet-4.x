@@ -39,6 +39,7 @@ simple PARRoT like IManetRouting
         double qFctAlpha = default(0.3);
         double qFctGamma = default(0.2);
         string combinationMethod = default("M");
+        double maxRangeForLET = default(76.35); // m
         
         // Mobility Prediction
         int historySize = default(5);

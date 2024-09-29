@@ -79,6 +79,7 @@ double PARRoT::getMaxValueFor(Ipv4Address target) {
 Ipv4Address PARRoT::getNextHopFor(Ipv4Address target) {
 	Ipv4Address a = Ipv4Address("0.0.0.0");
 	double res = -1000;
+	std::vector<Ipv4Address> toDelete;
 	if(Gateways.find(target) != Gateways.end()){
 	for (std::map<Ipv4Address, PCE*>::iterator act =
 	        Gateways.find(target)->second.begin();
@@ -97,11 +98,24 @@ Ipv4Address PARRoT::getNextHopFor(Ipv4Address target) {
 			}
 		}
 		else {
+		    toDelete.push_back(act->first);
 //			delete act->second;
 //			Gateways.at(target).erase(act);
 		}
 	}
+
+    for (const auto& addr : toDelete) {
+        std::map<Ipv4Address, PCE*> interNodes = Gateways.find(target)->second;
+        auto it = interNodes.find(addr);
+        if (it != interNodes.end()) {
+//                delete static_cast<PCE*>(it->second);  // 释放 PCE 对象的内存
+            interNodes.erase(it);  // 从 map 中删除元素
+        }
+    }
 	}
+
+
+
 	return a;
 
 }
@@ -135,10 +149,14 @@ double PARRoT::Gamma_Pos(Ipv4Address neighbor, Ipv4Address origin) {
 
 	double a = pow(vx, 2) + pow(vy, 2) + pow(vz, 2);
 	double b = 2 * (px * vx + py * vy + pz * vz);
+//	double c =
+//	        pow(px, 2) + pow(py, 2) + pow(pz, 2)
+//	                - pow(rangeOffset + radioMedium->getMediumLimitCache()->getMaxCommunicationRange().get(),
+//	                        2);
 	double c =
-	        pow(px, 2) + pow(py, 2) + pow(pz, 2)
-	                - pow(rangeOffset + radioMedium->getMediumLimitCache()->getMaxCommunicationRange().get(),
-	                        2);
+              pow(px, 2) + pow(py, 2) + pow(pz, 2)
+                      - pow(rangeOffset + GetMaxCommunicationRange(),
+                              2);
 
 	if (a==0){
 		return (c < 0) ? 1.0 : 0.0;
@@ -169,6 +187,11 @@ double PARRoT::Gamma_Pos(Ipv4Address neighbor, Ipv4Address origin) {
 	}
 
 	return t;
+}
+
+double PARRoT::GetMaxCommunicationRange()
+{
+    return maxRangeForLET;
 }
 
 } // namespace inet
