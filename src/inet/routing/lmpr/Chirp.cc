@@ -17,6 +17,15 @@
 
 namespace inet {
 
+void LMPR::handleOGMReminder()
+{
+//    broadcastOGM();
+    scheduleAt(simTime() + mhOGMInterval + broadcastDelay->doubleValue(), OGMReminder);
+
+    int len = nodesInfoList.size();
+    emit(nodeInfoLenSignal, len);
+}
+
 void LMPR::broadcastOGM()
 {
     auto ogm = makeShared<OGM>();
@@ -27,13 +36,13 @@ void LMPR::broadcastOGM()
     ogm->setSeq(m_OGM_seqNum);
     ogm->setTTL(defaultTTL);
     ogm->setTimeAbstract(simTime().dbl());
-    Coord pos1 = forecastSelfPosition(predictDuration);
+    Coord pos1 = forecastSelfPosition_Optimal(predictDuration);
     ogm->setX1(pos1.x);
     ogm->setY1(pos1.y);
-    Coord pos2 = forecastSelfPosition(predictDuration*2);
+    Coord pos2 = forecastSelfPosition_Optimal(predictDuration*2);
     ogm->setX2(pos2.x);
     ogm->setY2(pos2.y);
-    Coord pos3 = forecastSelfPosition(predictDuration*3);
+    Coord pos3 = forecastSelfPosition_Optimal(predictDuration*3);
     ogm->setX3(pos3.x);
     ogm->setY3(pos3.y);
 
@@ -44,7 +53,12 @@ void LMPR::broadcastOGM()
             + sizeof((int)defaultTTL);
     ogm->setChunkLength(B(totalByteLength));
 
-    auto packet = new Packet("OGM", ogm);
+    std::ostringstream str;
+    str << "OGM" << "-" << m_OGM_seqNum;
+    auto packet = new Packet(str.str().c_str(), ogm);
+    auto originTag = packet->addTagIfAbsent<OriginatorTag>();
+    originTag->setName("OGM");
+    originTag->setIsOrigin(true);
     setDownControlInfo(packet, MacAddress::BROADCAST_ADDRESS);
     sendDown(packet);
     packet = nullptr;

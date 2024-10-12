@@ -104,6 +104,7 @@ void UdpBasicApp::sendPacket()
 {
     std::ostringstream str;
     str << packetName << "-" << numSent;
+//    str << packetName;
     Packet *packet = new Packet(str.str().c_str());
     if (dontFragment)
         packet->addTag<FragmentationReq>()->setDontFragment(true);

@@ -14,6 +14,7 @@
 #include "inet/linklayer/ieee80211/mac/Ieee80211Frame_m.h"
 #include "inet/linklayer/ieee80211/mac/Ieee80211Mac.h"
 #include "inet/linklayer/ieee80211/mac/contract/IRx.h"
+#include "inet/routing/lmpr/OriginatorTag_m.h"
 
 namespace inet {
 namespace ieee80211 {
@@ -69,6 +70,10 @@ void Tx::transmitFrame(Packet *packet, const Ptr<const Ieee80211MacHeader>& head
         delete[] buffer;
     }
     packet->insertAtBack(updatedTrailer);
+
+    auto& tag = packet->findTag<OriginatorTag>();
+    auto& tag2 = packet->findTag<MacAddressInd>();
+
     this->frame = packet->dup();
     ASSERT(!endIfsTimer->isScheduled() && !transmitting); // we are idle
     if (ifs == 0) {

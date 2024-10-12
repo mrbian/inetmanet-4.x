@@ -8,6 +8,7 @@
 package inet.linklayer.ieee80211.mac.originator;
 
 import inet.linklayer.ieee80211.mac.contract.IFragmentationPolicy;
+import inet.linklayer.ieee80211.mac.fragmentation.BasicFragmentationPolicy;
 
 module OriginatorMacDataService
 {
@@ -19,7 +20,8 @@ module OriginatorMacDataService
         @statistic[packetFragmented](title="packets fragmented"; record=count);
         @statistic[packetAggregated](title="packets aggregated"; record=count);
     submodules:
-        fragmentationPolicy: <"BasicFragmentationPolicy"> like IFragmentationPolicy if typename != "" {
+//        fragmentationPolicy: <"BasicFragmentationPolicy"> like IFragmentationPolicy if typename != "" {
+		fragmentationPolicy: <default("BasicFragmentationPolicy")> like IFragmentationPolicy if typename != "" {
             parameters:
                 @display("p=100,100");
         }

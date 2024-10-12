@@ -165,6 +165,7 @@ class Olsr_Etx : public Olsr
         friend class Olsr_MsgTimer;
         friend class Olsr_Etx_state;
         friend class Dijkstra;
+        friend class Olsr_Etx_TVT;
 
         Olsr_Etx_parameter parameter_;
 

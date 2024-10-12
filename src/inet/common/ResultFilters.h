@@ -577,6 +577,16 @@ class INET_API PacketDropReasonFilter : public cObjectResultFilter
     virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
 };
 
+class INET_API MacSendTypeFilter : public cObjectResultFilter
+{
+  protected:
+    char type[100];
+    std::set<std::string> pktNameSet;
+
+  public:
+    virtual void receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details) override;
+};
+
 /**
  * Filter that expects a Packet and outputs its minsnir from snirIndication tag if exists .
  */

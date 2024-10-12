@@ -61,6 +61,7 @@
 
 #include "OGM_m.h"
 #include "LMPRHeader_m.h"
+#include "OriginatorTag_m.h"
 
 using namespace std;
 
@@ -69,6 +70,8 @@ using namespace std;
 namespace inet {
 
 extern simsignal_t nodeInfoLenSignal;
+extern simsignal_t LETSignal;
+extern simsignal_t nextNodeChoiceLETSignal;
 
 struct Trajectory {
     float x1;
@@ -171,6 +174,7 @@ protected:
     void broadcastOGM();
     bool notBroadcasted(const Ptr<OGM> msg);
     void handleOGM(Ptr<OGM> msg, int64_t len);
+    void handleOGMReminder();
 
 /* Brain */
 protected:
@@ -179,13 +183,16 @@ protected:
     void forwardData(Packet *packet, Ipv4Address dest);
     void forwardData_Optimal(Packet* packet, Ipv4Address dest);
     void forwardData_Forecast(Packet* packet, Ipv4Address dest);
+    void forwardData_by_ETX_LET(Packet* packet, Ipv4Address dest);
+    double calculateLET(int i, int j);
 
 /* Util */
 protected:
     const Protocol& getProtocol() const override { return Protocol::ipv4; }
     int dijkstra(const vector<vector<double>>& graph, int source, int target);
-    Coord forecastSelfPosition(double duration);
-    Coord forecastNodeLocation(NodeInfo* node_info, simtime_t t);
+    Coord forecastSelfPosition_Optimal(double duration);
+    Coord forecastNodePosition_Optimal(int idx, double duration);
+    Coord forecastNodeLocation_by_ThreePos(NodeInfo* node_info, simtime_t t);
     int getTargetNodeIdxByAddr(Ipv4Address addr);
     NodeInfo* getNodeInfoByAddr(Ipv4Address addr);
     double getRealCommRange(Coord PosA, Coord PosB);

@@ -34,6 +34,10 @@ void LMPR::handleDataFromUpperLayer(Packet *packet)
 
     packet->insertAtFront(lh);
 
+    auto originTag = packet->addTagIfAbsent<OriginatorTag>();
+    originTag->setName("UDPData");
+    originTag->setIsOrigin(true);
+
     forwardData(packet, dest);
 }
 
@@ -66,8 +70,9 @@ void LMPR::handleDataFromLowerLayer(Packet *packet)
 
 void LMPR::forwardData(Packet* packet, Ipv4Address dest)
 {
-    forwardData_Optimal(packet, dest);
+//    forwardData_Optimal(packet, dest);
 //    forwardData_Forecast(packet, dest);
+    forwardData_by_ETX_LET(packet, dest);
 }
 
 void LMPR::forwardData_Optimal(Packet* packet, Ipv4Address dest)
@@ -82,7 +87,7 @@ void LMPR::forwardData_Optimal(Packet* packet, Ipv4Address dest)
                 if (distance <= commRange) {
                     adjacencyMatrix[i][j] = 1.0; // Nodes i and j are within communication range
                 } else {
-                    adjacencyMatrix[i][j] = 0.0;
+                    adjacencyMatrix[i][j] = INF;
                 }
             }
         }
@@ -103,25 +108,86 @@ void LMPR::forwardData_Forecast(Packet* packet, Ipv4Address dest)
                 NodeInfo* node_info_B = getNodeInfoByAddr(_globalMob[j].first);
                 if(node_info_A && node_info_B)
                 {
-                    Coord PosA = forecastNodeLocation(node_info_A, simTime());
-                    Coord PosB = forecastNodeLocation(node_info_B, simTime());
+                    Coord PosA = forecastNodeLocation_by_ThreePos(node_info_A, simTime());
+                    Coord PosB = forecastNodeLocation_by_ThreePos(node_info_B, simTime());
                     double distance = PosA.distance(PosB);
                     double commRange = getRealCommRange(PosA, PosB);
                     if (distance <= commRange) {
                         adjacencyMatrix[i][j] = 1.0; // Nodes i and j are within communication range
                     } else {
-                        adjacencyMatrix[i][j] = 0.0;
+//                        adjacencyMatrix[i][j] = 0.0;
+                        adjacencyMatrix[i][j] = INF;
                     }
                 }
                 else
                 {
-                    adjacencyMatrix[i][j] = 0.0;
+//                    adjacencyMatrix[i][j] = 0.0;
+                    adjacencyMatrix[i][j] = INF;
                 }
             }
         }
     }
 }
 
+void LMPR::forwardData_by_ETX_LET(Packet* packet, Ipv4Address dest)
+{
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            if (i != j) {  // No self-loops
+                Coord PosA = _globalMob[i].second->getCurrentPosition();
+                Coord PosB = _globalMob[j].second->getCurrentPosition();
+                double distance = PosA.distance(PosB);
+                double commRange = getRealCommRange(PosA, PosB);
+                if(distance <= commRange)
+                {
+                    double ETX = 1.0;
+                    double LET = calculateLET(i, j);
+                    ETX = ETX*std::exp(LET);
+                    adjacencyMatrix[i][j] = ETX;
+                }
+                else
+                {
+                    adjacencyMatrix[i][j] = INF;
+                }
+            }
+        }
+    }
+    int nextNodeIdx = dijkstra(adjacencyMatrix, m_selfNodeIdx, getTargetNodeIdxByAddr(dest));
+    if(nextNodeIdx != -1)
+    {
+        emit(nextNodeChoiceLETSignal, calculateLET(m_selfNodeIdx, nextNodeIdx));
+    }
+    Ipv4Address nextHopAddr = _globalMob[nextNodeIdx].first;
+    MacAddress nextHopMacAddr = arp->resolveL3Address(nextHopAddr, nullptr);
+    setDownControlInfo(packet, nextHopMacAddr);
+    sendDown(packet);
+}
+
+double LMPR::calculateLET(int i, int j)
+{
+    double LET = 0;
+    int Np = 30;
+    double period = 0.1;
+    for(int k = 0; k < Np; k ++)
+    {
+        Coord PosA = forecastNodePosition_Optimal(i, k*period);
+        Coord PosB = forecastNodePosition_Optimal(j, k*period);
+        double distance = PosA.distance(PosB);
+        double commRange = getRealCommRange(PosA, PosB);
+        if(distance <= commRange)
+        {
+            LET += period;
+        }
+        else
+        {
+            break;
+        }
+    }
+    emit(LETSignal, LET);
+    return LET;
+}
+
+// Find shortest path
 int LMPR::dijkstra(const vector<vector<double>>& graph, int source, int target) {
     int N = graph.size();
     vector<double> dist(N, INF);  // Distance from source to each node
@@ -144,7 +210,8 @@ int LMPR::dijkstra(const vector<vector<double>>& graph, int source, int target) 
 
         // Check neighbors of u
         for (int v = 0; v < N; ++v) {
-            if (graph[u][v] != 0 && !visited[v]) {  // There's an edge between u and v
+//            if (graph[u][v] != 0 && !visited[v]) {  // There's an edge between u and v
+            if (graph[u][v] != INF && !visited[v]) {
                 int newDist = dist[u] + graph[u][v];
                 if (newDist < dist[v]) {
                     dist[v] = newDist;

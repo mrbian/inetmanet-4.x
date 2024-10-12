@@ -26,6 +26,7 @@ class INET_API SnirReceiverBase : public ReceiverBase
     };
 
     double snirThreshold = NaN;
+    double snirThreshold_rts_cts_ack = NaN;
     SnirThresholdMode snirThresholdMode = SnirThresholdMode::STM_UNDEFINED;
 
   protected:

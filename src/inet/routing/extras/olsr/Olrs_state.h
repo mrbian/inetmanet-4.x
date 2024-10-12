@@ -39,6 +39,7 @@ class Olsr_state : public cObject
 {
     friend class Olsr;
     friend class OlsrOpt;
+    friend class Olsr_Etx_TVT;
   protected:
     linkset_t   linkset_;   ///< Link Set (RFC 3626, section 4.2.1).
     nbset_t     nbset_;     ///< Neighbor Set (RFC 3626, section 4.3.1).

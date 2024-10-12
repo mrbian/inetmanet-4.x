@@ -13,6 +13,7 @@
 #include "inet/common/TimeTag.h"
 #include "inet/queueing/function/PacketComparatorFunction.h"
 #include "inet/queueing/function/PacketDropperFunction.h"
+#include "inet/routing/lmpr/OriginatorTag_m.h"
 
 namespace inet {
 namespace queueing {
@@ -90,6 +91,7 @@ Packet *PacketQueue::getPacket(int index) const
 
 void PacketQueue::pushPacket(Packet *packet, const cGate *gate)
 {
+    auto& tag = packet->findTag<OriginatorTag>();
     Enter_Method("pushPacket");
     take(packet);
     cNamedObject packetPushStartedDetails("atomicOperationStarted");
@@ -133,6 +135,9 @@ Packet *PacketQueue::pullPacket(const cGate *gate)
     if (collector != nullptr)
         animatePullPacket(packet, outputGate, collector.getReferencedGate());
     updateDisplayString();
+
+    auto& tag = packet->findTag<OriginatorTag>();
+
     return packet;
 }
 

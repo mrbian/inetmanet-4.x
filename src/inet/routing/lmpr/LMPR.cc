@@ -20,6 +20,8 @@ namespace inet {
 Define_Module(LMPR);
 
 simsignal_t nodeInfoLenSignal = cComponent::registerSignal("nodeInfoLen");
+simsignal_t LETSignal = cComponent::registerSignal("LET");
+simsignal_t nextNodeChoiceLETSignal = cComponent::registerSignal("nextNodeChoiceLET");
 
 LMPR::LMPR() {
     // TODO Auto-generated constructor stub
@@ -139,7 +141,8 @@ void LMPR::start(){
         }
     }
 
-    scheduleAt(simTime() + uniform(0.0, par("maxJitter")), OGMReminder);
+//    scheduleAt(simTime() + uniform(0.0, par("maxJitter")), OGMReminder);
+    scheduleAt(simTime() + uniform(0.0, par("mhOGMInterval")), OGMReminder);
 }
 
 void LMPR::stop() {
@@ -150,11 +153,7 @@ void LMPR::finish() {
 
 void LMPR::handleSelfMessage(cMessage *msg) {
     if (msg == OGMReminder) {
-        broadcastOGM();
-        scheduleAt(simTime() + mhOGMInterval + broadcastDelay->doubleValue(), OGMReminder);
-
-        int len = nodesInfoList.size();
-        emit(nodeInfoLenSignal, len);
+        handleOGMReminder();
     }
 }
 
@@ -167,7 +166,8 @@ void LMPR::handleUpperPacket(Packet *packet)
 /** @brief Handle messages from lower layer */
 void LMPR::handleLowerPacket(Packet *packet)
 {
-    if(strcmp(packet->getName(), "OGM") == 0)
+//    if(strcmp(packet->getName(), "OGM") == 0)
+    if(strstr(packet->getName(), "OGM") != nullptr)
     {
         auto incomingOGM = (staticPtrCast<OGM>(packet->peekData<OGM>()->dupShared()));
         handleOGM(incomingOGM, packet->getBitLength());
@@ -180,8 +180,6 @@ void LMPR::handleLowerPacket(Packet *packet)
         delete packet;
     }
 }
-
-
 
 //        auto tmp = this->getParentModule()->getParentModule()->getSubmodule("radioMedium");
 //        if (tmp) {

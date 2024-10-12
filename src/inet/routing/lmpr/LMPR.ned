@@ -28,7 +28,11 @@ simple LMPR extends NetworkProtocolBase like INetworkProtocol
         @class(LMPR);
         
         @signal[nodeInfoLen](type=int);
+        @signal[LET](type=double);
+        @signal[nextNodeChoiceLET](type=double);
         @statistic[nodeInfoLen](title="cached node info length"; record=vector; interpolationmode=none);
+        @statistic[LET](title="link expiration time for link"; record=histogram; interpolationmode=none);
+        @statistic[nextNodeChoiceLET](title="link expiration time for link between current node and next hop"; record=histogram; interpolationmode=none);
 	
 		// Modules
 //        string interfaceTableModule;   // The path to the InterfaceTable module

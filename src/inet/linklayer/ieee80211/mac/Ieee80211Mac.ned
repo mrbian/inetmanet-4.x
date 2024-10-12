@@ -95,6 +95,8 @@ module Ieee80211Mac extends MacProtocolBase like IIeee80211Mac
         @signal[modesetChanged](type=inet::physicallayer::Ieee80211ModeSet);
         @statistic[packetSentToUpper](title="packets sent to upper layer"; record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
         @statistic[packetSentToLower](title="packets sent to lower layer"; record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
+        @statistic[OGMPacketSentToLower](title="OGM packets sent to lower layer"; source=macSendOGMPacket(packetSentToLower); record=count; interpolationmode=none);
+        @statistic[UDPDataPacketSentToLower](title="Udp data packets sent to lower layer"; source=macSendUDPDataPacket(packetSentToLower); record=count; interpolationmode=none);
         @statistic[packetReceivedFromUpper](title="packets received from upper layer"; record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
         @statistic[packetReceivedFromLower](title="packets received from lower layer"; record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
         @statistic[linkBroken](title="link breaks"; record=count,vector?; interpolationmode=none);

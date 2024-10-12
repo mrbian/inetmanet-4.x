@@ -18,7 +18,8 @@ Define_Module(OriginatorMacDataService);
 void OriginatorMacDataService::initialize()
 {
     sequenceNumberAssignment = new NonQoSSequenceNumberAssignment();
-    fragmentationPolicy = check_and_cast<IFragmentationPolicy *>(getSubmodule("fragmentationPolicy"));
+    if(getSubmodule("fragmentationPolicy"))
+        fragmentationPolicy = check_and_cast<IFragmentationPolicy *>(getSubmodule("fragmentationPolicy"));
     fragmentation = new Fragmentation();
 }
 

@@ -16,6 +16,7 @@
 #include "inet/common/TimeTag_m.h"
 #include "inet/mobility/contract/IMobility.h"
 #include "inet/networklayer/common/L3AddressTag_m.h"
+#include "inet/routing/lmpr/OriginatorTag_m.h"
 
 #ifdef INET_WITH_PHYSICALLAYERWIRELESSCOMMON
 #include "inet/physicallayer/wireless/common/base/packetlevel/ReceptionBase.h"
@@ -1027,6 +1028,27 @@ Register_PacketDropReason_ResultFilter("packetDropReasonIsNoProtocolFound", NoPr
 Register_PacketDropReason_ResultFilter("packetDropReasonIsNoPortFound", NoPortFoundPacketDropReasonFilter, NO_PORT_FOUND);
 Register_PacketDropReason_ResultFilter("packetDropReasonIsDuplicateDetected", DuplicateDetectedPacketDropReasonFilter, DUPLICATE_DETECTED);
 Register_PacketDropReason_ResultFilter("packetDropReasonIsOther", OtherPacketDropReasonFilter, OTHER_PACKET_DROP);
+
+
+void MacSendTypeFilter::receiveSignal(cResultFilter *prev, simtime_t_cref t, cObject *object, cObject *details)
+{
+    if (auto pk = dynamic_cast<Packet *>(object)) {
+        if(const auto& tag = pk->findTag<OriginatorTag>())
+        {
+            std::string pktName = pk->getName();
+            if(strcmp(type, tag->getName()) == 0 && tag->isOrigin() && pktNameSet.find(pktName) == pktNameSet.end())
+            {
+                pktNameSet.insert(pktName);
+                fire(this, t, object, details);
+            }
+        }
+    }
+}
+
+#define Register_MacSendType_Filter(NAME, CLASS, TYPE)  class CLASS : public MacSendTypeFilter { public: CLASS() { strcpy(type, TYPE); } }; Register_ResultFilter(NAME, CLASS);
+Register_MacSendType_Filter("macSendOGMPacket", macSendOGMPacketFilter, "OGM");
+Register_MacSendType_Filter("macSendUDPDataPacket", macSendUDPDataPacketFilter, "UDPData");
+
 
 Register_ResultFilter("minimumSnir", MinimumSnirFromSnirIndFilter);
 

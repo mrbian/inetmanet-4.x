@@ -354,6 +354,7 @@ class Olsr : public ManetRoutingBase
     friend class Olsr_IfaceAssocTupleTimer;
     friend class Olsr_MsgTimer;
     friend class Olsr_Timer;
+    friend class Olsr_Etx_TVT;
   protected:
 
     bool configured = false;
