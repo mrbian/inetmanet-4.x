@@ -17,6 +17,7 @@
 #include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/physicallayer/wireless/common/radio/packetlevel/Radio.h"
 #include "inet/physicallayer/wireless/common/signal/Interference.h"
+#include "inet/physicallayer/pathloss/LOSCondTag_m.h"
 
 namespace inet {
 namespace physicallayer {
@@ -594,6 +595,16 @@ Packet *RadioMedium::receivePacket(const IRadio *radio, IWirelessSignal *signal)
     communicationCache->removeCachedReceptionResult(radio, transmission);
     Packet *packet = result->getPacket()->dup();
     delete result;
+    LOSCond* cond = pathLoss->getLOSCondByTxId(transmission->getId());
+    if(cond)
+    {
+        auto condTag = packet->addTagIfAbsent<LOSCondTag>();
+        condTag->setTxX(cond->txX);
+        condTag->setTxY(cond->txY);
+        condTag->setRxX(cond->rxX);
+        condTag->setRxY(cond->rxY);
+        condTag->setLosCondFlag(cond->losCondFlag);
+    }
     return packet;
 }
 

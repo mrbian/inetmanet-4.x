@@ -15,6 +15,14 @@ namespace inet {
 
 namespace physicallayer {
 
+typedef struct{
+    double txX;
+    double txY;
+    double rxX;
+    double rxY;
+    int losCondFlag;
+} LOSCond;
+
 /**
  * This interface models path loss (or path attenuation) that is the reduction
  * in power density of a radio signal as it propagates through space.
@@ -41,6 +49,11 @@ class INET_API IPathLoss : public virtual IPrintableObject
      * [0, +infinity) or NaN if unspecified.
      */
     virtual m computeRange(mps propagationSpeed, Hz frequency, double loss) const = 0;
+
+    virtual LOSCond* getLOSCondByTxId(int tranmission_id) const
+    {
+        return nullptr;
+    }
 };
 
 } // namespace physicallayer

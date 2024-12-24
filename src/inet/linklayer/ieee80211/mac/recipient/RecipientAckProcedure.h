@@ -27,6 +27,7 @@ class INET_API RecipientAckProcedure : public IRecipientAckProcedure
 
   public:
     virtual void processReceivedFrame(Packet *packet, const Ptr<const Ieee80211DataOrMgmtHeader>& dataOrMgmtHeader, IRecipientAckPolicy *ackPolicy, IProcedureCallback *callback) override;
+//    virtual void processReceivedFramePromisc(Packet *packet, const Ptr<const Ieee80211DataOrMgmtHeader>& dataOrMgmtHeader, IRecipientAckPolicy *ackPolicy, IProcedureCallback *callback) override;
     virtual void processTransmittedAck(const Ptr<const Ieee80211AckFrame>& ack) override;
 };
 

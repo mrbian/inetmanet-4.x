@@ -17,6 +17,7 @@ simple RecipientAckPolicy like IRecipientAckPolicy
 {
     parameters:
         string rateSelectionModule;
+        string macModule;
         @display("i=block/control");
 }
 

@@ -39,6 +39,7 @@ class INET_API ITransmission : public virtual IPrintableObject
   protected:
     uint64_t& nextId = SIMULATION_SHARED_COUNTER(nextId);
 
+
   public:
     /**
      * Returns an identifier for this transmission which is globally unique

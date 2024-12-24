@@ -130,7 +130,10 @@ extern INET_API simsignal_t // admin
     tokensChangedSignal,
     tokensAddedSignal,
     tokensRemovedSignal,
-    tokensDepletedSignal;
+    tokensDepletedSignal,
+
+
+    destDataHopCountSignal;
 
 /**
  * Utility function

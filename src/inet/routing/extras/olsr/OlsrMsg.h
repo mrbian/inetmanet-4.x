@@ -5,6 +5,7 @@
 #include "inet/common/INETDefs.h"
 #include "inet/networklayer/common/L3Address.h"
 #include "inet/routing/extras/olsr/Olrs_Etx_parameter.h"
+#include <cmath>
 
 namespace inet {
 
@@ -98,6 +99,9 @@ typedef struct Olsr_Etx_iface_address {
   double  nb_link_delay_;
   int parameter_qos_;
 
+  // Link expiration extension
+  double let_factor_;
+
   inline nsaddr_t& iface_address() { return iface_address_; }
 
   /// Link quality extension
@@ -106,9 +110,14 @@ typedef struct Olsr_Etx_iface_address {
 
   inline double  etx()  {
     double mult = (double) (link_quality() * nb_link_quality());
+    double etx = 1;
     switch (parameter_qos_) {
     case OLSR_ETX_BEHAVIOR_ETX:
       return (mult < 0.01) ? 100.0 : (double) 1.0 / (double) mult;
+      break;
+
+    case OLSR_ETX_BEHAVIOR_LET:
+      return (mult < 0.01) ? 100.0 : (double) let_factor_ / (double) mult;
       break;
 
     case OLSR_ETX_BEHAVIOR_ML:
@@ -125,6 +134,7 @@ typedef struct Olsr_Etx_iface_address {
   /// Link delay extension
   inline double& link_delay() { return link_delay_; }
   inline double& nb_link_delay() { return nb_link_delay_; }
+  inline double& let_factor() { return let_factor_; }
 
 } Olsr_Etx_iface_address;
 
@@ -193,6 +203,7 @@ typedef struct Olsr_hello :cObject {
     Olsr_hello_msg  hello_body_[OLSR_MAX_HELLOS];
     /// Number of OLSR_hello_msg contained in hello_body_.
     int     count;
+    int     node_mob_info_; // mobility index for position prediction(node id)
 
     inline uint16_t&    reserved()      { return reserved_; }
     inline uint8_t& htime()         { return htime_; }

@@ -20,6 +20,7 @@ class INET_API IRecipientAckPolicy
     virtual ~IRecipientAckPolicy() {}
 
     virtual bool isAckNeeded(const Ptr<const Ieee80211DataOrMgmtHeader>& header) const = 0;
+//    virtual bool isAckNeededPromisc(const Ptr<const Ieee80211DataOrMgmtHeader>& header) const { return false; }
     virtual simtime_t computeAckDurationField(Packet *packet, const Ptr<const Ieee80211DataOrMgmtHeader>& header) const = 0;
 };
 

@@ -123,6 +123,10 @@ simsignal_t tokensAddedSignal = cComponent::registerSignal("tokensAdded");
 simsignal_t tokensRemovedSignal = cComponent::registerSignal("tokensRemoved");
 simsignal_t tokensDepletedSignal = cComponent::registerSignal("tokensDepleted");
 
+// Debug
+simsignal_t destDataHopCountSignal = cComponent::registerSignal("destDataHopCount");
+
+
 void printSignalBanner(simsignal_t signalID, const cObject *obj, const cObject *details)
 {
     EV << "** Signal at T=" << simTime()

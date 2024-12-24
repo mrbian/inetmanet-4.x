@@ -1,45 +1,26 @@
 //
-//   Copyright (C) 2009 by Alfonso Ariza
-//   Malaga University
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Lesser General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-//
+// 
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU Lesser General Public License for more details.
-//
+// 
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see http://www.gnu.org/licenses/.
-//
+// 
 
 package inet.routing.extras;
-
 import inet.routing.extras.base.BaseRouting;
 
 
-//
-// Optimized Link State Routing Protocol with the ETX and ML (Link Quality) extension
-//
-// Implements core functionality as described in rfc3626 chapter 2.1
-// as well as the ETX and ML extensions (Auxiliary functions are NOT supported):
-// Supports optional Link Layer feedback (see the use_mac parameter)
-// and optional Fish eye (see the fish_eye parameter) extension.
-//
-// NOTE:
-//  - The initialization of the routing component is done in stage=4
-//  - hello, tc, mid intervals accept INTEGER values only
-//  - IPv4 address size is assumed in the messages. If you need IPv6, recompile with -DOLSR_IPv6 added to CFLAGS
-//  - Multiple interfaces per OLSR node is supported only with adding -DMULTIPLE_IFACES_SUPPORT to CFLAGS
-//
-// see: <a>http://www.inf.ufrgs.br/~~wlccordeiro/resources/olsr/README.html</a>
-//
-simple Olsr_Etx extends BaseRouting
+simple Olsr_Etx_TVT extends BaseRouting
 {
     parameters:
-        @class(Olsr_Etx);
+        @class(Olsr_Etx_TVT);
 
         UdpPort = default(698);
         int Willingness = default(3); // (0..7) The node's willingness to carry traffic on behalf of other nodes. 0:NEVER .. 7:ALWAYS (section 18.8)
@@ -75,5 +56,6 @@ simple Olsr_Etx extends BaseRouting
         bool DelOnlyRtEntriesInrtable_ = default(false); // delete only ip entries that are in the interal routing table
         
         int ETX_loss_window_size = default(10);
+        bool load_losmap = default(false);
+        double Rmax @unit(m) = default(123m);
 }
-

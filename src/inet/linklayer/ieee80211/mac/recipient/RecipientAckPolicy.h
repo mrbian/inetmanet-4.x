@@ -11,6 +11,7 @@
 #include "inet/linklayer/ieee80211/mac/common/ModeSetListener.h"
 #include "inet/linklayer/ieee80211/mac/contract/IRateSelection.h"
 #include "inet/linklayer/ieee80211/mac/contract/IRecipientAckPolicy.h"
+#include "inet/linklayer/ieee80211/mac/Ieee80211Mac.h"
 
 namespace inet {
 namespace ieee80211 {
@@ -19,6 +20,7 @@ class INET_API RecipientAckPolicy : public ModeSetListener, public IRecipientAck
 {
   protected:
     IRateSelection *rateSelection = nullptr;
+    Ieee80211Mac *mac = nullptr;
 
   protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
@@ -28,6 +30,7 @@ class INET_API RecipientAckPolicy : public ModeSetListener, public IRecipientAck
 
   public:
     virtual bool isAckNeeded(const Ptr<const Ieee80211DataOrMgmtHeader>& header) const override;
+//    virtual bool isAckNeededPromisc(const Ptr<const Ieee80211DataOrMgmtHeader>& header) const override;
 
     virtual simtime_t computeAckDurationField(Packet *packet, const Ptr<const Ieee80211DataOrMgmtHeader>& header) const override;
 };

@@ -80,6 +80,18 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
     double          nb_link_quality_;
     double          etx_;
 
+    // Link expire extension
+//    double          link_expire_time_;
+
+    // mobile extension
+    // Time when mobile information update
+    double      mob_update_time_;
+    // Node id
+    int         mob_info_idx_;
+    // let multiple factor for etx calculate
+    double      let_factor_;
+    double      link_expire_time_;
+
     Olsr_Etx_parameter parameter_;
 
     inline void set_qos_behaviour(Olsr_Etx_parameter parameter) {parameter_ = parameter;}
@@ -100,6 +112,10 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
         link_quality_ = 0;
         nb_link_quality_ = 0;
         etx_ = 0;
+
+        let_factor_ = 1;
+
+//        link_expire_time_ = 0;
     }
 
 #if 0
@@ -118,6 +134,8 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
     inline double link_quality() { return link_quality_; }
     inline double nb_link_quality() { return nb_link_quality_; }
     inline double etx() { return etx_; }
+    inline double let_factor() {return let_factor_;}
+
 #if 0
     inline double  etx()
     {
@@ -140,6 +158,31 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
     }
 #endif
 
+//    inline void update_link_quality(double nb_link_quality)
+//    {
+//        // update link quality information
+//        nb_link_quality_ = nb_link_quality;
+//
+//        // calculate the new etx value
+//        double mult = link_quality_ * nb_link_quality_;
+//        switch (parameter_.link_quality())
+//        {
+//        case OLSR_ETX_BEHAVIOR_ETX:
+//        case OLSR_ETX_BEHAVIOR_LET:
+//            etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
+//            break;
+//
+//        case OLSR_ETX_BEHAVIOR_ML:
+//            etx_ = mult;
+//            break;
+//
+//        case OLSR_ETX_BEHAVIOR_NONE:
+//        default:
+//            etx_ = 0.0;
+//            break;
+//        }
+//    }
+
     inline void update_link_quality(double nb_link_quality)
     {
         // update link quality information
@@ -153,6 +196,10 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
             etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
             break;
 
+        case OLSR_ETX_BEHAVIOR_LET:
+            etx_ = (mult < 0.01) ? 100.0 : let_factor_ / mult;
+            break;
+
         case OLSR_ETX_BEHAVIOR_ML:
             etx_ = mult;
             break;
@@ -163,6 +210,62 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
             break;
         }
     }
+
+    inline void update_let_factor(double let_factor)
+    {
+        let_factor_ = let_factor;
+
+        // calculate the new etx value
+        double mult = link_quality_ * nb_link_quality_;
+        switch (parameter_.link_quality())
+        {
+        case OLSR_ETX_BEHAVIOR_ETX:
+            etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
+            break;
+
+        case OLSR_ETX_BEHAVIOR_LET:
+            etx_ = (mult < 0.01) ? 100.0 : let_factor_ / mult;
+            break;
+
+        case OLSR_ETX_BEHAVIOR_ML:
+            etx_ = mult;
+            break;
+
+        case OLSR_ETX_BEHAVIOR_NONE:
+        default:
+            etx_ = 0.0;
+            break;
+        }
+    }
+
+//    inline void update_link_quality(double nb_link_quality, double let_factor)
+//    {
+//        // update link quality information
+//        nb_link_quality_ = nb_link_quality;
+//        let_factor_ = let_factor;
+//
+//        // calculate the new etx value
+//        double mult = link_quality_ * nb_link_quality_;
+//        switch (parameter_.link_quality())
+//        {
+//        case OLSR_ETX_BEHAVIOR_ETX:
+//            etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
+//            break;
+//        case OLSR_ETX_BEHAVIOR_LET:
+//            etx_ = (mult < 0.01) ? 100.0 : let_factor_ / mult;
+//            break;
+//
+//        case OLSR_ETX_BEHAVIOR_ML:
+//            etx_ = mult;
+//            break;
+//
+//        case OLSR_ETX_BEHAVIOR_NONE:
+//        default:
+//            etx_ = 0.0;
+//            break;
+//        }
+//    }
+
 
 
     inline double& next_hello() { return next_hello_; }
@@ -211,8 +314,10 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
     inline void process_packet(bool received, double htime)
     {
         // Code extracted from olsrd implementation
-        unsigned char mask = 1 << (loss_index_ & 7);
-        int index = loss_index_ >> 3;
+        // 这样存储使用bitmap是为了充分利用空间，让每个bit对应1个数据包，而不是每个字节对应1个数据包
+        unsigned char mask = 1 << (loss_index_ & 7); // (loss_index_&7)获得最低3位的bit值，表示整除8后的余数;
+                                                     // mask=1<<余数，表示对应位置上取1，其他全0
+        int index = loss_index_ >> 3;  // 整除8得到除数,索引到bitmap 8bit数据块对应的位置
         if (received)
         {
             // packet not lost
@@ -220,8 +325,8 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
             {
                 // but the packet that we replace was lost
                 // => decrement packet loss
-                loss_bitmap_[index] &= ~mask;
-                lost_packets_--;
+                loss_bitmap_[index] &= ~mask;    // 置为1表示丢包，置为0表示没有丢包
+                lost_packets_--;                // 覆盖（相当于窗口滑动的时候忽略之前的值）旧值的时候需要更新lost_packets的数量消除旧值的影响
             }
             hello_ival_ = htime;
             next_hello_ = CURRENT_TIME_OWER + hello_ival_;
@@ -233,8 +338,8 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
             {
                 // but the packet that we replace was not lost
                 // => increment packet loss
-                loss_bitmap_[index] |= mask;
-                lost_packets_++;
+                loss_bitmap_[index] |= mask;   // 置为1表示丢包，置为0表示没有丢包
+                lost_packets_++;               // 覆盖（相当于窗口滑动的时候忽略之前的值）旧值的时候需要更新lost_packets的数量消除旧值的影响
             }
         }
         // move to the next packet
@@ -258,6 +363,15 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
         case OLSR_ETX_BEHAVIOR_ETX:
             etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
             break;
+
+        case OLSR_ETX_BEHAVIOR_LET:
+            etx_ = (mult < 0.01) ? 100.0 : let_factor_ / mult;
+            break;
+
+//        case OLSR_ETX_BEHAVIOR_LET:
+//            etx = (mult < 0.01) ? 100.0 : (double) 1.0 / (double) mult;
+//            etx_ = (mult < 0.01) ? 100.0 : etx*exp(-link_expire_time_);
+//            break;
 
         case OLSR_ETX_BEHAVIOR_ML:
             etx_ = mult;
@@ -289,6 +403,30 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
         loss_missed_hellos_ = 0;
         loss_seqno_ = (seqno + 1) % (OLSR_ETX_MAX_SEQ_NUM + 1);
     }
+
+
+//    inline void receive(uint16_t seqno, double htime, double link_expire_time)
+//    {
+//        link_expire_time_ = link_expire_time;
+//
+//        while (seqno != loss_seqno_)
+//        {
+//            // have already considered all lost HELLO messages?
+//            if (loss_missed_hellos_ == 0)
+//                process_packet(false, htime);
+//            else
+//                // if not, then decrement the number of lost HELLOs
+//                loss_missed_hellos_--;
+//            // set loss_seqno_ to the next expected sequence number
+//            loss_seqno_ = (loss_seqno_ + 1) % (OLSR_ETX_MAX_SEQ_NUM + 1);
+//        }
+//        // we have received a packet, otherwise this function would not
+//        // have been called
+//        process_packet(true, htime);
+//        // (re-)initialize
+//        loss_missed_hellos_ = 0;
+//        loss_seqno_ = (seqno + 1) % (OLSR_ETX_MAX_SEQ_NUM + 1);
+//    }
 
     inline void packet_timeout()
     {
@@ -391,7 +529,10 @@ typedef struct OLSR_ETX_nb2hop_tuple : public Olsr_nb2hop_tuple
     /// Link quality extension
     double link_quality_;
     double nb_link_quality_;
+//    double link_expire_time_;
     double etx_;
+
+    double let_factor_;
 
     inline double  link_quality() { return link_quality_; }
     inline double  nb_link_quality() { return nb_link_quality_; }
@@ -430,6 +571,7 @@ typedef struct OLSR_ETX_nb2hop_tuple : public Olsr_nb2hop_tuple
         switch (parameter_qos_)
         {
         case OLSR_ETX_BEHAVIOR_ETX:
+        case OLSR_ETX_BEHAVIOR_LET:
             etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
             break;
 
@@ -443,6 +585,39 @@ typedef struct OLSR_ETX_nb2hop_tuple : public Olsr_nb2hop_tuple
             break;
         }
     }
+
+    inline void update_link_quality(double link_quality, double nb_link_quality, double let_factor)
+    {
+        // update link quality information
+        link_quality_ = link_quality;
+        nb_link_quality_ = nb_link_quality;
+        let_factor_ = let_factor;
+
+        // calculate the new etx value
+        double mult = link_quality_ * nb_link_quality_;
+        double etx = 1;
+        switch (parameter_qos_)
+        {
+        case OLSR_ETX_BEHAVIOR_ETX:
+            etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
+            break;
+
+        case OLSR_ETX_BEHAVIOR_LET:
+            etx = (mult < 0.01) ? 100.0 : let_factor_ / (double) mult;
+            break;
+
+        case OLSR_ETX_BEHAVIOR_ML:
+            etx_ = mult;
+            break;
+
+        case OLSR_ETX_BEHAVIOR_NONE:
+        default:
+            etx_ = 0.0;
+            break;
+        }
+    }
+
+
     /// Link delay extension
     double  link_delay_;
     double nb_link_delay_;
@@ -478,7 +653,10 @@ typedef struct OLSR_ETX_topology_tuple : public Olsr_topology_tuple
     /// Link delay extension
     double  link_quality_;
     double nb_link_quality_;
+//    double link_expire_time_;
     double etx_;
+
+    double let_factor_;
 
     int parameter_qos_;
 
@@ -520,6 +698,7 @@ typedef struct OLSR_ETX_topology_tuple : public Olsr_topology_tuple
         switch (parameter_qos_)
         {
         case OLSR_ETX_BEHAVIOR_ETX:
+        case OLSR_ETX_BEHAVIOR_LET:
             etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
             break;
 
@@ -532,6 +711,37 @@ typedef struct OLSR_ETX_topology_tuple : public Olsr_topology_tuple
             break;
         }
     }
+
+    inline void update_link_quality(double link_quality, double nb_link_quality, double let_factor)
+    {
+        // update link quality information
+        link_quality_ = link_quality;
+        nb_link_quality_ = nb_link_quality;
+        let_factor_ = let_factor;
+
+        // calculate the new etx value
+        double mult = link_quality_ * nb_link_quality_;
+        double etx = 1;
+        switch (parameter_qos_)
+        {
+        case OLSR_ETX_BEHAVIOR_ETX:
+            etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
+            break;
+
+        case OLSR_ETX_BEHAVIOR_LET:
+            etx = (mult < 0.01) ? 100.0 : let_factor_ / (double) mult;
+            break;
+
+        case OLSR_ETX_BEHAVIOR_ML:
+            etx_ = mult;
+            break;
+        case OLSR_ETX_BEHAVIOR_NONE:
+        default:
+            etx_ = 0.0;
+            break;
+        }
+    }
+
 
 /// Link delay extension
     double  link_delay_;

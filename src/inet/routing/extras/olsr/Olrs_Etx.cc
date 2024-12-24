@@ -102,6 +102,7 @@ Olsr_Etx::initialize(int stage)
         tc_ival_ = &par("Tc_ival");
         mid_ival_ = &par("Mid_ival");
         use_mac_ = par("use_mac");
+        ETX_loss_window_size = par("ETX_loss_window_size");
 
 
         if ( par("Fish_eye"))
@@ -183,7 +184,8 @@ void Olsr_Etx::start()
     hello_timer_.resched(hello_ival());
     tc_timer_.resched(hello_ival());
     mid_timer_.resched(hello_ival());
-    link_quality_timer_.resched(0.0);
+//    link_quality_timer_.resched(0.0);
+    link_quality_timer_.resched(hello_ival());
     scheduleEvent();
 }
 
@@ -2491,7 +2493,6 @@ Olsr_Etx::send_hello()
     msg.hello().willingness() = willingness();
     msg.hello().count = 0;
 
-
     std::map<uint8_t, int> linkcodes_count;
     for (auto it = linkset().begin(); it != linkset().end(); it++)
     {
@@ -2861,7 +2862,8 @@ Olsr_Etx::link_sensing
         link_tuple->lost_time() = 0.0;
         link_tuple->time() = now + Olsr::emf_to_seconds(msg.vtime());
         // Init link quality information struct for this link tuple
-        link_tuple->link_quality_init(pkt_seq_num, DEFAULT_LOSS_WINDOW_SIZE);
+//        link_tuple->link_quality_init(pkt_seq_num, DEFAULT_LOSS_WINDOW_SIZE);
+        link_tuple->link_quality_init(pkt_seq_num, ETX_loss_window_size);
         /// Link delay extension
         link_tuple->link_delay_init();
         // This call will be also in charge of creating a new tuple in

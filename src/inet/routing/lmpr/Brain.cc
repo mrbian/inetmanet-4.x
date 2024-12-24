@@ -48,8 +48,11 @@ void LMPR::handleDataFromLowerLayer(Packet *packet)
     // forward
     Ipv4Address src = lh->getSourceAddress().toIpv4();
     Ipv4Address dest = lh->getDestinationAddress().toIpv4();
+    Ipv4Address prev = lh->getPrevAddr().toIpv4();
+    Ipv4Address next = lh->getNextAddr().toIpv4();
     int ttl = lh->getTtl();
-    if(dest == m_selfIpv4Address)
+//    if(dest == m_selfIpv4Address)
+    if(dest == m_selfIpv4Address && next == m_selfIpv4Address)
     {
         lh = packet->popAtFront<LMPRHeader>();
         packet->addTagIfAbsent<NetworkProtocolInd>()->setProtocol(&getProtocol());
@@ -62,20 +65,40 @@ void LMPR::handleDataFromLowerLayer(Packet *packet)
         l3AddressInd->setDestAddress(lh->getDestinationAddress());
         sendUp(packet);
     }
-    else       // forward
+    else if(next == m_selfIpv4Address)      // next == me! forward
     {
         forwardData(packet, dest);
+    }
+    else
+    {
+        EV_INFO << "NOT addressed to me! abort & drop" << std::endl;
     }
 }
 
 void LMPR::forwardData(Packet* packet, Ipv4Address dest)
 {
-//    forwardData_Optimal(packet, dest);
-//    forwardData_Forecast(packet, dest);
-    forwardData_by_ETX_LET(packet, dest);
+    int nextNodeIdx = forwardData_Optimal(packet, dest);
+//    int nextNodeIdx = forwardData_Forecast(packet, dest);
+//    int nextNodeIdx = forwardData_by_ETX_LET(packet, dest);
+    if(nextNodeIdx == -1)
+    {
+        // todo: emit abort
+        EV_INFO << "Can not find next hop, abort!" << std::endl;
+        return;
+    }
+
+    Ipv4Address nextHopAddr = _globalMob[nextNodeIdx].first;
+    auto lh = packet->removeAtFront<LMPRHeader>();
+    lh->setPrevAddr(m_selfIpv4Address);
+    lh->setNextAddr(nextHopAddr);
+    packet->insertAtFront(lh);
+
+    MacAddress nextHopMacAddr = arp->resolveL3Address(nextHopAddr, nullptr);
+    setDownControlInfo(packet, nextHopMacAddr);
+    sendDown(packet);
 }
 
-void LMPR::forwardData_Optimal(Packet* packet, Ipv4Address dest)
+int LMPR::forwardData_Optimal(Packet* packet, Ipv4Address dest)
 {
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
@@ -93,13 +116,10 @@ void LMPR::forwardData_Optimal(Packet* packet, Ipv4Address dest)
         }
     }
     int nextNodeIdx = dijkstra(adjacencyMatrix, m_selfNodeIdx, getTargetNodeIdxByAddr(dest));
-    Ipv4Address nextHopAddr = _globalMob[nextNodeIdx].first;
-    MacAddress nextHopMacAddr = arp->resolveL3Address(nextHopAddr, nullptr);
-    setDownControlInfo(packet, nextHopMacAddr);
-    sendDown(packet);
+    return nextNodeIdx;
 }
 
-void LMPR::forwardData_Forecast(Packet* packet, Ipv4Address dest)
+int LMPR::forwardData_Forecast(Packet* packet, Ipv4Address dest)
 {
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
@@ -127,9 +147,13 @@ void LMPR::forwardData_Forecast(Packet* packet, Ipv4Address dest)
             }
         }
     }
+    // todo: check right or not
+    int nextNodeIdx = dijkstra(adjacencyMatrix, m_selfNodeIdx, getTargetNodeIdxByAddr(dest));
+    return nextNodeIdx;
+
 }
 
-void LMPR::forwardData_by_ETX_LET(Packet* packet, Ipv4Address dest)
+int LMPR::forwardData_by_ETX_LET(Packet* packet, Ipv4Address dest)
 {
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
@@ -152,15 +176,13 @@ void LMPR::forwardData_by_ETX_LET(Packet* packet, Ipv4Address dest)
             }
         }
     }
+
     int nextNodeIdx = dijkstra(adjacencyMatrix, m_selfNodeIdx, getTargetNodeIdxByAddr(dest));
     if(nextNodeIdx != -1)
     {
         emit(nextNodeChoiceLETSignal, calculateLET(m_selfNodeIdx, nextNodeIdx));
     }
-    Ipv4Address nextHopAddr = _globalMob[nextNodeIdx].first;
-    MacAddress nextHopMacAddr = arp->resolveL3Address(nextHopAddr, nullptr);
-    setDownControlInfo(packet, nextHopMacAddr);
-    sendDown(packet);
+    return nextNodeIdx;
 }
 
 double LMPR::calculateLET(int i, int j)
@@ -173,8 +195,9 @@ double LMPR::calculateLET(int i, int j)
         Coord PosA = forecastNodePosition_Optimal(i, k*period);
         Coord PosB = forecastNodePosition_Optimal(j, k*period);
         double distance = PosA.distance(PosB);
-        double commRange = getRealCommRange(PosA, PosB);
-        if(distance <= commRange)
+//        double commRange = getRealCommRange(PosA, PosB);
+        double Rmax = getRangeForLET(PosA, PosB);
+        if(distance <= Rmax)
         {
             LET += period;
         }

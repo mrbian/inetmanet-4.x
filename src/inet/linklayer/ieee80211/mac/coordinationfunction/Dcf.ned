@@ -30,8 +30,10 @@ module Dcf like IDcf
     parameters:
         string rxModule;
         string txModule;
+        bool promiscModeEnable = default(false);
 
         *.rateSelectionModule = "^.rateSelection";
+        *.macModule = "^.^.^.mac";
         *.rxModule = "^." + this.rxModule;
 
         @class(Dcf);

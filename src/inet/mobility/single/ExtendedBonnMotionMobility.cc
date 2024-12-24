@@ -116,6 +116,11 @@ void ExtendedBonnMotionMobility::setInitialPosition()
 
 void ExtendedBonnMotionMobility::setTargetPosition()
 {
+    nextChange = -1;
+    stationary = true;
+    targetPosition = lastPosition;
+    return;
+
     const ExtendedBonnMotionFile::Line& vec = *lines;
     if (currentLine + (is3D ? 3 : 2) >= (int)vec.size()) {
         nextChange = -1;
@@ -212,6 +217,7 @@ Coord ExtendedBonnMotionMobility::getFuturePosition(double lookAhead, simtime_t 
     Coord pos;
 
     double requestedTime = lookAhead + t.dbl();
+//    double requestedTime = lookAhead;
     int steps = lookAhead/samplingInterval;
     int l = currentLine;
 

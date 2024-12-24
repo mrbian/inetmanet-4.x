@@ -138,6 +138,7 @@ typedef struct Olsr_link_tuple : public cObject
     double      lost_time_;
     /// Time at which this tuple expires and must be removed.
     double      time_;
+
     int         index;
     //cMessage *asocTimer;
     cObject *asocTimer;

@@ -29,6 +29,8 @@ class LMPRHeader extends NetworkHeaderBase
 {
     L3Address    srcAddr;
     L3Address    destAddr;
+    L3Address    prevAddr;
+    L3Address 	 nextAddr;
     int           ttl = 1;    // time to live field
     int seqNum = 0; // sequence number
     IpProtocolId  protocolId;

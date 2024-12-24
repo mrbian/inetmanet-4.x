@@ -24,6 +24,7 @@ void Dcf::initialize(int stage)
 {
     ModeSetListener::initialize(stage);
     if (stage == INITSTAGE_LINK_LAYER) {
+        promiscModeEnable = par("promiscModeEnable");
         startRxTimer = new cMessage("startRxTimeout");
         mac = check_and_cast<Ieee80211Mac *>(getContainingNicModule(this)->getSubmodule("mac"));
         dataAndMgmtRateControl = dynamic_cast<IRateControl *>(getSubmodule(("rateControl")));
@@ -161,7 +162,7 @@ void Dcf::processLowerFrame(Packet *packet, const Ptr<const Ieee80211MacHeader>&
         }
         cancelEvent(startRxTimer);
     }
-    else if (isForUs(header))
+    else if (isForUs(header) || promiscModeEnable)
         recipientProcessReceivedFrame(packet, header);
     else {
         EV_INFO << "This frame is not for us" << std::endl;
@@ -215,14 +216,22 @@ void Dcf::recipientProcessReceivedFrame(Packet *packet, const Ptr<const Ieee8021
     EV_INFO << "Processing received frame " << packet->getName() << " as recipient.\n";
     emit(packetReceivedFromPeerSignal, packet);
     if (auto dataOrMgmtHeader = dynamicPtrCast<const Ieee80211DataOrMgmtHeader>(header))
-        recipientAckProcedure->processReceivedFrame(packet, dataOrMgmtHeader, recipientAckPolicy, this);
+    {
+        if(isForUs(header))
+        {
+            recipientAckProcedure->processReceivedFrame(packet, dataOrMgmtHeader, recipientAckPolicy, this);
+        }
+    }
     if (auto dataHeader = dynamicPtrCast<const Ieee80211DataHeader>(header))
         sendUp(recipientDataService->dataFrameReceived(packet, dataHeader));
     else if (auto mgmtHeader = dynamicPtrCast<const Ieee80211MgmtHeader>(header))
         sendUp(recipientDataService->managementFrameReceived(packet, mgmtHeader));
     else { // TODO else if (auto ctrlFrame = dynamic_cast<Ieee80211ControlFrame*>(frame))
-        sendUp(recipientDataService->controlFrameReceived(packet, header));
-        recipientProcessReceivedControlFrame(packet, header);
+        if(isForUs(header))
+        {
+            sendUp(recipientDataService->controlFrameReceived(packet, header));
+            recipientProcessReceivedControlFrame(packet, header);
+        }
         delete packet;
     }
 }

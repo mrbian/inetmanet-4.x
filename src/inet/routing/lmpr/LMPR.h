@@ -91,6 +91,17 @@ struct NodeInfo{
     simtime_t last_seen;
 };
 
+struct MapDataEle{
+    double txX;
+    double txY;
+    double rxX;
+    double rxY;
+    double sinr;
+    int losCond;
+};
+
+typedef std::vector<MapDataEle> LosMapDataSet;
+
 class LMPR: public NetworkProtocolBase, public INetworkProtocol
 {
 public:
@@ -123,6 +134,7 @@ protected:
     std::vector<std::vector<double>> adjacencyMatrix;
 
     bool setAutoRange;
+    bool setAutoLETRange;
     double losMapError;
     double maxRangeForLET;
 
@@ -149,6 +161,7 @@ protected:
     double neighborReliabilityTimeout;
 //    double txRange;
     double predictDuration;
+    LosMapDataSet mapDataSet;
 
 
 /* Main */
@@ -181,9 +194,9 @@ protected:
     void handleDataFromLowerLayer(Packet *packet);
     void handleDataFromUpperLayer(Packet *packet);
     void forwardData(Packet *packet, Ipv4Address dest);
-    void forwardData_Optimal(Packet* packet, Ipv4Address dest);
-    void forwardData_Forecast(Packet* packet, Ipv4Address dest);
-    void forwardData_by_ETX_LET(Packet* packet, Ipv4Address dest);
+    int forwardData_Optimal(Packet* packet, Ipv4Address dest);
+    int forwardData_Forecast(Packet* packet, Ipv4Address dest);
+    int forwardData_by_ETX_LET(Packet* packet, Ipv4Address dest);
     double calculateLET(int i, int j);
 
 /* Util */
@@ -196,10 +209,13 @@ protected:
     int getTargetNodeIdxByAddr(Ipv4Address addr);
     NodeInfo* getNodeInfoByAddr(Ipv4Address addr);
     double getRealCommRange(Coord PosA, Coord PosB);
+    double getRangeForLET(Coord PosA, Coord PosB);
 
     void setDownControlInfo(Packet *const pMsg, const MacAddress& pDestAddr);
 
-
+protected:
+    void addMapData(Packet *packet);
+    void storeMapDataToCSV();
 
 };
 

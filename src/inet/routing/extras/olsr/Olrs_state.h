@@ -40,7 +40,7 @@ class Olsr_state : public cObject
     friend class Olsr;
     friend class OlsrOpt;
     friend class Olsr_Etx_TVT;
-  protected:
+  public:
     linkset_t   linkset_;   ///< Link Set (RFC 3626, section 4.2.1).
     nbset_t     nbset_;     ///< Neighbor Set (RFC 3626, section 4.3.1).
     nb2hopset_t nb2hopset_; ///< 2-hop Neighbor Set (RFC 3626, section 4.3.2).
@@ -86,7 +86,7 @@ class Olsr_state : public cObject
     void            insert_dup_tuple(Olsr_dup_tuple*);
 
     Olsr_link_tuple*    find_link_tuple(const nsaddr_t &);
-    Olsr_link_tuple*    find_sym_link_tuple(const nsaddr_t &, double);
+    virtual Olsr_link_tuple*    find_sym_link_tuple(const nsaddr_t &, double);
     void            erase_link_tuple(Olsr_link_tuple*);
     void            insert_link_tuple(Olsr_link_tuple*);
 

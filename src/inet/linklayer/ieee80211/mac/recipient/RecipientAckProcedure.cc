@@ -25,6 +25,23 @@ void RecipientAckProcedure::processReceivedFrame(Packet *packet, const Ptr<const
     }
 }
 
+
+//void RecipientAckProcedure::processReceivedFramePromisc(Packet *packet, const Ptr<const Ieee80211DataOrMgmtHeader>& dataOrMgmtHeader, IRecipientAckPolicy *ackPolicy, IProcedureCallback *callback)
+//{
+//    numReceivedAckableFrame++;
+//    // After a successful reception of a frame requiring acknowledgment, transmission of the ACK frame
+//    // shall commence after a SIFS period, without regard to the busy/idle state of the medium. (See Figure 9-9.)
+//    if (ackPolicy->isAckNeededPromisc(dataOrMgmtHeader)) {
+//        auto ackFrame = buildAck(dataOrMgmtHeader);
+//        auto duration = ackPolicy->computeAckDurationField(packet, dataOrMgmtHeader);
+//        ackFrame->setDurationField(duration);
+//        auto ackPacket = new Packet("WlanAck", ackFrame);
+//        EV_DEBUG << "Duration for " << ackFrame->getName() << " is set to " << duration << " s.\n";
+//        callback->transmitControlResponseFrame(ackPacket, ackFrame, packet, dataOrMgmtHeader);
+//    }
+//}
+
+
 void RecipientAckProcedure::processTransmittedAck(const Ptr<const Ieee80211AckFrame>& ack)
 {
     numSentAck++;

@@ -82,6 +82,8 @@ class INET_API Dcf : public ICoordinationFunction, public IFrameSequenceHandler:
     // Station counters
     StationRetryCounters *stationRetryCounters = nullptr;
 
+    bool promiscModeEnable;
+
   protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     virtual void initialize(int stage) override;

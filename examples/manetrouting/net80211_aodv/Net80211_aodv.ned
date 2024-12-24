@@ -23,6 +23,8 @@ import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.networklayer.ipv4.RoutingTableRecorder;
 import inet.node.inet.AdhocHost;
 import inet.physicallayer.wireless.ieee80211.packetlevel.Ieee80211ScalarRadioMedium;
+import inet.environment.common.PhysicalEnvironment;
+import inet.visualizer.canvas.integrated.IntegratedCanvasVisualizer;
 
 //
 // Example network for testing aodv routing. Contains
@@ -51,6 +53,13 @@ network Net80211_aodv
         host[numHosts]: AdhocHost {
             parameters:
                 @display("i=device/pocketpc_s;r=,,#707070");
+        }
+		physicalEnvironment: PhysicalEnvironment {
+            parameters:
+                @display("p=60,50");
+        }
+        visualizer: IntegratedCanvasVisualizer {
+            @display("p=500,240");
         }
 
     connections allowunconnected:

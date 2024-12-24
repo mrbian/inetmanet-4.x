@@ -51,6 +51,7 @@ void LMPR::initialize(int stage) {
         setAutoRange = par("setAutoRange");
         losMapError = par("losMapError");
         maxRangeForLET = par("maxRangeForLET");
+        setAutoLETRange = par("setAutoLETRange");
     }
     else if(stage == INITSTAGE_NETWORK_LAYER) {
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
@@ -141,6 +142,7 @@ void LMPR::start(){
         }
     }
 
+
 //    scheduleAt(simTime() + uniform(0.0, par("maxJitter")), OGMReminder);
     scheduleAt(simTime() + uniform(0.0, par("mhOGMInterval")), OGMReminder);
 }
@@ -149,6 +151,7 @@ void LMPR::stop() {
 
 }
 void LMPR::finish() {
+    storeMapDataToCSV();
 }
 
 void LMPR::handleSelfMessage(cMessage *msg) {
@@ -166,6 +169,7 @@ void LMPR::handleUpperPacket(Packet *packet)
 /** @brief Handle messages from lower layer */
 void LMPR::handleLowerPacket(Packet *packet)
 {
+    addMapData(packet->dup());
 //    if(strcmp(packet->getName(), "OGM") == 0)
     if(strstr(packet->getName(), "OGM") != nullptr)
     {

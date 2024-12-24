@@ -29,9 +29,8 @@ typedef struct {
     double ymax;
 } Block;
 
-
 class INET_API  FactoryFading : public FreeSpacePathLoss {
-protected:
+public:
     virtual void initialize(int stage) override;
     std::vector<Block> blockages;
 
@@ -51,6 +50,8 @@ protected:
     std::map<int, bool> los_condition_cache;
     std::map<int, double> distance_cache;
 
+    static std::map<int, LOSCond*> transmissionLOSCondCache;
+
 public:
     FactoryFading();
     virtual ~FactoryFading();
@@ -65,7 +66,7 @@ public:
     bool CheckLineRectIntersect(double x1, double y1, double x2, double y2, double xmin, double ymin, double xmax, double ymax) const;
     int ComputeCode(double x, double y, double xmin, double ymin, double xmax, double ymax) const;
 
-
+    virtual LOSCond* getLOSCondByTxId(int tranmission_id) const override;
 
 };
 

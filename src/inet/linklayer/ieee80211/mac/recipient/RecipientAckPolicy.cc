@@ -20,6 +20,10 @@ void RecipientAckPolicy::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         rateSelection = check_and_cast<IRateSelection *>(getModuleByPath(par("rateSelectionModule")));
     }
+    else if(stage == INITSTAGE_LINK_LAYER)
+    {
+        mac = check_and_cast<Ieee80211Mac *>(getModuleByPath(par("macModule")));
+    }
 }
 
 simtime_t RecipientAckPolicy::computeAckDuration(Packet *dataOrMgmtPacket, const Ptr<const Ieee80211DataOrMgmtHeader>& dataOrMgmtHeader) const
@@ -37,6 +41,13 @@ bool RecipientAckPolicy::isAckNeeded(const Ptr<const Ieee80211DataOrMgmtHeader>&
     // TODO add mgmt NoAck check
     return !header->getReceiverAddress().isMulticast();
 }
+
+//bool RecipientAckPolicy::isAckNeededPromisc(const Ptr<const Ieee80211DataOrMgmtHeader>& header) const
+//{
+//    // TODO add mgmt NoAck check
+////    return !header->getReceiverAddress().isMulticast();
+//    return !header->getReceiverAddress().isMulticast() && header->getReceiverAddress() == mac->getAddress();
+//}
 
 //
 // 8.3.1.4 ACK frame format

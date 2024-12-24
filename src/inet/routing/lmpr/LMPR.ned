@@ -45,6 +45,7 @@ simple LMPR extends NetworkProtocolBase like INetworkProtocol
         double neighborReliabilityTimeout @unit(s) = default(1s);
 //        double txRange @unit(m) = default(76.3598m);
 		bool setAutoRange = default(false);
+		bool setAutoLETRange = default(false);
 		double losMapError = default(0.0);
         double maxRangeForLET @unit(m) = default(32.49m);
         double predictDuration @unit(s) = default(0.5s);

@@ -42,9 +42,11 @@ namespace inetmanet {
 class Olsr_Etx_state : public Olsr_state
 {
     friend class Olsr_Etx;
+    friend class Olsr_Etx_TVT;
     Olsr_Etx_parameter *parameter;
-  protected:
+  public:
     Olsr_Etx_link_tuple*  find_best_sym_link_tuple(const nsaddr_t &main_addr, double now);
+//    virtual Olsr_link_tuple* find_sym_link_tuple(const nsaddr_t & iface_addr, double now) override;
     Olsr_Etx_state(Olsr_Etx_parameter *);
 };
 

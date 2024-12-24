@@ -176,6 +176,7 @@ class Olsr_Etx : public Olsr
 
         /// Link delay extension
         long cap_sn_;
+        int ETX_loss_window_size;
 
         // PortClassifier*  dmux_;      ///< For passing packets up to agents.
         // Trace*       logtarget_; ///< For logging.

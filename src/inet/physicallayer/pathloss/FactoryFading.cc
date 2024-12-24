@@ -22,11 +22,14 @@
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadioSignal.h"
 
 #include "inet/physicallayer/wireless/common/analogmodel/scalar/ScalarTransmitterAnalogModel.h"
+#include "inet/physicallayer/pathloss/LOSCondTag_m.h"
 
 namespace inet {
 namespace physicallayer {
 
 Define_Module(FactoryFading);
+
+std::map<int, LOSCond*> FactoryFading::transmissionLOSCondCache;
 
 FactoryFading::FactoryFading() {
     // TODO Auto-generated constructor stub
@@ -91,7 +94,7 @@ FactoryFading::computePathLoss(const ITransmission *transmission, const IArrival
     double freq = centerFrequency.get();
     Coord ptx = transmission->getStartPosition();
     Coord prx = arrival->getStartPosition();
-    int tx_id = transmission->getTransmitterRadioId();
+    int tx_id = transmission->getId();
     return computePathLoss(freq, ptx, prx, tx_id);
 }
 
@@ -104,6 +107,16 @@ FactoryFading::computeRange(mps propagationSpeed, Hz frequency, double loss) con
     return maxRange;
 }
 
+LOSCond* FactoryFading::getLOSCondByTxId(int tranmission_id) const
+{
+    auto it = transmissionLOSCondCache.find(tranmission_id);
+    if(it != transmissionLOSCondCache.end())
+    {
+        return it->second;
+    }
+    return nullptr;
+}
+
 
 double
 FactoryFading::computePathLoss(double frequency, Coord ptx, Coord prx, int tx_id) const
@@ -111,16 +124,25 @@ FactoryFading::computePathLoss(double frequency, Coord ptx, Coord prx, int tx_id
     double distance = ptx.distance(prx);
     double lossDb;
     bool is_nlos = checkNlos(ptx, prx);
-    frequency = 5.9*1e9; // todo: disable
+//    frequency = 5.9*1e9; // todo: disable
 //    double shadowFadingDb = getShadowingFading(tx_id, rx_id, distance, is_nlos);
     if(is_nlos)
     {
-        lossDb = m_nlos_alpha + m_nlos_beta*log10(distance) + m_los_gamma*log10(frequency/1e9);
+        lossDb = m_nlos_alpha + m_nlos_beta*log10(distance) + m_nlos_gamma*log10(frequency/1e9);
     }
     else
     {
         lossDb = m_los_alpha + m_los_beta*log10(distance) + m_los_gamma*log10(frequency/1e9);
     }
+
+    LOSCond* cond = new LOSCond();
+    cond->txX = ptx.x;
+    cond->txY = ptx.y;
+    cond->rxX = prx.x;
+    cond->rxY = prx.y;
+    cond->losCondFlag = is_nlos ? 0 : 1;
+    transmissionLOSCondCache.insert(std::make_pair(tx_id, cond));
+
     return pow(10, -lossDb/10);
 }
 

@@ -844,6 +844,22 @@ void Ipv4::reassembleAndDeliverFinish(Packet *packet)
         }
     }
     if (contains(upperProtocols, protocol)) {
+        // TODO : remove debug signal
+        const char* packetName = packet->getName();
+        char* appDataName = "UDPBasicAppData";
+        size_t length = strlen(appDataName);
+        bool equal_flag = true;
+        for(size_t i=0; i < length; ++i) {
+            if(appDataName[i] != packetName[i]){
+                equal_flag = false;
+            }
+        }
+        if(equal_flag) {
+            int ttl = ipv4Header->getTimeToLive();
+            int hop = defaultTimeToLive - ttl + 1;
+            emit(destDataHopCountSignal, hop);
+        }
+
         EV_INFO << "Passing up to protocol " << *protocol << "\n";
         emit(packetSentToUpperSignal, packet);
         send(packet, "transportOut");

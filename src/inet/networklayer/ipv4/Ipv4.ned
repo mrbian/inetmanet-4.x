@@ -105,6 +105,8 @@ simple Ipv4 like IIpv4
         @signal[ipv4DataOnNonrpf](type=inet::Ipv4Header);
         @signal[ipv4DataOnRpf](type=inet::Ipv4Header);
         @signal[ipv4MdataRegister](type=inet::Packet);
+        @signal[destDataHopCount](type=int);
+        @statistic[destDataHopCount](title="app data arrive on destination hop count"; record=histogram; interpolationmode=none);
         @statistic[packetDropAddressResolutionFailed](title="packet drop: address resolution failed"; source=packetDropReasonIsAddressResolutionFailed(packetDropped); record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
         @statistic[packetDropHopLimitReached](title="packet drop: hop limit reached"; source=packetDropReasonIsHopLimitReached(packetDropped); record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
         @statistic[packetDropForwardingDisabled](title="packet drop: forwarding disabled"; source=packetDropReasonIsForwardingDisabled(packetDropped); record=count,sum(packetBytes),vector(packetBytes); interpolationmode=none);
