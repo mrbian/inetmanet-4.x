@@ -39,6 +39,7 @@ Olsr_Etx_state::Olsr_Etx_state(Olsr_Etx_parameter *p)
     parameter = p;
 }
 
+// 在多个interface里面选一个最好
 Olsr_Etx_link_tuple*  Olsr_Etx_state::find_best_sym_link_tuple(const nsaddr_t &main_addr, double now)
 {
     Olsr_Etx_link_tuple* best = nullptr;

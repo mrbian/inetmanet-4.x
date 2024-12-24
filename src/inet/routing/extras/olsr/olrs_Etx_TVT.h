@@ -72,7 +72,6 @@ public:
     virtual bool populate_nb2hopset(OlsrMsg& msg) override;
     bool process_hello(OlsrMsg& msg, const nsaddr_t &receiver_iface, const nsaddr_t &sender_iface, uint16_t pkt_seq_num, const int &index);
     virtual void olsr_mpr_computation_TVT();
-    virtual void rtable_dijkstra_computation() override;
 };
 
 } /* namespace inetmanet */
