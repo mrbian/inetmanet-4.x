@@ -120,7 +120,6 @@ Dijkstra::NodesSet::iterator Dijkstra::best_cost()
                 switch (parameter->link_quality())
                 {
                 case OLSR_ETX_BEHAVIOR_ETX:
-                case OLSR_ETX_BEHAVIOR_LET:
                     if (itDij->second.link().quality() < itBest->second.link().quality())
                         best = it;
                     break;
@@ -194,7 +193,6 @@ void Dijkstra::run()
                 switch (parameter->link_quality())
                 {
                 case OLSR_ETX_BEHAVIOR_ETX:
-                case OLSR_ETX_BEHAVIOR_LET:
                     itDest->second.link().last_node() = current_edge->last_node();
                     itDest->second.link().quality() = itCurrent->second.link().quality() + current_edge->quality();
                     /// Link delay extension
@@ -230,7 +228,6 @@ void Dijkstra::run()
                     switch (parameter->link_quality())
                     {
                     case OLSR_ETX_BEHAVIOR_ETX:
-                    case OLSR_ETX_BEHAVIOR_LET:
                         if (itCurrent->second.link().getDelay() + current_edge->getDelay() < itDest->second.link().getDelay())
                         {
                             itDest->second.link().last_node() = current_edge->last_node();
@@ -267,7 +264,6 @@ void Dijkstra::run()
                     switch (parameter->link_quality())
                     {
                     case OLSR_ETX_BEHAVIOR_ETX:
-                    case OLSR_ETX_BEHAVIOR_LET:
                         if (itCurrent->second.link().quality() + current_edge->quality() < itDest->second.link().quality())
                         {
                             itDest->second.link().last_node() = current_edge->last_node();

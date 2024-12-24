@@ -150,30 +150,6 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
     }
 #endif
 
-//    inline void update_link_quality(double nb_link_quality)
-//    {
-//        // update link quality information
-//        nb_link_quality_ = nb_link_quality;
-//
-//        // calculate the new etx value
-//        double mult = link_quality_ * nb_link_quality_;
-//        switch (parameter_.link_quality())
-//        {
-//        case OLSR_ETX_BEHAVIOR_ETX:
-//        case OLSR_ETX_BEHAVIOR_LET:
-//            etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
-//            break;
-//
-//        case OLSR_ETX_BEHAVIOR_ML:
-//            etx_ = mult;
-//            break;
-//
-//        case OLSR_ETX_BEHAVIOR_NONE:
-//        default:
-//            etx_ = 0.0;
-//            break;
-//        }
-//    }
 
     inline void update_link_quality(double nb_link_quality)
     {
@@ -185,7 +161,6 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
         switch (parameter_.link_quality())
         {
         case OLSR_ETX_BEHAVIOR_ETX:
-        case OLSR_ETX_BEHAVIOR_LET:
             etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
             break;
 
@@ -199,35 +174,6 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
             break;
         }
     }
-
-//    inline void update_link_quality(double nb_link_quality, double let_factor)
-//    {
-//        // update link quality information
-//        nb_link_quality_ = nb_link_quality;
-//        let_factor_ = let_factor;
-//
-//        // calculate the new etx value
-//        double mult = link_quality_ * nb_link_quality_;
-//        switch (parameter_.link_quality())
-//        {
-//        case OLSR_ETX_BEHAVIOR_ETX:
-//            etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
-//            break;
-//        case OLSR_ETX_BEHAVIOR_LET:
-//            etx_ = (mult < 0.01) ? 100.0 : let_factor_ / mult;
-//            break;
-//
-//        case OLSR_ETX_BEHAVIOR_ML:
-//            etx_ = mult;
-//            break;
-//
-//        case OLSR_ETX_BEHAVIOR_NONE:
-//        default:
-//            etx_ = 0.0;
-//            break;
-//        }
-//    }
-
 
 
     inline double& next_hello() { return next_hello_; }
@@ -323,7 +269,6 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
         switch (parameter_.link_quality())
         {
         case OLSR_ETX_BEHAVIOR_ETX:
-        case OLSR_ETX_BEHAVIOR_LET:
             etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
             break;
 
@@ -504,7 +449,6 @@ typedef struct OLSR_ETX_nb2hop_tuple : public Olsr_nb2hop_tuple
         switch (parameter_qos_)
         {
         case OLSR_ETX_BEHAVIOR_ETX:
-        case OLSR_ETX_BEHAVIOR_LET:
             etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
             break;
 
@@ -596,7 +540,6 @@ typedef struct OLSR_ETX_topology_tuple : public Olsr_topology_tuple
         switch (parameter_qos_)
         {
         case OLSR_ETX_BEHAVIOR_ETX:
-        case OLSR_ETX_BEHAVIOR_LET:
             etx_ = (mult < 0.01) ? 100.0 : 1.0 / mult;
             break;
 

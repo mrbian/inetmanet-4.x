@@ -750,7 +750,6 @@ Olsr_Etx_TVT::populate_nb2hopset(OlsrMsg& msg)
                         switch (parameter_.link_quality())
                         {
                         case OLSR_ETX_BEHAVIOR_ETX:
-                        case OLSR_ETX_BEHAVIOR_LET:
                             nb2hop_tuple->update_link_quality(
                                 hello_msg.nb_etx_iface_addr(j).link_quality(),
                                 hello_msg.nb_etx_iface_addr(j).nb_link_quality());
@@ -1219,22 +1218,6 @@ Olsr_Etx_TVT::olsr_mpr_computation_TVT()
                                 switch (parameter_.link_quality())
                                 {
                                 case OLSR_ETX_BEHAVIOR_ETX:
-                                    if (nb_link_tuple == nullptr)
-                                        continue;
-                                    else if (nb_link_tuple != nullptr && max_link_tuple == nullptr)
-                                    {
-                                        max = nb_tuple;
-                                        max_r = r;
-                                        continue;
-                                    }
-                                    if (nb_link_tuple->etx() < max_link_tuple->etx())
-                                    {
-                                        max = nb_tuple;
-                                        max_r = r;
-                                    }
-                                    break;
-
-                                case OLSR_ETX_BEHAVIOR_LET:
                                     if (nb_link_tuple == nullptr)
                                         continue;
                                     else if (nb_link_tuple != nullptr && max_link_tuple == nullptr)

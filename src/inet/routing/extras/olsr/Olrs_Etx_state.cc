@@ -69,7 +69,6 @@ Olsr_Etx_link_tuple*  Olsr_Etx_state::find_best_sym_link_tuple(const nsaddr_t &m
                     switch (parameter->link_quality())
                     {
                     case OLSR_ETX_BEHAVIOR_ETX:
-                    case OLSR_ETX_BEHAVIOR_LET:
                         if (tuple->etx() < best->etx())
                             best = tuple;
                         break;
@@ -95,42 +94,6 @@ Olsr_Etx_link_tuple*  Olsr_Etx_state::find_best_sym_link_tuple(const nsaddr_t &m
     }
     return best;
 }
-
-
-//Olsr_link_tuple*
-//Olsr_Etx_state::find_sym_link_tuple(const nsaddr_t & iface_addr, double now)
-//{
-//    for (auto it = linkset_.begin(); it != linkset_.end(); it++)
-//    {
-//        Olsr_link_tuple* tuple = *it;
-//        Olsr_Etx_link_tuple* link_tuple = nullptr;
-//        if (tuple->nb_iface_addr() == iface_addr)
-//        {
-//            switch (parameter->link_quality())
-//            {
-//            case OLSR_ETX_BEHAVIOR_LET:
-//                link_tuple = dynamic_cast<Olsr_Etx_link_tuple*>(tuple);
-//                if (link_tuple == nullptr)
-//                    throw cRuntimeError("\n Error conversion link tuple");
-//                if (tuple->sym_time() > now && (link_tuple->mob_update_time_ + link_tuple->link_expire_time_ > now))
-//                {
-//                    return tuple;
-//                }
-//                break;
-//
-//            default:
-//                if (tuple->sym_time() > now)
-//                {
-//                    return tuple;
-//                }
-//                break;
-//            }
-//        }
-//
-//    }
-//    return nullptr;
-//}
-
 
 } // namespace inetmanet
 

@@ -53,7 +53,7 @@ class Olsr_Etx_parameter : public cObject
 #define OLSR_ETX_MPR_QOLSR           4
         // non-OLSR standard: use the MPR selection algorithm implemented in OLSRD (See FAQ)
 #define OLSR_ETX_MPR_OLSRD           5
-        //
+        // using LET to improve ETX
 #define OLSR_ETX_MPR_TVT         6
         int mpr_algorithm_ = 0;
         /// Determine which routing algorith is to be used
@@ -69,8 +69,6 @@ class Olsr_Etx_parameter : public cObject
 #define OLSR_ETX_BEHAVIOR_ETX        2
         // non-OLSR standard: use the ML metric to assert link quality between nodes
 #define OLSR_ETX_BEHAVIOR_ML         3
-        // etx with link expiration metric
-#define OLSR_ETX_BEHAVIOR_LET        4
 
         int link_quality_ = 0;
         /// non-OLSR standard: determine whether fish eye routing algorithm should be used

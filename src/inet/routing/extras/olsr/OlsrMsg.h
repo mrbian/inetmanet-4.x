@@ -99,9 +99,6 @@ typedef struct Olsr_Etx_iface_address {
   double  nb_link_delay_;
   int parameter_qos_;
 
-  // Link expiration extension
-  double let_factor_;
-
   inline nsaddr_t& iface_address() { return iface_address_; }
 
   /// Link quality extension
@@ -114,10 +111,6 @@ typedef struct Olsr_Etx_iface_address {
     switch (parameter_qos_) {
     case OLSR_ETX_BEHAVIOR_ETX:
       return (mult < 0.01) ? 100.0 : (double) 1.0 / (double) mult;
-      break;
-
-    case OLSR_ETX_BEHAVIOR_LET:
-      return (mult < 0.01) ? 100.0 : (double) let_factor_ / (double) mult;
       break;
 
     case OLSR_ETX_BEHAVIOR_ML:
@@ -134,7 +127,6 @@ typedef struct Olsr_Etx_iface_address {
   /// Link delay extension
   inline double& link_delay() { return link_delay_; }
   inline double& nb_link_delay() { return nb_link_delay_; }
-  inline double& let_factor() { return let_factor_; }
 
 } Olsr_Etx_iface_address;
 
