@@ -32,6 +32,9 @@
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IRadioMedium.h"
 #include "inet/mobility/single/ExtendedBonnMotionMobility.h"
 
+#include "inet/physicallayer/wireless/common/medium/RadioMedium.h"
+#include "inet/physicallayer/pathloss/FactoryFading.h"
+
 
 #include "PDC.h"
 #include "PCE.h"
@@ -45,6 +48,9 @@ class PARRoT: public RoutingProtocolBase {
 	public:
 		PARRoT();
 		~PARRoT();
+
+        physicallayer::FactoryFading * pathLoss = nullptr;
+
 	protected:
 		virtual int numInitStages() const override {
 			return NUM_INIT_STAGES;
@@ -108,6 +114,9 @@ class PARRoT: public RoutingProtocolBase {
 		bool rescheduleRoutesOnTimeout;
 		bool useOHRepair;
 		double rangeOffset;
+		double losRange;
+		double nlosRange;
+		bool enableLosMap;
 	// Reinforcement Learning
 	protected:
 		double qFunction(Ipv4Address target, Ipv4Address hop);

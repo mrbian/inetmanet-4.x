@@ -305,8 +305,9 @@ typedef struct Olsr_Etx_link_tuple : public Olsr_link_tuple
 
     inline double improved_ext(double now)
     {
-        double let = (mob_update_time_ - now) + link_expire_time_;
-        return exp(-let)*etx_;
+//        double let = (mob_update_time_ - now) + link_expire_time_;
+//        return exp(-let)*etx_;
+        return etx_;
     }
 
     inline void packet_timeout()

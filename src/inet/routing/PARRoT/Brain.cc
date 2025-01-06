@@ -131,14 +131,25 @@ double PARRoT::Gamma_Pos(Ipv4Address neighbor, Ipv4Address origin) {
 	Coord vj;
 	Coord pj;
 
-
 	vj = Vi.at(neighbor)->velo();
 	pj = Vi.at(neighbor)->coord() + (vj * (t_elapsed_since_last_hello));
-
 
 	Coord pi = hist_coord[historySize - 1];
 	Coord vi = (forecastPosition() - pi)/((neighborReliabilityTimeout != 0) ? neighborReliabilityTimeout : 1.0);
 
+	bool los_flag = false;
+	double sample_interval = 0.1;
+	int Np = (int)(neighborReliabilityTimeout/sample_interval);
+	for(int i=0; i < Np; i++)
+	{
+	    double t_pred = Np*sample_interval;
+	    Coord pi_pred = pi + vi*t_pred;
+	    Coord pj_pred = pj + vj*t_pred;
+	    if(! pathLoss->checkNlos(pi_pred, pj_pred))
+	    {
+	        los_flag = true;
+	    }
+	}
 
 	double px = (pj - pi).getX();
 	double vx = (vj - vi).getX();
@@ -153,10 +164,37 @@ double PARRoT::Gamma_Pos(Ipv4Address neighbor, Ipv4Address origin) {
 //	        pow(px, 2) + pow(py, 2) + pow(pz, 2)
 //	                - pow(rangeOffset + radioMedium->getMediumLimitCache()->getMaxCommunicationRange().get(),
 //	                        2);
-	double c =
-              pow(px, 2) + pow(py, 2) + pow(pz, 2)
-                      - pow(rangeOffset + GetMaxCommunicationRange(),
-                              2);
+//	double c =
+//              pow(px, 2) + pow(py, 2) + pow(pz, 2)
+//                      - pow(rangeOffset + GetMaxCommunicationRange(),
+//                              2);
+
+    double c;
+    if(enableLosMap)
+    {
+        if(los_flag)
+        {
+            c =
+                      pow(px, 2) + pow(py, 2) + pow(pz, 2)
+                              - pow(losRange,
+                                      2);
+        }
+        else
+        {
+            c =
+                      pow(px, 2) + pow(py, 2) + pow(pz, 2)
+                              - pow(nlosRange,
+                                      2);
+        }
+    }
+    else
+    {
+          c =
+                      pow(px, 2) + pow(py, 2) + pow(pz, 2)
+                              - pow(rangeOffset + GetMaxCommunicationRange(),
+                                      2);
+    }
+
 
 	if (a==0){
 		return (c < 0) ? 1.0 : 0.0;

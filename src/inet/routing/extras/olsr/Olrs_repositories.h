@@ -178,6 +178,9 @@ typedef struct Olsr_nb_tuple : public cObject
     //cMessage *asocTimer;
     cObject *asocTimer;
 
+    int mob_info_idx_;
+    double let;
+
     inline nsaddr_t & nb_main_addr()    { return nb_main_addr_; }
     void    setNb_main_addr(const nsaddr_t &a)  { nb_main_addr_ = a; }
 

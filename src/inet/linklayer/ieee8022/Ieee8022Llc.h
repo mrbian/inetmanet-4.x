@@ -19,6 +19,18 @@
 
 namespace inet {
 
+struct MapDataEle{
+    double txX;
+    double txY;
+    double rxX;
+    double rxY;
+    double sinr;
+    int losCond;
+};
+
+typedef std::vector<MapDataEle> LosMapDataSet;
+
+
 class INET_API Ieee8022Llc : public OperationalBase, public DefaultProtocolRegistrationListener
 {
   protected:
@@ -64,6 +76,11 @@ class INET_API Ieee8022Llc : public OperationalBase, public DefaultProtocolRegis
   public:
     virtual ~Ieee8022Llc();
     static const Protocol *getProtocol(const Ptr<const Ieee8022LlcHeader>& header);
+
+    void addMapData(Packet *packet);
+    void storeMapDataToCSV();
+    void finish() override;
+    LosMapDataSet mapDataSet;
 };
 
 } // namespace inet

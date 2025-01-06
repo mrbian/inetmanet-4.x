@@ -58,4 +58,8 @@ simple Olsr_Etx_TVT extends BaseRouting
         int ETX_loss_window_size = default(10);
         bool load_losmap = default(false);
         double Rmax @unit(m) = default(123m);
+        
+        @signal[linkExpireTime](type=double);
+        @statistic[linkExpireTime](title="predicted link expire time"; record=histogram; interpolationmode=none);
+        
 }

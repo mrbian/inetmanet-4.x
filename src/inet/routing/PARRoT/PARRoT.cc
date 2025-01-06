@@ -62,11 +62,18 @@ void PARRoT::initialize(int stage) {
 		// Create reminder messages
 		multiHopChirpReminder = new cMessage("multiHopChirpReminder");
 		destinationReminder = new cMessage("destinationReminder");
+
+		losRange = par("losRange");
+		nlosRange = par("nlosRange");
+		enableLosMap = par("enableLosMap");
 	}
 	else if (stage == INITSTAGE_ROUTING_PROTOCOLS) {
 //		registerService(Protocol::manet, nullptr, gate("ipIn"));
 //		registerProtocol(Protocol::manet, gate("ipOut"), nullptr);
 	    registerProtocol(Protocol::manet, gate("ipOut"), gate("ipIn"));
+
+        pathLoss = check_and_cast<physicallayer::FactoryFading*>(getModuleByPath("Net80211_parrot.radioMedium.pathLoss"));
+
 	}
 }
 

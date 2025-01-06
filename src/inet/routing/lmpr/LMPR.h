@@ -91,16 +91,16 @@ struct NodeInfo{
     simtime_t last_seen;
 };
 
-struct MapDataEle{
-    double txX;
-    double txY;
-    double rxX;
-    double rxY;
-    double sinr;
-    int losCond;
-};
-
-typedef std::vector<MapDataEle> LosMapDataSet;
+//struct MapDataEle{
+//    double txX;
+//    double txY;
+//    double rxX;
+//    double rxY;
+//    double sinr;
+//    int losCond;
+//};
+//
+//typedef std::vector<MapDataEle> LosMapDataSet;
 
 class LMPR: public NetworkProtocolBase, public INetworkProtocol
 {
@@ -161,7 +161,7 @@ protected:
     double neighborReliabilityTimeout;
 //    double txRange;
     double predictDuration;
-    LosMapDataSet mapDataSet;
+//    LosMapDataSet mapDataSet;
 
 
 /* Main */
@@ -213,9 +213,9 @@ protected:
 
     void setDownControlInfo(Packet *const pMsg, const MacAddress& pDestAddr);
 
-protected:
-    void addMapData(Packet *packet);
-    void storeMapDataToCSV();
+//protected:
+//    void addMapData(Packet *packet);
+//    void storeMapDataToCSV();
 
 };
 

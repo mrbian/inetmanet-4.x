@@ -208,12 +208,13 @@ void ExtendedBonnMotionMobility::updateDistortion(int t1){
 }
 
 Coord ExtendedBonnMotionMobility::getFuturePosition(double lookAhead, simtime_t t){
-    const ExtendedBonnMotionFile::Line& vec = *lines;
-    Coord pos;
 
+    const ExtendedBonnMotionFile::Line& vec = *lines;
+
+    Coord pos;
     double requestedTime = lookAhead + t.dbl();
     int steps = lookAhead/samplingInterval;
-    int l = currentLine;
+    int l = currentLine - (is3D ? 4 : 3);
 
     int i = 0;
     while(vec[l] < requestedTime){

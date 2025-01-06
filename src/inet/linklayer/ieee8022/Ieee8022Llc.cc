@@ -18,6 +18,14 @@
 #include "inet/linklayer/common/Ieee802SapTag_m.h"
 #include "inet/linklayer/ieee8022/Ieee8022LlcSocketCommand_m.h"
 
+// for data collection
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <filesystem>
+#include "inet/physicallayer/wireless/common/contract/packetlevel/SignalTag_m.h"
+#include "inet/physicallayer/pathloss/LOSCondTag_m.h"
+
 namespace inet {
 
 Define_Module(Ieee8022Llc);
@@ -142,6 +150,9 @@ void Ieee8022Llc::processPacketFromMac(Packet *packet)
     bool isSent = deliverCopyToSockets(packet);
 
     if (isDeliverableToUpperLayer(packet)) {
+        // INFO: collect data here
+//        addMapData(packet);
+        // origin code below
         send(packet, "upperLayerOut");
     }
     else {
@@ -154,6 +165,67 @@ void Ieee8022Llc::processPacketFromMac(Packet *packet)
         delete packet;
     }
 }
+
+
+void Ieee8022Llc::addMapData(Packet *packet)
+{
+    const auto losCond = packet->findTag<LOSCondTag>();
+    const auto sinrInd = packet->findTag<SnirInd>();
+    if(losCond && sinrInd)
+    {
+        MapDataEle d;
+        d.txX = losCond->getTxX();
+        d.txY = losCond->getTxY();
+        d.rxX = losCond->getRxX();
+        d.rxY = losCond->getRxY();
+        d.sinr = sinrInd->getMinimumSnir();
+        d.losCond = losCond->getLosCondFlag();
+        mapDataSet.push_back(d);
+    }
+}
+
+void Ieee8022Llc::storeMapDataToCSV()
+{
+    std::string baseName = getEnvir()->getConfig()->substituteVariables("${resultdir}/../LOSMapDataFiles/${configname}-${iterationvarsf}#${repetition}");
+    if (!std::filesystem::exists(baseName)) {
+        if (std::filesystem::create_directory(baseName)) {
+            std::cout << "Folder " << baseName << " created successfully" << std::endl;
+        } else {
+            std::cerr << "Cannot create folder" << baseName << "." << std::endl;
+            return;
+        }
+    }
+
+    cModule *node = findContainingNode(this);
+    std::string nodeName = node->getFullName();
+    std::string fileName = nodeName + ".csv";
+    std::string fullPath = baseName + "/" + fileName;
+    std::ofstream file(fullPath);
+    if (file.is_open()) {
+      std::cout << "File " << fullPath << " is opened successfully" << std::endl;
+      for(auto ele = mapDataSet.begin(); ele != mapDataSet.end(); ele ++)
+      {
+          file << ele->txX << ","
+                  << ele->txY << ","
+                  << ele->rxX << ","
+                  << ele->rxY << ","
+                  << ele->sinr << ","
+                  << ele->losCond << std::endl;
+      }
+      file.close();
+    } else {
+      std::cerr << "Cannot create or open " << fullPath << "." << std::endl;
+    }
+    return;
+}
+
+void Ieee8022Llc::finish()
+{
+    // INFO: collect data here
+//    storeMapDataToCSV();
+}
+
+
 
 void Ieee8022Llc::encapsulate(Packet *frame)
 {
@@ -279,6 +351,7 @@ void Ieee8022Llc::handleStartOperation(LifecycleOperation *operation)
 
 void Ieee8022Llc::handleStopOperation(LifecycleOperation *operation)
 {
+    // origin code
     clearSockets();
 }
 

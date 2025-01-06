@@ -125,6 +125,7 @@ simsignal_t tokensDepletedSignal = cComponent::registerSignal("tokensDepleted");
 
 // Debug
 simsignal_t destDataHopCountSignal = cComponent::registerSignal("destDataHopCount");
+simsignal_t linkExpireTimeSignal = cComponent::registerSignal("linkExpireTime");
 
 
 void printSignalBanner(simsignal_t signalID, const cObject *obj, const cObject *details)

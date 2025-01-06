@@ -193,6 +193,24 @@ int PARRoT::handleIncomingMultiHopChirp(MultiHopChirp *chirp, int64_t len) {
 	float vy = chirp->getVY();
 	float vz = chirp->getVZ();
 
+
+	Coord pi = hist_coord[historySize - 1];
+	double self_x = pi.x;
+	double self_y = pi.y;
+	double self_z = pi.z;
+	double distance = sqrt((x-self_x)*(x-self_x) + (y-self_y)*(y-self_y) + (z-self_z)*(z-self_z));
+//	if(enableLosMap)
+//	{
+////	    if()
+//	}
+//	else
+//	{
+//	    if(distance >= maxRangeForLET)
+//	    {
+//	        return 0;
+//	    }
+//	}
+
 	float gamma_mob = chirp->getGamma_mob();
 	unsigned short squNr = chirp->getSquNr();
 

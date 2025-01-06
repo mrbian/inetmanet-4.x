@@ -133,7 +133,8 @@ extern INET_API simsignal_t // admin
     tokensDepletedSignal,
 
 
-    destDataHopCountSignal;
+    destDataHopCountSignal,
+    linkExpireTimeSignal;
 
 /**
  * Utility function

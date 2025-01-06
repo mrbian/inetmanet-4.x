@@ -26,6 +26,9 @@ import inet.physicallayer.wireless.ieee80211.packetlevel.Ieee80211ScalarRadioMed
 import inet.environment.common.PhysicalEnvironment;
 import inet.visualizer.canvas.integrated.IntegratedCanvasVisualizer;
 
+import parrot.node.parrot_host;
+//import parrot.node.parrot_host;
+
 //
 // Example network for testing aodv routing. Contains
 // fixed and mobile nodes. Mobile nodes are not moving,
@@ -34,7 +37,7 @@ import inet.visualizer.canvas.integrated.IntegratedCanvasVisualizer;
 network Net80211_aodv
 {
     parameters:
-        int numHosts;
+        int numRouters;
         int numFixHosts;
     submodules:
         radioMedium: Ieee80211ScalarRadioMedium {
@@ -50,7 +53,7 @@ network Net80211_aodv
             parameters:
                 @display("i=device/pocketpc_s;r=,,#707070");
         }
-        host[numHosts]: AdhocHost {
+        router[numRouters]: AdhocHost {
             parameters:
                 @display("i=device/pocketpc_s;r=,,#707070");
         }
@@ -64,5 +67,40 @@ network Net80211_aodv
 
     connections allowunconnected:
 }
+
+network Net80211_parrot
+{
+    parameters:
+        int numRouters;
+        int numFixHosts;
+    submodules:
+        radioMedium: Ieee80211ScalarRadioMedium {
+            parameters:
+                @display("p=60,50;i=misc/sun");
+        }
+        configurator: Ipv4NetworkConfigurator {
+            parameters:
+                config = xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");
+                @display("p=140,50;i=block/cogwheel_s");
+        }        
+        fixhost[numFixHosts]: parrot_host {
+            parameters:
+                @display("i=device/pocketpc_s;r=,,#707070");
+        }
+        router[numRouters]: parrot_host {
+            parameters:
+                @display("i=device/pocketpc_s;r=,,#707070");
+        }
+		physicalEnvironment: PhysicalEnvironment {
+            parameters:
+                @display("p=60,50");
+        }
+        visualizer: IntegratedCanvasVisualizer {
+            @display("p=500,240");
+        }
+
+    connections allowunconnected:
+}
+
 
 

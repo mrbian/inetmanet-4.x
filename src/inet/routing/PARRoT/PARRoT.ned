@@ -52,6 +52,9 @@ simple PARRoT like IManetRouting
         double maxJitter = default(0.1); // This is the maximum of a random value to determine when the first hello message will be sent out 
         volatile double broadcastDelay @unit(s) = default(uniform(0s,0.01s));
 
+		double losRange;
+		double nlosRange;
+		bool enableLosMap = default(false);
         
     gates:
         input ipIn;
