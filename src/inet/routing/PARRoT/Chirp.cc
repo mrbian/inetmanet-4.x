@@ -112,17 +112,16 @@ void PARRoT::handleSelfMessage(cMessage *msg) {
 		        multiHopChirpReminder);
 	}
 	else if (msg == destinationReminder) {
+        // Erase handled Event
 		if(!destinationsToUpdate.empty()){
-		Ipv4Address target = destinationsToUpdate.begin()->second;
-		destinationsToUpdate.erase(destinationsToUpdate.begin());
-		for (std::map<SimTime, Ipv4Address>::iterator it = destinationsToUpdate.begin(); it != destinationsToUpdate.end(); it++){
-			if(it->second == target){
-				destinationsToUpdate.erase(it);
-			}
-		}
-		refreshRoutingTable(target);
-
-		// Erase handled Event
+            Ipv4Address target = destinationsToUpdate.begin()->second;
+            destinationsToUpdate.erase(destinationsToUpdate.begin());
+            for (std::map<SimTime, Ipv4Address>::iterator it = destinationsToUpdate.begin(); it != destinationsToUpdate.end(); it++){
+                if(it->second == target){
+                    destinationsToUpdate.erase(it);
+                }
+            }
+            refreshRoutingTable(target);
 		}
 		// Schedule next event
 		if(!destinationsToUpdate.empty()){
@@ -294,8 +293,7 @@ void PARRoT::refreshRoutingTable(Ipv4Address origin) {
 
 	// Determine current route and bestRoute
 	Ipv4Route *_route = rt->findBestMatchingRoute(origin);
-	PARRoTRoute *route =
-	        (_route) ? check_and_cast<PARRoTRoute*>(_route) : nullptr;
+	PARRoTRoute *route = (_route) ? check_and_cast<PARRoTRoute*>(_route) : nullptr;
 	Ipv4Address bestHop = getNextHopFor(origin);
 
 	// Do nothing..

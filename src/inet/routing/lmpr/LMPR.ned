@@ -33,6 +33,9 @@ simple LMPR extends NetworkProtocolBase like INetworkProtocol
         @statistic[nodeInfoLen](title="cached node info length"; record=vector; interpolationmode=none);
         @statistic[LET](title="link expiration time for link"; record=histogram; interpolationmode=none);
         @statistic[nextNodeChoiceLET](title="link expiration time for link between current node and next hop"; record=histogram; interpolationmode=none);
+        
+        @signal[destDataHopCount](type=int);
+        @statistic[destDataHopCount](title="app data arrive on destination hop count"; record=histogram; interpolationmode=none);
 	
 		// Modules
 //        string interfaceTableModule;   // The path to the InterfaceTable module
@@ -58,6 +61,10 @@ simple LMPR extends NetworkProtocolBase like INetworkProtocol
         int bcMaxEntries = default(100);
         double bcDelTime @unit(s) = default(100 s);
         int defaultTTL = default(10);
+        
+        int LETRangeMode;
+        double nlosRange;
+        double losRange;
         
     gates:
 //        input ipIn;

@@ -10,6 +10,7 @@
 
 #include "inet/physicallayer/wireless/common/contract/packetlevel/IArrival.h"
 #include "inet/physicallayer/wireless/common/contract/packetlevel/ITransmission.h"
+#include "inet/physicallayer/wireless/common/contract/packetlevel/IRadio.h"
 
 namespace inet {
 
@@ -50,10 +51,16 @@ class INET_API IPathLoss : public virtual IPrintableObject
      */
     virtual m computeRange(mps propagationSpeed, Hz frequency, double loss) const = 0;
 
-    virtual LOSCond* getLOSCondByTxId(int tranmission_id) const
+    virtual LOSCond* getLOSCondByTxId(int tranmission_id, int rx_id) const
     {
         return nullptr;
     }
+
+    virtual double computePathLoss(const IRadio *receiverRadio, const ITransmission *transmission, const IArrival *arrival) const
+    {
+        throw cRuntimeError("Should not use PathLossBase::computePathLoss(receiverRadio)!");
+    }
+
 };
 
 } // namespace physicallayer

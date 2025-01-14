@@ -37,8 +37,9 @@ import parrot.node.parrot_host;
 network Net80211_aodv
 {
     parameters:
+        int numServers;
+        int numClients;
         int numRouters;
-        int numFixHosts;
     submodules:
         radioMedium: Ieee80211ScalarRadioMedium {
             parameters:
@@ -49,7 +50,12 @@ network Net80211_aodv
                 config = xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");
                 @display("p=140,50;i=block/cogwheel_s");
         }        
-        fixhost[numFixHosts]: AdhocHost {
+        // must before server, for finish() clean destAddress first 
+        client[numClients]: AdhocHost {
+            parameters:
+                @display("i=device/pocketpc_s;r=,,#707070");
+        }
+        server[numServers]: AdhocHost {
             parameters:
                 @display("i=device/pocketpc_s;r=,,#707070");
         }
@@ -71,8 +77,9 @@ network Net80211_aodv
 network Net80211_parrot
 {
     parameters:
+        int numServers;
+        int numClients;
         int numRouters;
-        int numFixHosts;
     submodules:
         radioMedium: Ieee80211ScalarRadioMedium {
             parameters:
@@ -83,7 +90,11 @@ network Net80211_parrot
                 config = xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");
                 @display("p=140,50;i=block/cogwheel_s");
         }        
-        fixhost[numFixHosts]: parrot_host {
+        client[numClients]: parrot_host {
+            parameters:
+                @display("i=device/pocketpc_s;r=,,#707070");
+        }
+        server[numServers]: parrot_host {
             parameters:
                 @display("i=device/pocketpc_s;r=,,#707070");
         }

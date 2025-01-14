@@ -93,3 +93,5 @@ xxx
 /tmp/
 /.computed/
 *.DS_Store
+*/LOSMapDataFiles/*
+examples/manetrouting/net80211_aodv/LOSMapDataFiles/*

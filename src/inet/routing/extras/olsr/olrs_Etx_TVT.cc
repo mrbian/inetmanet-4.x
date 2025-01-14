@@ -36,6 +36,9 @@ Define_Module(Olsr_Etx_TVT);
 #define RT_PORT 698
 #define IP_DEF_TTL 32
 
+#define LOS 0
+#define NLOS 1
+#define LOSMAP 2
 
 #define state_      (*state_etx_ptr)
 
@@ -54,11 +57,32 @@ Olsr_Etx_TVT::initialize(int stage){
     if (stage == INITSTAGE_ROUTING_PROTOCOLS)
     {
         cModule* topModule = getModuleByPath("Net80211_aodv");
+        int numServers = topModule->par("numServers");
+        int numClients = topModule->par("numClients");
         int numRouters = topModule->par("numRouters");
-        int numFixHosts = topModule->par("numFixHosts");
         char mob_path_str[100];
         char node_path_str[100];
-        for(int i = 0; i < numRouters; i ++)
+        for(int i = 0; i < numServers; i ++)
+        {
+            sprintf(mob_path_str, "Net80211_aodv.server[%d].mobility", i);
+            sprintf(node_path_str, "Net80211_aodv.server[%d]", i);
+            ExtendedBonnMotionMobility* mob = check_and_cast<ExtendedBonnMotionMobility*>(
+                    getModuleByPath(mob_path_str));
+            NodeBase *node = check_and_cast<NodeBase*>(
+                    getModuleByPath(node_path_str));
+            _globalMob.insert(std::make_pair(node->getId(), mob));
+        }
+        for (int i = 0; i < numClients; i ++)
+        {
+            sprintf(mob_path_str, "Net80211_aodv.client[%d].mobility", i);
+            sprintf(node_path_str, "Net80211_aodv.client[%d]", i);
+            ExtendedBonnMotionMobility* mob = check_and_cast<ExtendedBonnMotionMobility*>(
+                    getModuleByPath(mob_path_str));
+            NodeBase *node = check_and_cast<NodeBase*>(
+                    getModuleByPath(node_path_str));
+            _globalMob.insert(std::make_pair(node->getId(), mob));
+        }
+        for (int i = 0; i < numRouters; i ++)
         {
             sprintf(mob_path_str, "Net80211_aodv.router[%d].mobility", i);
             sprintf(node_path_str, "Net80211_aodv.router[%d]", i);
@@ -68,20 +92,13 @@ Olsr_Etx_TVT::initialize(int stage){
                     getModuleByPath(node_path_str));
             _globalMob.insert(std::make_pair(node->getId(), mob));
         }
-        for (int i = 0; i < numFixHosts; i ++)
-        {
-            sprintf(mob_path_str, "Net80211_aodv.fixhost[%d].mobility", i);
-            sprintf(node_path_str, "Net80211_aodv.fixhost[%d]", i);
-            ExtendedBonnMotionMobility* mob = check_and_cast<ExtendedBonnMotionMobility*>(
-                    getModuleByPath(mob_path_str));
-            NodeBase *node = check_and_cast<NodeBase*>(
-                    getModuleByPath(node_path_str));
-            _globalMob.insert(std::make_pair(node->getId(), mob));
-        }
 
         self_node_id = getContainingNode(this)->getId();
-        load_losmap = par("load_losmap");
-        Rmax = par("Rmax");
+
+        LETRangeMode = par("LETRangeMode");
+        losRange = par("losRange");
+        nlosRange = par("nlosRange");
+
         pathloss_model = check_and_cast<physicallayer::FactoryFading*>(getModuleByPath("Net80211_aodv.radioMedium.pathLoss"));
     }
 }
@@ -372,7 +389,7 @@ Olsr_Etx_TVT::link_sensing
             new Olsr_LinkTupleTimer(this, link_tuple);
         link_timer->resched(DELAY(MIN(link_tuple->time(), link_tuple->sym_time())));
     }
-    return false;
+    return true;
 }
 
 
@@ -825,13 +842,20 @@ Olsr_Etx_TVT::predict_link_expire_time(int node_mob_info)
         Coord PosB = forecast_node_position_optimal(node_mob_info, k*period);
         double distance = PosA.distance(PosB);
         double commRange;
-        if(load_losmap)
+        switch(LETRangeMode)
         {
-            commRange = get_commrange_for_link_expire_time(PosA, PosB);
-        }
-        else
-        {
-            commRange = get_commrange_for_link_expire_time();
+            case LOS:
+                commRange = get_commrange_for_link_expire_time(PosA, PosB);
+                break;
+            case NLOS:
+                commRange = nlosRange;
+                break;
+            case LOSMAP:
+                commRange = losRange;
+                break;
+            default:
+                throw cRuntimeError("LETRangeMode not supported");
+                break;
         }
         if(distance <= commRange)
         {
@@ -855,22 +879,16 @@ Olsr_Etx_TVT::forecast_node_position_optimal(int node_id, double duration)
 }
 
 double
-Olsr_Etx_TVT::get_commrange_for_link_expire_time()
-{
-    return Rmax;
-}
-
-double
 Olsr_Etx_TVT::get_commrange_for_link_expire_time(Coord PosA, Coord PosB)
 {
     bool nlos_cond = pathloss_model->checkNlos(PosA, PosB);
     if(nlos_cond)
     {
-        return 50;
+        return nlosRange;
     }
     else
     {
-        return 123;
+        return losRange;
     }
 }
 
@@ -879,10 +897,10 @@ Olsr_Etx_TVT::process_hello(OlsrMsg& msg, const nsaddr_t &receiver_iface, const 
 {
     assert(msg.msg_type() == OLSR_ETX_HELLO_MSG);
     bool continue_flag = link_sensing(msg, receiver_iface, sender_iface, pkt_seq_num, index);
-    if(!continue_flag)
-    {
-        return false;
-    }
+//    if(!continue_flag)
+//    {
+//        return false;
+//    }
     populate_nbset(msg);
     populate_nb2hopset(msg);
     switch (parameter_.mpr_algorithm())
@@ -910,6 +928,7 @@ Olsr_Etx_TVT::process_hello(OlsrMsg& msg, const nsaddr_t &receiver_iface, const 
     populate_mprselset(msg);
     return false;
 }
+
 
 //// inherit from olsr_mpr_computation
 void

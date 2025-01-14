@@ -19,7 +19,7 @@ namespace inet {
 
 void LMPR::handleOGMReminder()
 {
-//    broadcastOGM();
+    broadcastOGM();
     scheduleAt(simTime() + mhOGMInterval + broadcastDelay->doubleValue(), OGMReminder);
 
     int len = nodesInfoList.size();

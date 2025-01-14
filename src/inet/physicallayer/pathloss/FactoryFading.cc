@@ -29,7 +29,7 @@ namespace physicallayer {
 
 Define_Module(FactoryFading);
 
-std::map<int, LOSCond*> FactoryFading::transmissionLOSCondCache;
+std::map<std::pair<int, int>, LOSCond*> FactoryFading::transmissionLOSCondCache;
 
 FactoryFading::FactoryFading() {
     // TODO Auto-generated constructor stub
@@ -44,7 +44,7 @@ FactoryFading::initialize(int stage)
 {
     FreeSpacePathLoss::initialize(stage);
     if (stage == INITSTAGE_LOCAL) {
-        bool loadObstacle = par("loadObstacle");
+        loadObstacle = par("loadObstacle");
         if(loadObstacle)
         {
             const char *fname = par("blockageFile");
@@ -83,19 +83,77 @@ FactoryFading::initialize(int stage)
 
             r.close();
         }
+
+        loadShadowFading = par("loadShadowFading");
+        if(loadShadowFading)
+        {
+            const char * fname = par("shadowFadingFile");
+            std::string filename(fname);
+            std::ifstream file(filename);
+            if (!file.is_open()) {
+                throw cRuntimeError("无法打开文件");
+            }
+           std::string line;
+           // 逐行读取文件
+           while (std::getline(file, line)) {
+               std::stringstream ss(line);
+               std::string value;
+               std::vector<double> row;
+               // 按照逗号分割每行
+               while (std::getline(ss, value, ',')) {
+                   row.push_back(std::stod(value));  // 将字符串转换为double并存储
+               }
+               // 将读取到的行存储到矩阵中
+               shadow_fading_matrix.push_back(row);
+           }
+           // 关闭文件
+           file.close();
+        }
+
+        loadSmallScaleFading = par("loadSmallScaleFading");
     }
 }
 
 double
 FactoryFading::computePathLoss(const ITransmission *transmission, const IArrival *arrival) const
 {
+    throw cRuntimeError("Should not use common FactoryFading::computePathLoss!");
+}
+
+double
+FactoryFading::computePathLoss(const IRadio *receiverRadio, const ITransmission *transmission, const IArrival *arrival) const
+{
     auto analogModel = check_and_cast<const INarrowbandSignalAnalogModel *>(transmission->getAnalogModel());
     Hz centerFrequency = Hz(analogModel->getCenterFrequency());
     double freq = centerFrequency.get();
+
+    freq = 5.9e9;
+
+    // check los cond
     Coord ptx = transmission->getStartPosition();
     Coord prx = arrival->getStartPosition();
+    bool is_nlos = checkNlos(ptx, prx);
+
+    // cache los cond
     int tx_id = transmission->getId();
-    return computePathLoss(freq, ptx, prx, tx_id);
+    int rx_id = receiverRadio->getId();
+    LOSCond* cond = new LOSCond();
+    cond->txX = ptx.x;
+    cond->txY = ptx.y;
+    cond->rxX = prx.x;
+    cond->rxY = prx.y;
+    cond->losCondFlag = is_nlos ? 0 : 1;
+    transmissionLOSCondCache.insert(std::make_pair(std::make_pair(tx_id, rx_id), cond));
+
+    // path loss
+    double PL_dB = computePathLoss(freq, ptx, prx, is_nlos);
+    // shadow fading
+    double SF_dB = computeShadowFading(ptx, prx);
+    // small scale fading
+    double SSF_dB = computeSmallScaleFading(is_nlos);
+    // total loss in dB
+    double lossDb = PL_dB + SF_dB + SSF_dB;
+    return pow(10, lossDb/10);
 }
 
 m
@@ -107,9 +165,10 @@ FactoryFading::computeRange(mps propagationSpeed, Hz frequency, double loss) con
     return maxRange;
 }
 
-LOSCond* FactoryFading::getLOSCondByTxId(int tranmission_id) const
+LOSCond* FactoryFading::getLOSCondByTxId(int tranmission_id, int rx_id) const
 {
-    auto it = transmissionLOSCondCache.find(tranmission_id);
+    std::pair<int, int> keyToFind = std::make_pair(tranmission_id, rx_id);
+    auto it = transmissionLOSCondCache.find(keyToFind);
     if(it != transmissionLOSCondCache.end())
     {
         return it->second;
@@ -119,13 +178,10 @@ LOSCond* FactoryFading::getLOSCondByTxId(int tranmission_id) const
 
 
 double
-FactoryFading::computePathLoss(double frequency, Coord ptx, Coord prx, int tx_id) const
+FactoryFading::computePathLoss(double frequency, Coord ptx, Coord prx, bool is_nlos) const
 {
     double distance = ptx.distance(prx);
     double lossDb;
-    bool is_nlos = checkNlos(ptx, prx);
-//    frequency = 5.9*1e9; // todo: disable
-//    double shadowFadingDb = getShadowingFading(tx_id, rx_id, distance, is_nlos);
     if(is_nlos)
     {
         lossDb = m_nlos_alpha + m_nlos_beta*log10(distance) + m_nlos_gamma*log10(frequency/1e9);
@@ -135,15 +191,52 @@ FactoryFading::computePathLoss(double frequency, Coord ptx, Coord prx, int tx_id
         lossDb = m_los_alpha + m_los_beta*log10(distance) + m_los_gamma*log10(frequency/1e9);
     }
 
-    LOSCond* cond = new LOSCond();
-    cond->txX = ptx.x;
-    cond->txY = ptx.y;
-    cond->rxX = prx.x;
-    cond->rxY = prx.y;
-    cond->losCondFlag = is_nlos ? 0 : 1;
-    transmissionLOSCondCache.insert(std::make_pair(tx_id, cond));
+    return -lossDb;
+}
 
-    return pow(10, -lossDb/10);
+double
+FactoryFading::computeShadowFading(Coord ptx, Coord prx) const
+{
+    double lossDb = 0;
+    if(loadShadowFading)
+    {
+        int tx_x_idx = floor(ptx.x/5);
+        int tx_y_idx = floor(ptx.y/5);
+        int rx_x_idx = floor(prx.x/5);
+        int rx_y_idx = floor(prx.y/5);
+        lossDb = shadow_fading_matrix[tx_x_idx*80+tx_y_idx][rx_x_idx*80+rx_y_idx];
+    }
+    return lossDb;
+}
+
+double FactoryFading::computeSmallScaleFading(bool is_nlos) const
+{
+    double lossDb = 0;
+    if(loadSmallScaleFading)
+    {
+        double doppler_fading = -0.0436; // 20m/s, dB
+        double multipath_fading = 0;
+        if(is_nlos)
+        {
+            double sigma = 1;
+            double real_part = sigma * normal(0,1);
+            double imag_part =  sigma * normal(0,1);
+            double amplitude_h = real_part*real_part + imag_part*imag_part;
+            multipath_fading = 10*log10(amplitude_h);
+        }
+        else
+        {
+            double nu = 1;
+            double sigma = 1;
+            double los_component = nu;
+            double real_part = los_component + sigma * normal(0,1);
+            double imag_part = sigma * normal(0,1);
+            double amplitude_h = real_part*real_part + imag_part*imag_part;
+            multipath_fading = 10*log10(amplitude_h);
+        }
+        lossDb = doppler_fading + multipath_fading;
+    }
+    return lossDb;
 }
 
 bool
@@ -159,28 +252,6 @@ FactoryFading::checkNlos(Coord ptx, Coord prx) const
             return true;
     }
     return false;
-}
-
-double
-FactoryFading::getShadowingFading(int tx_id, int rx_id, double distance, bool is_nlos) const
-{
-//    UnorderedPair node_pair = UnorderedPair(tx_id, rx_id);
-//    auto it_sf_cache = shadowing_fading_cache.find(node_pair);
-//    if(it_sf_cache == shadowing_fading_cache.end())
-//    {
-//        shadowing_fading_cache.insert(make_pair(node_pair, normal(0, m_los_sigma)));
-//    }
-//    auto it_los_cond_cache = los_condition_cache.find(node_pair);
-//    if(it_los_cond_cache == los_condition_cache.end())
-//    {
-//        los_condition_cache.insert(make_pair(node_pair, is_nlos));
-//    }
-//    auto it_dist_cache = distance_cache.find(node_pair);
-//    if(it_dist_cache == distance_cache.end())
-//    {
-//        distance_cache.insert(make_pair(node_pair, distance));
-//    }
-
 }
 
 bool

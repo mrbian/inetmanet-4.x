@@ -54,7 +54,7 @@ simple PARRoT like IManetRouting
 
 		double losRange;
 		double nlosRange;
-		bool enableLosMap = default(false);
+		int LETRangeMode;
         
     gates:
         input ipIn;

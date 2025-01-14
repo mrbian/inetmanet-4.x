@@ -83,9 +83,6 @@ protected:
     NetworkInterface *interface80211ptr = nullptr;
     IInterfaceTable *ift = nullptr;
     IMobility *mobility = nullptr;
-    cMessage *hello_reminder = nullptr;
-    cMessage *tc_reminder = nullptr;
-    cMessage *send_reminder = nullptr;
     GlobalArp* arp = nullptr;
     std::map<int, IMobility*> _globalMob;
     int interfaceId = -1;

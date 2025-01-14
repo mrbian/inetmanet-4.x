@@ -3,7 +3,6 @@
     <inputs>
         <input pattern="/inet/examples/manetrouting/net80211_aodv/results_parrot/PARRoT-*.vec"/>
         <input pattern="/inet/examples/manetrouting/net80211_aodv/results_parrot/PARRoT-*.sca"/>
-        <input pattern="PARRoT_*"/>
     </inputs>
     <charts/>
 </analysis>

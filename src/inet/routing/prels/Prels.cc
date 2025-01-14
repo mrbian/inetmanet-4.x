@@ -27,9 +27,6 @@ void Prels::initialize(int stage) {
         hello_ival_ = &par("Hello_ival");
         tc_ival_ = &par("Tc_ival");
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-        hello_reminder = new cMessage("hello_reminder");
-        tc_reminder = new cMessage("tc_reminder");
-        send_reminder = new cMessage("send_reminder");
 
         state_ptr = new Prels_state();
         helloTimer = new Prels_HelloTimer();
@@ -40,22 +37,31 @@ void Prels::initialize(int stage) {
         arp = check_and_cast<GlobalArp*>(this->getParentModule()->getSubmodule("arp"));
 
         cModule* topModule = getModuleByPath("Net80211_aodv");
+        int numClients = topModule->par("numClients");
+        int numServers = topModule->par("numServers");
         int numRouters = topModule->par("numRouters");
-        int numFixHosts = topModule->par("numFixHosts");
         char mob_path_str[100];
         char node_path_str[100];
-        for(int i = 0; i < numRouters; i ++)
+        for (int i = 0; i < numClients; i ++)
         {
-            sprintf(mob_path_str, "Net80211_aodv.router[%d].mobility", i);
-            sprintf(node_path_str, "Net80211_aodv.router[%d]", i);
+            sprintf(mob_path_str, "Net80211_aodv.client[%d].mobility", i);
+            sprintf(node_path_str, "Net80211_aodv.client[%d]", i);
             IMobility* mob = check_and_cast<IMobility *>(getModuleByPath(mob_path_str));
             NodeBase *node = check_and_cast<NodeBase*>(getModuleByPath(node_path_str));
             _globalMob.insert(std::make_pair(node->getId(), mob));
         }
-        for (int i = 0; i < numFixHosts; i ++)
+        for (int i = 0; i < numServers; i ++)
         {
-            sprintf(mob_path_str, "Net80211_aodv.fixhost[%d].mobility", i);
-            sprintf(node_path_str, "Net80211_aodv.fixhost[%d]", i);
+            sprintf(mob_path_str, "Net80211_aodv.server[%d].mobility", i);
+            sprintf(node_path_str, "Net80211_aodv.server[%d]", i);
+            IMobility* mob = check_and_cast<IMobility *>(getModuleByPath(mob_path_str));
+            NodeBase *node = check_and_cast<NodeBase*>(getModuleByPath(node_path_str));
+            _globalMob.insert(std::make_pair(node->getId(), mob));
+        }
+        for(int i = 0; i < numRouters; i ++)
+        {
+            sprintf(mob_path_str, "Net80211_aodv.router[%d].mobility", i);
+            sprintf(node_path_str, "Net80211_aodv.router[%d]", i);
             IMobility* mob = check_and_cast<IMobility *>(getModuleByPath(mob_path_str));
             NodeBase *node = check_and_cast<NodeBase*>(getModuleByPath(node_path_str));
             _globalMob.insert(std::make_pair(node->getId(), mob));
@@ -124,6 +130,7 @@ void
 Prels::handleUpperPacket(Packet *packet)
 {
     // application data packet
+    delete packet;
 }
 
 void
@@ -135,10 +142,10 @@ Prels::handleLowerPacket(Packet *packet)
         recv_prels(packet);
     }
     // data
-//    else
-//    {
-//
-//    }
+    else
+    {
+        delete packet;
+    }
 }
 
 void

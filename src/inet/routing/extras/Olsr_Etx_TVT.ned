@@ -56,8 +56,10 @@ simple Olsr_Etx_TVT extends BaseRouting
         bool DelOnlyRtEntriesInrtable_ = default(false); // delete only ip entries that are in the interal routing table
         
         int ETX_loss_window_size = default(10);
-        bool load_losmap = default(false);
-        double Rmax @unit(m) = default(123m);
+        
+		int LETRangeMode;  // 0:los range; 1:nlos range; 2:los map
+		double losRange; 
+		double nlosRange;
         
         @signal[linkExpireTime](type=double);
         @statistic[linkExpireTime](title="predicted link expire time"; record=histogram; interpolationmode=none);

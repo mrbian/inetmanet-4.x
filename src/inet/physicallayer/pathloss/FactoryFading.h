@@ -50,7 +50,12 @@ public:
     std::map<int, bool> los_condition_cache;
     std::map<int, double> distance_cache;
 
-    static std::map<int, LOSCond*> transmissionLOSCondCache;
+    bool loadObstacle;
+    bool loadShadowFading;
+    bool loadSmallScaleFading;
+    std::vector<std::vector<double>> shadow_fading_matrix;
+
+    static std::map<std::pair<int, int>, LOSCond*>  transmissionLOSCondCache;
 
 public:
     FactoryFading();
@@ -58,15 +63,17 @@ public:
 
     virtual std::ostream& printToStream(std::ostream& stream, int level, int evFlags) const override;
     virtual double computePathLoss(const ITransmission *transmission, const IArrival *arrival) const override;
+    virtual double computePathLoss(const IRadio *receiverRadio, const ITransmission *transmission, const IArrival *arrival) const override;
     virtual m computeRange(mps propagationSpeed, Hz frequency, double loss) const override;
 
-    double computePathLoss(double frequency, Coord ptx, Coord prx, int tx_id) const;
-    double getShadowingFading(int tx_id, int rx_id, double distance, bool is_nlos) const;
+    double computePathLoss(double frequency, Coord ptx, Coord prx, bool is_nlos) const;
+    double computeShadowFading(Coord ptx, Coord prx) const;
+    double computeSmallScaleFading(bool is_nlos) const;
     bool checkNlos(Coord ptx, Coord prx) const;
     bool CheckLineRectIntersect(double x1, double y1, double x2, double y2, double xmin, double ymin, double xmax, double ymax) const;
     int ComputeCode(double x, double y, double xmin, double ymin, double xmax, double ymax) const;
 
-    virtual LOSCond* getLOSCondByTxId(int tranmission_id) const override;
+    virtual LOSCond* getLOSCondByTxId(int tranmission_id, int rx_id) const override;
 
 };
 

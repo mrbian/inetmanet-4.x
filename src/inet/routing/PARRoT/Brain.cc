@@ -10,6 +10,10 @@
 
 namespace inet {
 
+#define LOS 0
+#define NLOS 1
+#define LOSMAP 2
+
 double PARRoT::combineDiscounts(std::vector<double> gamma) {
 	if (combinationMethod == "M") {
 		return std::accumulate(gamma.begin(), gamma.end(), 1.0,
@@ -126,111 +130,139 @@ double PARRoT::R(Ipv4Address origin, Ipv4Address hop) {
 }
 
 double PARRoT::Gamma_Pos(Ipv4Address neighbor, Ipv4Address origin) {
-	double t_elapsed_since_last_hello = simTime().dbl()
-	        - Vi.at(neighbor)->lastSeen();
-	Coord vj;
-	Coord pj;
-
-	vj = Vi.at(neighbor)->velo();
-	pj = Vi.at(neighbor)->coord() + (vj * (t_elapsed_since_last_hello));
-
-	Coord pi = hist_coord[historySize - 1];
-	Coord vi = (forecastPosition() - pi)/((neighborReliabilityTimeout != 0) ? neighborReliabilityTimeout : 1.0);
-
-	bool los_flag = false;
-	double sample_interval = 0.1;
-	int Np = (int)(neighborReliabilityTimeout/sample_interval);
-	for(int i=0; i < Np; i++)
-	{
-	    double t_pred = Np*sample_interval;
-	    Coord pi_pred = pi + vi*t_pred;
-	    Coord pj_pred = pj + vj*t_pred;
-	    if(! pathLoss->checkNlos(pi_pred, pj_pred))
-	    {
-	        los_flag = true;
-	    }
-	}
-
-	double px = (pj - pi).getX();
-	double vx = (vj - vi).getX();
-	double py = (pj - pi).getY();
-	double vy = (vj - vi).getY();
-	double pz = (pj - pi).getZ();
-	double vz = (vj - vi).getZ();
-
-	double a = pow(vx, 2) + pow(vy, 2) + pow(vz, 2);
-	double b = 2 * (px * vx + py * vy + pz * vz);
-//	double c =
-//	        pow(px, 2) + pow(py, 2) + pow(pz, 2)
-//	                - pow(rangeOffset + radioMedium->getMediumLimitCache()->getMaxCommunicationRange().get(),
-//	                        2);
-//	double c =
-//              pow(px, 2) + pow(py, 2) + pow(pz, 2)
-//                      - pow(rangeOffset + GetMaxCommunicationRange(),
-//                              2);
-
-    double c;
-    if(enableLosMap)
+    ExtendedBonnMotionMobility *neighbor_mob = check_and_cast<ExtendedBonnMotionMobility*>(_globalMob[neighbor]);
+    ExtendedBonnMotionMobility *self_mob = check_and_cast<ExtendedBonnMotionMobility*>(_globalMob[m_selfIpv4Address]);
+    double period = 0.1;
+    int Np = ceil(neighborReliabilityTimeout/period);
+    double link_expire_time = 0;
+    for(int i=0; i<Np; i++)
     {
-        if(los_flag)
+        double lookAhead = i * period;
+        Coord P1 = neighbor_mob->getFuturePosition(lookAhead, simTime());
+        Coord P2 = self_mob->getFuturePosition(lookAhead, simTime());
+        double distance = P1.distance(P2);
+        if(LETRangeMode == LOS)
         {
-            c =
-                      pow(px, 2) + pow(py, 2) + pow(pz, 2)
-                              - pow(losRange,
-                                      2);
+            if(distance >= losRange) break;
+            link_expire_time += period;
+        }
+        else if(LETRangeMode == NLOS)
+        {
+            if(distance >= nlosRange) break;
+            link_expire_time += period;
+        }
+        else if(LETRangeMode == LOSMAP)
+        {
+            if(pathLoss->checkNlos(P1, P2))
+            {
+                if(distance >= nlosRange) break;
+                link_expire_time += period;
+            }
+            else
+            {
+                if(distance >= losRange) break;
+                link_expire_time += period;
+            }
         }
         else
-        {
-            c =
-                      pow(px, 2) + pow(py, 2) + pow(pz, 2)
-                              - pow(nlosRange,
-                                      2);
-        }
-    }
-    else
-    {
-          c =
-                      pow(px, 2) + pow(py, 2) + pow(pz, 2)
-                              - pow(rangeOffset + GetMaxCommunicationRange(),
-                                      2);
+            throw cRuntimeError("LETRangeMode not supported");
     }
 
+    if (!origin.isUnspecified() && rescheduleRoutesOnTimeout && link_expire_time >= 0.0){
+        destinationsToUpdate.insert( { { simTime() + link_expire_time, origin } });
+        cancelEvent(destinationReminder);
+        scheduleAt(destinationsToUpdate.begin()->first, destinationReminder);
+    }
 
-	if (a==0){
-		return (c < 0) ? 1.0 : 0.0;
-	}
-	double t1 = (-b + sqrt(pow(b, 2) - 4 * a * c)) / (2 * a);
-	double t2 = (-b - sqrt(pow(b, 2) - 4 * a * c)) / (2 * a);
-	double t = (t2 >= 0.0 || (t2 < 0.0 && t1 < 0.0)) ? 0.0 : t1;
-	if(isnan(t)){
-		t = 0.0;
-	}
-	if (!origin.isUnspecified() && rescheduleRoutesOnTimeout && t2 >= 0.0){
-
-		// If Gamma_Pos < 1.0 we need to schedule a re-calculation event
-		destinationsToUpdate.insert(
-		        { { simTime()
-		                + t2,
-		                origin } });
-		cancelEvent(destinationReminder);
-		scheduleAt(destinationsToUpdate.begin()->first, destinationReminder);
-	}else if(!origin.isUnspecified() && rescheduleRoutesOnTimeout && t2 <= 0.0 && t1 > 0.0 && t1 < neighborReliabilityTimeout){
-		//std::cout << "Reschedule update for " << origin.str() << " in " << t1 << "\n" << std::flush;
-		destinationsToUpdate.insert(
-				        { { simTime()
-				                + t1,
-				                origin } });
-				cancelEvent(destinationReminder);
-				scheduleAt(destinationsToUpdate.begin()->first, destinationReminder);
-	}
-
-	return t;
+    return link_expire_time;
 }
 
-double PARRoT::GetMaxCommunicationRange()
-{
-    return maxRangeForLET;
-}
+
+//double PARRoT::Gamma_Pos(Ipv4Address neighbor, Ipv4Address origin) {
+//	double t_elapsed_since_last_hello = simTime().dbl() - Vi.at(neighbor)->lastSeen();
+//	Coord vj;
+//	Coord pj;
+//
+//	vj = Vi.at(neighbor)->velo();
+//	pj = Vi.at(neighbor)->coord() + (vj * (t_elapsed_since_last_hello));
+//
+//	Coord pi = hist_coord[historySize - 1];
+//	Coord vi = (forecastPosition() - pi)/((neighborReliabilityTimeout != 0) ? neighborReliabilityTimeout : 1.0);
+//
+//	double px = (pj - pi).getX();
+//	double vx = (vj - vi).getX();
+//	double py = (pj - pi).getY();
+//	double vy = (vj - vi).getY();
+//	double pz = (pj - pi).getZ();
+//	double vz = (vj - vi).getZ();
+//
+//	double a = pow(vx, 2) + pow(vy, 2) + pow(vz, 2);
+//	double b = 2 * (px * vx + py * vy + pz * vz);
+//	double c = pow(px, 2) + pow(py, 2) + pow(pz, 2) - pow(nlosRange, 2);
+//
+////	double c;
+////    switch(LETRangeMode)
+////    {
+////        case LOS:
+////            c = pow(px, 2) + pow(py, 2) + pow(pz, 2) - pow(losRange, 2);
+////            break;
+////        case NLOS:
+////            c = pow(px, 2) + pow(py, 2) + pow(pz, 2) - pow(nlosRange, 2);
+////            break;
+////        case LOSMAP:
+////            double sample_interval = 0.1;
+////            int Np = (int)(neighborReliabilityTimeout/sample_interval);
+////            double link_expire_time = 0;
+////            for(int i=0; i < Np; i++)
+////            {
+////                double t_pred = Np*sample_interval;
+////                Coord pi_pred = pi + vi*t_pred;
+////                Coord pj_pred = pj + vj*t_pred;
+////                double distance = pi_pred.distance(pj_pred);
+////                if(pathLoss->checkNlos(pi_pred, pj_pred))
+////                {
+////                    if(distance > nlosRange)
+////                        return link_expire_time;
+////                    link_expire_time += period;
+////                }
+////                else
+////                {
+////                    if(distance < losRange)
+////                        return link_expire_time;
+////                    link_expire_time += period;
+////                }
+////            }
+////            return link_expire_time;
+////            break;
+////        default:
+////            throw cRuntimeError("LETRangeMode not supported");
+////            break;
+////    }
+//
+//	if (a==0){
+////		return (c < 0) ? 1.0 : 0.0;
+//	    return (c < 0) ? neighborReliabilityTimeout : 0.0;
+//	}
+//	double t1 = (-b + sqrt(pow(b, 2) - 4 * a * c)) / (2 * a);
+//	double t2 = (-b - sqrt(pow(b, 2) - 4 * a * c)) / (2 * a);
+//	double t = (t2 >= 0.0 || (t2 < 0.0 && t1 < 0.0)) ? 0.0 : t1;
+//	if(isnan(t)){
+//		t = 0.0;
+//	}
+//	if (!origin.isUnspecified() && rescheduleRoutesOnTimeout && t2 >= 0.0){
+//		// If Gamma_Pos < 1.0 we need to schedule a re-calculation event
+//		destinationsToUpdate.insert( { { simTime() + t2, origin } });
+//		cancelEvent(destinationReminder);
+//		scheduleAt(destinationsToUpdate.begin()->first, destinationReminder);
+//	}else if(!origin.isUnspecified() && rescheduleRoutesOnTimeout && t2 <= 0.0 && t1 > 0.0 && t1 < neighborReliabilityTimeout){
+//		//std::cout << "Reschedule update for " << origin.str() << " in " << t1 << "\n" << std::flush;
+//		destinationsToUpdate.insert( { { simTime() + t1, origin } });
+//        cancelEvent(destinationReminder);
+//        scheduleAt(destinationsToUpdate.begin()->first, destinationReminder);
+//	}
+//
+//	return t;
+//}
 
 } // namespace inet
 

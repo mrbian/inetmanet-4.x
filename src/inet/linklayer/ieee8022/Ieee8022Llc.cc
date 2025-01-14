@@ -151,7 +151,7 @@ void Ieee8022Llc::processPacketFromMac(Packet *packet)
 
     if (isDeliverableToUpperLayer(packet)) {
         // INFO: collect data here
-//        addMapData(packet);
+        addMapData(packet);
         // origin code below
         send(packet, "upperLayerOut");
     }
@@ -174,6 +174,7 @@ void Ieee8022Llc::addMapData(Packet *packet)
     if(losCond && sinrInd)
     {
         MapDataEle d;
+        d.time = simTime().dbl();
         d.txX = losCond->getTxX();
         d.txY = losCond->getTxY();
         d.rxX = losCond->getRxX();
@@ -186,7 +187,7 @@ void Ieee8022Llc::addMapData(Packet *packet)
 
 void Ieee8022Llc::storeMapDataToCSV()
 {
-    std::string baseName = getEnvir()->getConfig()->substituteVariables("${resultdir}/../LOSMapDataFiles/${configname}-${iterationvarsf}#${repetition}");
+    std::string baseName = getEnvir()->getConfig()->substituteVariables("${resultdir}/../LOSMapDataFiles/${configname}-${iterationvarsf}");
     if (!std::filesystem::exists(baseName)) {
         if (std::filesystem::create_directory(baseName)) {
             std::cout << "Folder " << baseName << " created successfully" << std::endl;
@@ -205,7 +206,8 @@ void Ieee8022Llc::storeMapDataToCSV()
       std::cout << "File " << fullPath << " is opened successfully" << std::endl;
       for(auto ele = mapDataSet.begin(); ele != mapDataSet.end(); ele ++)
       {
-          file << ele->txX << ","
+          file << ele->time << ","
+                  << ele->txX << ","
                   << ele->txY << ","
                   << ele->rxX << ","
                   << ele->rxY << ","
@@ -222,7 +224,7 @@ void Ieee8022Llc::storeMapDataToCSV()
 void Ieee8022Llc::finish()
 {
     // INFO: collect data here
-//    storeMapDataToCSV();
+    storeMapDataToCSV();
 }
 
 

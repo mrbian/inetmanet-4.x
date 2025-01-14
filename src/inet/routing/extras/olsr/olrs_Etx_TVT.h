@@ -55,8 +55,9 @@ public:
 
     std::map<int, ExtendedBonnMotionMobility*> _globalMob;
     int self_node_id;
-    bool load_losmap;
-    double Rmax;
+    int LETRangeMode;
+    double losRange;
+    double nlosRange;
     physicallayer::FactoryFading * pathloss_model = nullptr;
 
     void initialize(int stage) override;

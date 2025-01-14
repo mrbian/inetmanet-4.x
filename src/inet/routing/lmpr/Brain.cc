@@ -50,7 +50,6 @@ void LMPR::handleDataFromLowerLayer(Packet *packet)
     Ipv4Address dest = lh->getDestinationAddress().toIpv4();
     Ipv4Address prev = lh->getPrevAddr().toIpv4();
     Ipv4Address next = lh->getNextAddr().toIpv4();
-    int ttl = lh->getTtl();
 //    if(dest == m_selfIpv4Address)
     if(dest == m_selfIpv4Address && next == m_selfIpv4Address)
     {
@@ -59,11 +58,15 @@ void LMPR::handleDataFromLowerLayer(Packet *packet)
         packet->addTagIfAbsent<NetworkProtocolInd>()->setNetworkProtocolHeader(lh);
         packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(&Protocol::udp);
         packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::udp);
-        packet->addTagIfAbsent<HopLimitInd>()->setHopLimit(ttl);
+//        packet->addTagIfAbsent<HopLimitInd>()->setHopLimit(ttl);
         auto l3AddressInd = packet->addTagIfAbsent<L3AddressInd>();
         l3AddressInd->setSrcAddress(lh->getSourceAddress());
         l3AddressInd->setDestAddress(lh->getDestinationAddress());
         sendUp(packet);
+
+        int ttl = lh->getTtl();
+        int hop = defaultTTL - ttl;
+        emit(destDataHopCountSignal, hop);
     }
     else if(next == m_selfIpv4Address)      // next == me! forward
     {
@@ -91,6 +94,7 @@ void LMPR::forwardData(Packet* packet, Ipv4Address dest)
     auto lh = packet->removeAtFront<LMPRHeader>();
     lh->setPrevAddr(m_selfIpv4Address);
     lh->setNextAddr(nextHopAddr);
+    lh->setTtl(lh->getTtl()-1);
     packet->insertAtFront(lh);
 
     MacAddress nextHopMacAddr = arp->resolveL3Address(nextHopAddr, nullptr);

@@ -595,7 +595,7 @@ Packet *RadioMedium::receivePacket(const IRadio *radio, IWirelessSignal *signal)
     communicationCache->removeCachedReceptionResult(radio, transmission);
     Packet *packet = result->getPacket()->dup();
     delete result;
-    LOSCond* cond = pathLoss->getLOSCondByTxId(transmission->getId());
+    LOSCond* cond = pathLoss->getLOSCondByTxId(transmission->getId(), radio->getId());
     if(cond)
     {
         auto condTag = packet->addTagIfAbsent<LOSCondTag>();

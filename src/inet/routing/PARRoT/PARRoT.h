@@ -116,7 +116,9 @@ class PARRoT: public RoutingProtocolBase {
 		double rangeOffset;
 		double losRange;
 		double nlosRange;
-		bool enableLosMap;
+		int LETRangeMode;
+		std::map<Ipv4Address, ExtendedBonnMotionMobility*> _globalMob;
+
 	// Reinforcement Learning
 	protected:
 		double qFunction(Ipv4Address target, Ipv4Address hop);
@@ -126,14 +128,11 @@ class PARRoT: public RoutingProtocolBase {
 		double getMaxValueFor(Ipv4Address target);
 		Ipv4Address getNextHopFor(Ipv4Address target);
 		void updateGamma_Mob();
-		double GetMaxCommunicationRange();
 
 		double qFctAlpha;
 		double qFctGamma;
 		double m_Gamma_Mob;
 		std::string combinationMethod;
-		double maxRangeForLET;
-
 
 	// Mobility Prediction
 	protected:

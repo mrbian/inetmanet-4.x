@@ -135,6 +135,11 @@ protected:
 
     bool setAutoRange;
     bool setAutoLETRange;
+
+    int LETRangeMode;
+    double nlosRange;
+    double losRange;
+
     double losMapError;
     double maxRangeForLET;
 

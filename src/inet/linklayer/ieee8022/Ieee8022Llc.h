@@ -20,6 +20,7 @@
 namespace inet {
 
 struct MapDataEle{
+    double time;
     double txX;
     double txY;
     double rxX;

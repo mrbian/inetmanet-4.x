@@ -50,7 +50,6 @@ void PARRoT::initialize(int stage) {
 		qFctAlpha = par("qFctAlpha");
 		qFctGamma = par("qFctGamma");
 		combinationMethod = par("combinationMethod").stdstringValue();
-		maxRangeForLET = par("maxRangeForLET");
 
 		// Mobility Prediction
 		historySize = par("historySize");
@@ -65,7 +64,7 @@ void PARRoT::initialize(int stage) {
 
 		losRange = par("losRange");
 		nlosRange = par("nlosRange");
-		enableLosMap = par("enableLosMap");
+		LETRangeMode = par("LETRangeMode");
 	}
 	else if (stage == INITSTAGE_ROUTING_PROTOCOLS) {
 //		registerService(Protocol::manet, nullptr, gate("ipIn"));
@@ -73,6 +72,43 @@ void PARRoT::initialize(int stage) {
 	    registerProtocol(Protocol::manet, gate("ipOut"), gate("ipIn"));
 
         pathLoss = check_and_cast<physicallayer::FactoryFading*>(getModuleByPath("Net80211_parrot.radioMedium.pathLoss"));
+
+
+        mobility = check_and_cast<IMobility*>(getContainingNode(this)->getSubmodule("mobility"));
+        cModule* topModule = getModuleByPath("Net80211_parrot");
+        int numServers = topModule->par("numServers");
+        int numClients = topModule->par("numClients");
+        int numRouters = topModule->par("numRouters");
+        char mob_path_str[100];
+        char ip_path_str[100];
+        for(int i = 0; i < numServers; i ++)
+        {
+            sprintf(mob_path_str, "Net80211_parrot.server[%d].mobility", i);
+            sprintf(ip_path_str, "Net80211_parrot.server[%d].wlan[0]", i);
+            ExtendedBonnMotionMobility* mob = check_and_cast<ExtendedBonnMotionMobility*>(getModuleByPath(mob_path_str));
+            NetworkInterface *ie = check_and_cast<NetworkInterface*>(getModuleByPath(ip_path_str));
+            Ipv4Address addr = ie->getProtocolData<Ipv4InterfaceData>()->getIPAddress();
+            _globalMob.insert({addr, mob});
+        }
+        for (int i = 0; i < numClients; i ++)
+        {
+            sprintf(mob_path_str, "Net80211_parrot.client[%d].mobility", i);
+            sprintf(ip_path_str, "Net80211_parrot.client[%d].wlan[0]", i);
+            ExtendedBonnMotionMobility* mob = check_and_cast<ExtendedBonnMotionMobility*>(getModuleByPath(mob_path_str));
+            NetworkInterface *ie = check_and_cast<NetworkInterface*>(getModuleByPath(ip_path_str));
+            Ipv4Address addr = ie->getProtocolData<Ipv4InterfaceData>()->getIPAddress();
+            _globalMob.insert({addr, mob});
+        }
+        for (int i = 0; i < numRouters; i ++)
+        {
+            sprintf(mob_path_str, "Net80211_parrot.router[%d].mobility", i);
+            sprintf(ip_path_str, "Net80211_parrot.router[%d].wlan[0]", i);
+            ExtendedBonnMotionMobility* mob = check_and_cast<ExtendedBonnMotionMobility*>(getModuleByPath(mob_path_str));
+            NetworkInterface *ie = check_and_cast<NetworkInterface*>(getModuleByPath(ip_path_str));
+            Ipv4Address addr = ie->getProtocolData<Ipv4InterfaceData>()->getIPAddress();
+            _globalMob.insert({addr, mob});
+        }
+
 
 	}
 }

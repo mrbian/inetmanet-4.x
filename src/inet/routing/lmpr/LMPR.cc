@@ -52,22 +52,38 @@ void LMPR::initialize(int stage) {
         losMapError = par("losMapError");
         maxRangeForLET = par("maxRangeForLET");
         setAutoLETRange = par("setAutoLETRange");
+
+        LETRangeMode = par("LETRangeMode");
+        nlosRange = par("nlosRange");
+        losRange = par("losRange");
     }
     else if(stage == INITSTAGE_NETWORK_LAYER) {
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
         mobility = check_and_cast<IMobility*>(getContainingNode(this)->getSubmodule("mobility"));
-        radioMedium = check_and_cast<physicallayer::IRadioMedium*>(getModuleByPath("Scenario.radioMedium"));
+        radioMedium = check_and_cast<physicallayer::IRadioMedium*>(getModuleByPath("Net80211_aodv.radioMedium"));
         arp = check_and_cast<GlobalArp*>(this->getParentModule()->getSubmodule("arp"));
 //        arp = getModuleFromPar<GlobalArp>(par("arpModule"), this->getParentModule());
-        cModule* topModule = getModuleByPath("Scenario");
-        int numHosts = topModule->par("numHosts");
+        cModule* topModule = getModuleByPath("Net80211_aodv");
+        int numClients = topModule->par("numClients");
+        int numServers = topModule->par("numServers");
         int numRouters = topModule->par("numRouters");
         char mob_path_str[100];
         char ip_path_str[100];
-        for(int i = 0; i < numHosts; i ++)
+        for(int i = 0; i < numServers; i ++)
         {
-            sprintf(mob_path_str, "Scenario.host[%d].mobility", i);
-            sprintf(ip_path_str, "Scenario.host[%d].wlan[0]", i);
+            sprintf(mob_path_str, "Net80211_aodv.server[%d].mobility", i);
+            sprintf(ip_path_str, "Net80211_aodv.server[%d].wlan[0]", i);
+            ExtendedBonnMotionMobility* mob = check_and_cast<ExtendedBonnMotionMobility*>(
+                    getModuleByPath(mob_path_str));
+            NetworkInterface *ie = check_and_cast<NetworkInterface*>(
+                    getModuleByPath(ip_path_str));
+            Ipv4Address addr = ie->getProtocolData<Ipv4InterfaceData>()->getIPAddress();
+            _globalMob.push_back({addr, mob});
+        }
+        for (int i = 0; i < numClients; i ++)
+        {
+            sprintf(mob_path_str, "Net80211_aodv.client[%d].mobility", i);
+            sprintf(ip_path_str, "Net80211_aodv.client[%d].wlan[0]", i);
             ExtendedBonnMotionMobility* mob = check_and_cast<ExtendedBonnMotionMobility*>(
                     getModuleByPath(mob_path_str));
             NetworkInterface *ie = check_and_cast<NetworkInterface*>(
@@ -77,8 +93,8 @@ void LMPR::initialize(int stage) {
         }
         for (int i = 0; i < numRouters; i ++)
         {
-            sprintf(mob_path_str, "Scenario.router[%d].mobility", i);
-            sprintf(ip_path_str, "Scenario.router[%d].wlan[0]", i);
+            sprintf(mob_path_str, "Net80211_aodv.router[%d].mobility", i);
+            sprintf(ip_path_str, "Net80211_aodv.router[%d].wlan[0]", i);
             ExtendedBonnMotionMobility* mob = check_and_cast<ExtendedBonnMotionMobility*>(
                     getModuleByPath(mob_path_str));
             NetworkInterface *ie = check_and_cast<NetworkInterface*>(
@@ -87,18 +103,17 @@ void LMPR::initialize(int stage) {
             _globalMob.push_back({addr, mob});
         }
 
-        N = numHosts + numRouters;
+        N = numClients + numServers + numRouters;
         adjacencyMatrix.resize(N);
         for (int i = 0; i < N; i ++)
         {
             adjacencyMatrix[i].resize(N, 0.0);
         }
 
-        pathLoss = check_and_cast<physicallayer::FactoryFading*>(getModuleByPath("Scenario.radioMedium.pathLoss"));
+        pathLoss = check_and_cast<physicallayer::FactoryFading*>(getModuleByPath("Net80211_aodv.radioMedium.pathLoss"));
 
         start();
     }
-
     else
     {
         if(stage != 1)
@@ -144,7 +159,7 @@ void LMPR::start(){
 //
 
 //    scheduleAt(simTime() + uniform(0.0, par("maxJitter")), OGMReminder);
-    scheduleAt(simTime() + uniform(0.0, par("mhOGMInterval")), OGMReminder);
+//    scheduleAt(simTime() + uniform(0.0, par("mhOGMInterval")), OGMReminder);
 }
 
 void LMPR::stop() {
@@ -155,9 +170,9 @@ void LMPR::finish() {
 }
 
 void LMPR::handleSelfMessage(cMessage *msg) {
-    if (msg == OGMReminder) {
-        handleOGMReminder();
-    }
+//    if (msg == OGMReminder) {
+//        handleOGMReminder();
+//    }
 }
 
 /** @brief Handle messages from upper layer */

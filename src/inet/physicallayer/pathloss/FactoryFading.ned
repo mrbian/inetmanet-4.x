@@ -19,8 +19,11 @@ import inet.physicallayer.wireless.common.pathloss.FreeSpacePathLoss;
 module FactoryFading extends FreeSpacePathLoss
 {
     parameters:
-        string blockageFile = default("");
         bool loadObstacle = default(false);
+        string blockageFile = default("");
+        bool loadShadowFading = default(false);
+        bool loadSmallScaleFading = default(false);
+        string shadowFadingFile = default("");
         @class(FactoryFading);
 }
 
