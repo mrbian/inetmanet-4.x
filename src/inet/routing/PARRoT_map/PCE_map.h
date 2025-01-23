@@ -8,22 +8,16 @@
 #pragma once
 
 namespace inet {
-class PCE {
+class PCE_map {
 	public:
-		PCE(Ipv4Address destination) {
+		PCE_map(Ipv4Address destination) {
 			destination = destination;
 		}
-		~PCE() {
+		~PCE_map() {
 		}
 
 		void lastSeen(double v) {
 			_lastSeen = v;
-		}
-		void Q(double v) {
-			_qValue = v;
-		}
-		void V(double v) {
-			_rValue = v;
 		}
 		void squNr(unsigned int v) {
 			_squNr = v;
@@ -34,35 +28,29 @@ class PCE {
 		double lastSeen() {
 			return _lastSeen;
 		}
-		double Q() {
-			return _qValue;
-		}
-		double V() {
-			return _rValue;
-		}
 		unsigned int squNr() {
 			return _squNr;
 		}
 
-        void Qc(double v) {
+		void Vc(double v) {
+            _rc = v;
+        }
+        double Vc() {
+            return _rc;
+        }
+		void Qc(double v) {
             _qc = v;
         }
 		double Qc() {
             return _qc;
         }
+
 		void Qmap(double v){
 		    _qmap = v;
 		}
 		double Qmap() {
 		    return _qmap;
 		}
-
-        void Vc(double v) {
-            _rc = v;
-        }
-        double Vc() {
-            return _rc;
-        }
         void Vmap(double v) {
             _rmap = v;
         }
@@ -73,8 +61,6 @@ class PCE {
 	protected:
 		Ipv4Address destination;
 		double _lastSeen;
-		double _qValue;
-		double _rValue;
 		unsigned int _squNr;
 
         double _qc;

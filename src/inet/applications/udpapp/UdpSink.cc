@@ -138,6 +138,7 @@ void UdpSink::processPacket(Packet *pk)
     emit(packetReceivedSignal, pk);
     delete pk;
 
+//    UdpSocket::getReceivedPacketInfo(pk);
     numReceived++;
 }
 

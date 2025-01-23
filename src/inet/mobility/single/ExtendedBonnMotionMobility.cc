@@ -117,17 +117,18 @@ void ExtendedBonnMotionMobility::setInitialPosition()
 void ExtendedBonnMotionMobility::setTargetPosition()
 {
     const ExtendedBonnMotionFile::Line& vec = *lines;
-    if (currentLine + (is3D ? 3 : 2) >= (int)vec.size()) {
+    if (currentLine + (is3D ? 4 : 3) >= (int)vec.size()) {
         nextChange = -1;
         stationary = true;
         targetPosition = lastPosition;
         return;
     }
+    currentLine += (is3D ? 4 : 3);
     nextChange = vec[currentLine];
     targetPosition.x = vec[currentLine + 1];
     targetPosition.y = vec[currentLine + 2];
     targetPosition.z = is3D ? vec[currentLine + 3] : 0;
-    currentLine += (is3D ? 4 : 3);
+//    currentLine += (is3D ? 4 : 3);
 //
 //    if(applyDistortion){
 //		const DistortionFile::Line& dist_vec = *dist_lines;
@@ -213,7 +214,6 @@ Coord ExtendedBonnMotionMobility::getFuturePosition(double lookAhead, simtime_t 
 
     Coord pos;
     double requestedTime = lookAhead + t.dbl();
-    int steps = lookAhead/samplingInterval;
     int l = currentLine - (is3D ? 4 : 3);
 
     int i = 0;
@@ -225,6 +225,10 @@ Coord ExtendedBonnMotionMobility::getFuturePosition(double lookAhead, simtime_t 
 	p0.x = vec[currentLine + (i-1)*(is3D ? 4 : 3) + 1];
 	p0.y = vec[currentLine + (i-1)*(is3D ? 4 : 3) + 2];
 	p0.z = is3D ? vec[currentLine + (i-1)*(is3D ? 4 : 3) + 3] : 0;
+
+    if (currentLine + i*(is3D ? 4 : 3) >= (int)vec.size()) {
+        return p0;
+    }
 
     double tt = vec[currentLine + i*(is3D ? 4 : 3)] - vec[currentLine + (i-1)*(is3D ? 4 : 3)];
 	p1.x = vec[currentLine + i*(is3D ? 4 : 3) + 1];

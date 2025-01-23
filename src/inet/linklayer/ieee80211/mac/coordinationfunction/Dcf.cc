@@ -12,6 +12,8 @@
 #include "inet/linklayer/ieee80211/mac/framesequence/DcfFs.h"
 #include "inet/linklayer/ieee80211/mac/rateselection/RateSelection.h"
 #include "inet/linklayer/ieee80211/mac/recipient/RecipientAckProcedure.h"
+#include "inet/networklayer/arp/ipv4/GlobalArp.h"
+#include "inet/routing/PARRoT_map/RobustForwarder_m.h"
 
 namespace inet {
 namespace ieee80211 {
@@ -370,6 +372,24 @@ void Dcf::originatorProcessFailedFrame(Packet *failedPacket)
     else {
         EV_INFO << "Retrying frame " << failedPacket->getName() << ".\n";
         auto h = failedPacket->removeAtFront<Ieee80211DataOrMgmtHeader>();
+
+
+//        MacAddress cur_dst_mac_addr = h->getReceiverAddress();
+//        GlobalArp* arp = check_and_cast<GlobalArp*>(getModuleByPath("Net80211_aodv.router[0].generic.arp"));
+//        L3Address cur_dst_ip_addr = arp->getL3AddressFor(cur_dst_mac_addr);
+//        EV_INFO << "Change dst_ip_addr" << cur_dst_ip_addr << std::endl;
+
+
+        int retryCount = recoveryProcedure->getRetryCount(failedPacket, failedHeader);
+        auto robust_forwarder = failedPacket->findTag<RobustForwarderTag>();
+        if(retryCount >= 1 && robust_forwarder) {
+            MacAddress rf_addr = robust_forwarder->getAddr();
+            h->setReceiverAddress(rf_addr);
+            GlobalArp* arp = check_and_cast<GlobalArp*>(getModuleByPath("Net80211_aodv.router[0].generic.arp"));
+            L3Address dst_ip_addr = arp->getL3AddressFor(rf_addr);
+            EV_INFO << "Change dst_ip_addr" << dst_ip_addr << std::endl;
+        }
+
         h->setRetry(true);
         failedPacket->insertAtFront(h);
     }

@@ -226,7 +226,7 @@ double FactoryFading::computeSmallScaleFading(bool is_nlos) const
         }
         else
         {
-            double nu = 1;
+            double nu = 2;
             double sigma = 1;
             double los_component = nu;
             double real_part = los_component + sigma * normal(0,1);

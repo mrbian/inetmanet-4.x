@@ -3,7 +3,7 @@ import inet.common.packet.chunk.Chunk;
 import inet.networklayer.contract.ipv4.Ipv4Address;
 namespace inet;
 
-class MultiHopChirp extends FieldsChunk
+class MultiHopChirp_map extends FieldsChunk
 {
     // Identification
     Ipv4Address origin;
@@ -18,13 +18,10 @@ class MultiHopChirp extends FieldsChunk
     float VX;
     float VY;
     float VZ;
-    float gamma_mob; 
     
     // Route Information
-    float value;
-    
-    float value_c;
-    float value_map;
+    float omega_map;    
+    float omega_c;
 
     // Message Lifetime
     unsigned short hopCount;

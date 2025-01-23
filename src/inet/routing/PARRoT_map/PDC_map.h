@@ -3,11 +3,11 @@
 
 namespace inet {
 
-class PDC {
+class PDC_map {
 	public:
-		PDC() {
+        PDC_map() {
 		}
-		~PDC() {
+		~PDC_map() {
 		}
 
 		// Setter
@@ -26,12 +26,7 @@ class PDC {
 		void velo(Coord v) {
 			_velo = v;
 		}
-		void Gamma_Mob(double v) {
-			_Gamma_Mob = v;
-		}
-		void Gamma_Pos(double v) {
-			_Gamma_Pos = v;
-		}
+
 		// Getter
 		double lastSeen() {
 			return _lastSeen;
@@ -42,29 +37,28 @@ class PDC {
 		Coord velo() {
 			return _velo;
 		}
-		double Gamma_Mob() {
-			return _Gamma_Mob;
+
+		void Gamma_Future_map(double v){
+		    _Gamma_Future_map = v;
 		}
-		double Gamma_Pos() {
-			return _Gamma_Pos;
+		double Gamma_Future_map() {
+		    return _Gamma_Future_map;
 		}
 
-		void Gamma_Distance(double v){
-		    _Gamma_Distance = v;
-		}
-		double Gamma_Distance() {
-		    return _Gamma_Distance;
-		}
+		void Gamma_Future_c(double v){
+            _Gamma_Future_c = v;
+        }
+        double Gamma_Future_c() {
+            return _Gamma_Future_c;
+        }
 
 	protected:
 		double _lastSeen;
 		Coord _coord;
 		Coord _velo;
-		double _Gamma_Mob = 0.0;
-		double _Gamma_Pos = 0.0;
 
-		double _Gamma_Distance = 0.0;
-}
-;
+		double _Gamma_Future_map = 0.0;
+		double _Gamma_Future_c = 0.0;
+};
 
 }	// Namespace inet

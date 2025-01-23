@@ -47,7 +47,7 @@ network Net80211_aodv
         }
         configurator: Ipv4NetworkConfigurator {
             parameters:
-                config = xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");
+                config = xml("<config><interface hosts='*' address='10.0.x.x' netmask='255.255.0.0'/></config>");
                 @display("p=140,50;i=block/cogwheel_s");
         }        
         // must before server, for finish() clean destAddress first 
@@ -87,7 +87,7 @@ network Net80211_parrot
         }
         configurator: Ipv4NetworkConfigurator {
             parameters:
-                config = xml("<config><interface hosts='*' address='145.236.x.x' netmask='255.255.0.0'/></config>");
+                config = xml("<config><interface hosts='*' address='10.0.x.x' netmask='255.255.0.0'/></config>");
                 @display("p=140,50;i=block/cogwheel_s");
         }        
         client[numClients]: parrot_host {
