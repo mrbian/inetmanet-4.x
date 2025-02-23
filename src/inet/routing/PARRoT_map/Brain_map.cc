@@ -2,11 +2,13 @@
 #include <random>
 #include <fstream>
 
+
 namespace inet {
 
 #define LOS_ 0
 #define NLOS_ 1
 #define LOSMAP_ 2
+#define LOSMAP_NN 3
 
 void PARRoT_map::handleDataFromUpperLayer(Packet *packet)
 {
@@ -291,6 +293,17 @@ Ipv4Address PARRoT_map::findRobustNextHop(Ipv4Address target) {
 //    return link_expire_time/std::max(neighborReliabilityTimeout, mhChirpInterval);
 //}
 
+torch::Tensor PARRoT_map::get_points(double x1, double y1, double x2, double y2)
+{
+    double dx = x2 - x1;
+    double dy = y2 - y1;
+    torch::Tensor t = torch::linspace(0,1, 100);
+    torch::Tensor x = x1 + t*dx;
+    torch::Tensor y = y1 + t*dy;
+    torch::Tensor points = torch::stack({x, y}, 1);
+   return points;
+}
+
 double PARRoT_map::Cal_Gamma_Future_map(Ipv4Address neighbor) {
     ExtendedBonnMotionMobility *neighbor_mob = check_and_cast<ExtendedBonnMotionMobility*>(_globalMob[neighbor]);
     ExtendedBonnMotionMobility *self_mob = check_and_cast<ExtendedBonnMotionMobility*>(_globalMob[m_selfIpv4Address]);
@@ -317,6 +330,27 @@ double PARRoT_map::Cal_Gamma_Future_map(Ipv4Address neighbor) {
         else if(LETRangeMode == LOSMAP_)
         {
             if(pathLoss->checkNlos(P1, P2))
+            {
+                P_outage = rayleigh_outage_vector[ceil(distance)];
+            }
+            else
+            {
+                P_outage = rician_outage_vector[ceil(distance)];
+            }
+        }
+        else if(LETRangeMode == LOSMAP_NN){
+            torch::Tensor input = get_points(P1.x/areaMaxX, P1.y/areaMaxY, P2.x/areaMaxX, P2.y/areaMaxY);
+            auto points_a = input.accessor<float, 2>();
+//            for (int i = 0; i < input.size(0); ++i) {
+//                float _x = points_a[i][0]*400;
+//                float _y = points_a[i][1]*400;
+//                std::cout << _x << _y << std::endl;
+//            }
+            at::Tensor output = model.forward({input}).toTensor();
+            at::Tensor sum_output = output.sum();
+            float sigmoid_output = torch::sigmoid(sum_output).item<float>();
+            bool is_nlos = sigmoid_output > nlosThres;
+            if(is_nlos)
             {
                 P_outage = rayleigh_outage_vector[ceil(distance)];
             }

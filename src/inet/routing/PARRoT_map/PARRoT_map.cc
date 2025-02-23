@@ -33,6 +33,19 @@ void PARRoT_map::initialize(int stage) {
     NetworkProtocolBase::initialize(stage);
 
     if (stage == INITSTAGE_LOCAL) {
+
+        areaMaxX = par("areaMaxX");
+        areaMaxY = par("areaMaxY");
+        nlosThres = par("nlosThres");
+        _seed = par("_seed");
+        _block = par("_block");
+        bool loadModel = par("loadModel");
+        if(loadModel)
+        {
+            std::string modelPath = "/home/bman/Documents/omnetpp-6.0.3/samples/PARRoT-PARRoT/los_map_model/output_models/script_models/";
+            std::string fileName = "seed"+std::to_string(_seed)+"_block"+std::to_string(_block)+".pt";
+            model = torch::jit::load(modelPath+fileName);
+        }
         m_squNr = 0;
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
         // Routing

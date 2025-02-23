@@ -55,6 +55,8 @@
 #include "PDataHeader_m.h"
 #include "RobustForwarder_m.h"
 
+#include <torch/script.h>
+
 namespace inet {
 
 class PARRoT_map: public NetworkProtocolBase, public INetworkProtocol {
@@ -99,6 +101,13 @@ class PARRoT_map: public NetworkProtocolBase, public INetworkProtocol {
         std::vector<double> rayleigh_outage_vector;
         std::set<std::pair<Ipv4Address, int>> duplicate_data_pkt;
 
+        torch::jit::script::Module model;
+        double areaMaxX;
+        double areaMaxY;
+        double nlosThres;
+        int _seed;
+        int _block;
+
     // Routing
     protected:
         // Chirp
@@ -117,6 +126,7 @@ class PARRoT_map: public NetworkProtocolBase, public INetworkProtocol {
         double getMaxValueFor_map(Ipv4Address target);
         Ipv4Address findBestNextHop(Ipv4Address target);
         Ipv4Address findRobustNextHop(Ipv4Address target);
+        torch::Tensor get_points(double x1, double y1, double x2, double y2);
         double Cal_Gamma_Future_map(Ipv4Address neighbor);
         double Cal_Gamma_Future_c(Ipv4Address neighbor);
 

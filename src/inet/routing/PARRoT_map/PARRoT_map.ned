@@ -38,5 +38,12 @@ simple PARRoT_map extends NetworkProtocolBase like INetworkProtocol
 		bool considerSmallScale = default(true);
 		string RicianFadingFile = default("");
 		string RayleighFadingFile = default("");
+		
+		bool loadModel = default(false);
+		double areaMaxX = default(400);
+		double areaMaxY = default(400);
+		double nlosThres = default(0.5);
+		int _seed = default(0);
+		int _block = default(0);
 }
 

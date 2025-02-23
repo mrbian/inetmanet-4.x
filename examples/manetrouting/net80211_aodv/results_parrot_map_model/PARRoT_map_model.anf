@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<analysis version="2">
+    <inputs>
+        <input pattern="/inet/examples/manetrouting/net80211_aodv/results_parrot_map_model/PARRoT_map_model-*.vec"/>
+        <input pattern="/inet/examples/manetrouting/net80211_aodv/results_parrot_map_model/PARRoT_map_model-*.sca"/>
+    </inputs>
+    <charts/>
+</analysis>
