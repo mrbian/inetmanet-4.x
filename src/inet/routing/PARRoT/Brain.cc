@@ -46,59 +46,59 @@ double PARRoT::combineDiscounts(std::vector<double> gamma) {
 }
 
 
-//double PARRoT::qFunction(Ipv4Address target, Ipv4Address hop) {
-//	std::vector<double> discounts;
-//	discounts.push_back(qFctGamma);
-//	discounts.push_back(std::min(1.0, sqrt(std::max(Gamma_Pos(hop), 0.0)/(std::max(neighborReliabilityTimeout, mhChirpInterval))) ));
-//	discounts.push_back(Vi.at(hop)->Gamma_Mob());
-//
-//	return (1 - qFctAlpha) * Gateways.at(target).at(hop)->Q()
-//			+ qFctAlpha
-//					* (combineDiscounts(discounts)
-//							* Gateways.at(target).at(hop)->V());
-//}
+double PARRoT::qFunction(Ipv4Address target, Ipv4Address hop) {
+	std::vector<double> discounts;
+	discounts.push_back(qFctGamma);
+	discounts.push_back(std::min(1.0, sqrt(std::max(Gamma_Pos(hop), 0.0)/(std::max(neighborReliabilityTimeout, mhChirpInterval))) ));
+	discounts.push_back(Vi.at(hop)->Gamma_Mob());
 
-double PARRoT::qFunction_c(Ipv4Address target, Ipv4Address hop) {
-    double distance = Vi.at(hop)->Gamma_Distance();
-    double discount = 0;
-    if(distance <= nlosRange)
-    {
-        discount = 0.8;
-    }
-    else
-    {
-        discount = 0.0;
-    }
-
-    return Gateways.at(target).at(hop)->Vc() * discount;
+	return (1 - qFctAlpha) * Gateways.at(target).at(hop)->Q()
+			+ qFctAlpha
+					* (combineDiscounts(discounts)
+							* Gateways.at(target).at(hop)->V());
 }
 
-double PARRoT::qFunction_map(Ipv4Address target, Ipv4Address hop) {
-    double discount = 0.8;
-    return Gateways.at(target).at(hop)->Vmap() * discount;
-}
-
-//double PARRoT::getMaxValueFor(Ipv4Address target) {
+//double PARRoT::qFunction_c(Ipv4Address target, Ipv4Address hop) {
+//    double distance = Vi.at(hop)->Gamma_Distance();
+//    double discount = 0;
+//    if(distance <= nlosRange)
+//    {
+//        discount = 0.8;
+//    }
+//    else
+//    {
+//        discount = 0.0;
+//    }
 //
-//	double res = -1000;
-//	if(Gateways.find(target) != Gateways.end()){
-//	for (std::map<Ipv4Address, PCE*>::iterator act =
-//	        Gateways.find(target)->second.begin();
-//	        act != Gateways.find(target)->second.end(); act++) {
-//		double deltaT = simTime().dbl() - act->second->lastSeen();
-//		if (deltaT	<= std::min(std::max(neighborReliabilityTimeout, mhChirpInterval), Gamma_Pos(act->first))) {
-//			if (act == Gateways.find(target)->second.begin()) {
-//				// First possible action, make sure the result gets this value anyway
-//				res = qFunction(target, act->first);
-//			}
-//			res = std::max(res,
-//			        qFunction(target, act->first));
-//
-//		}
-//	}
-//	}
-//	return res;
+//    return Gateways.at(target).at(hop)->Vc() * discount;
 //}
+//
+//double PARRoT::qFunction_map(Ipv4Address target, Ipv4Address hop) {
+//    double discount = 0.8;
+//    return Gateways.at(target).at(hop)->Vmap() * discount;
+//}
+
+double PARRoT::getMaxValueFor(Ipv4Address target) {
+
+	double res = -1000;
+	if(Gateways.find(target) != Gateways.end()){
+	for (std::map<Ipv4Address, PCE*>::iterator act =
+	        Gateways.find(target)->second.begin();
+	        act != Gateways.find(target)->second.end(); act++) {
+		double deltaT = simTime().dbl() - act->second->lastSeen();
+		if (deltaT	<= std::min(std::max(neighborReliabilityTimeout, mhChirpInterval), Gamma_Pos(act->first))) {
+			if (act == Gateways.find(target)->second.begin()) {
+				// First possible action, make sure the result gets this value anyway
+				res = qFunction(target, act->first);
+			}
+			res = std::max(res,
+			        qFunction(target, act->first));
+
+		}
+	}
+	}
+	return res;
+}
 
 //double PARRoT::getMaxValueFor(Ipv4Address target) {
 //
@@ -122,121 +122,77 @@ double PARRoT::qFunction_map(Ipv4Address target, Ipv4Address hop) {
 //    return res;
 //}
 
-double PARRoT::getMaxValueFor_c(Ipv4Address target) {
-
-    double res = -1000;
-    if(Gateways.find(target) != Gateways.end()){
-    for (std::map<Ipv4Address, PCE*>::iterator act =
-            Gateways.find(target)->second.begin();
-            act != Gateways.find(target)->second.end(); act++) {
-        double deltaT = simTime().dbl() - act->second->lastSeen();
-        if (deltaT  <= std::max(neighborReliabilityTimeout, mhChirpInterval)) {
-            if (act == Gateways.find(target)->second.begin()) {
-                // First possible action, make sure the result gets this value anyway
-                res = qFunction_c(target, act->first);
-            }
-            res = std::max(res, qFunction_c(target, act->first));
-
-        }
-    }
-    }
-    return res;
-}
-
-double PARRoT::getMaxValueFor_map(Ipv4Address target) {
-
-    double res = -1000;
-    if(Gateways.find(target) != Gateways.end()){
-    for (std::map<Ipv4Address, PCE*>::iterator act =
-            Gateways.find(target)->second.begin();
-            act != Gateways.find(target)->second.end(); act++) {
-        double deltaT = simTime().dbl() - act->second->lastSeen();
-        if (deltaT  <= std::max(neighborReliabilityTimeout, mhChirpInterval)) {
-            if (act == Gateways.find(target)->second.begin()) {
-                // First possible action, make sure the result gets this value anyway
-                res = qFunction_map(target, act->first);
-            }
-            res = std::max(res, qFunction_map(target, act->first));
-
-        }
-    }
-    }
-    return res;
-}
-
-
-
-//Ipv4Address PARRoT::getNextHopFor(Ipv4Address target) {
-//	Ipv4Address a = Ipv4Address("0.0.0.0");
-//	double res = -1000;
-//	std::vector<Ipv4Address> toDelete;
-//	if(Gateways.find(target) != Gateways.end()){
-//	for (std::map<Ipv4Address, PCE*>::iterator act =
-//	        Gateways.find(target)->second.begin();
-//	        act != Gateways.find(target)->second.end(); act++) {
-//		double deltaT = simTime().dbl() - act->second->lastSeen();
-//		if (deltaT	<= std::min(std::max(neighborReliabilityTimeout, mhChirpInterval), Gamma_Pos(act->first))) {
+//double PARRoT::getMaxValueFor_c(Ipv4Address target) {
 //
-//		    if (act == Gateways.find(target)->second.begin()) {
-////				 First possible action, make sure the result gets this value anyway
-//				res = qFunction(target, act->first);
-//				a = act->first;
-//			}
-//			else if (qFunction(target, act->first) > res) { //act->second->Q() > res) {
-//				res = qFunction(target, act->first); //act->second->Q();
-//				a = act->first;
-//			}
-//		}
-//		else {
-//		    toDelete.push_back(act->first);
-////			delete act->second;
-////			Gateways.at(target).erase(act);
-//		}
-//	}
+//    double res = -1000;
+//    if(Gateways.find(target) != Gateways.end()){
+//    for (std::map<Ipv4Address, PCE*>::iterator act =
+//            Gateways.find(target)->second.begin();
+//            act != Gateways.find(target)->second.end(); act++) {
+//        double deltaT = simTime().dbl() - act->second->lastSeen();
+//        if (deltaT  <= std::max(neighborReliabilityTimeout, mhChirpInterval)) {
+//            if (act == Gateways.find(target)->second.begin()) {
+//                // First possible action, make sure the result gets this value anyway
+//                res = qFunction_c(target, act->first);
+//            }
+//            res = std::max(res, qFunction_c(target, act->first));
 //
-//    for (const auto& addr : toDelete) {
-//        std::map<Ipv4Address, PCE*> interNodes = Gateways.find(target)->second;
-//        auto it = interNodes.find(addr);
-//        if (it != interNodes.end()) {
-////                delete static_cast<PCE*>(it->second);  // 释放 PCE 对象的内存
-//            interNodes.erase(it);  // 从 map 中删除元素
 //        }
 //    }
-//	}
+//    }
+//    return res;
+//}
 //
+//double PARRoT::getMaxValueFor_map(Ipv4Address target) {
 //
+//    double res = -1000;
+//    if(Gateways.find(target) != Gateways.end()){
+//    for (std::map<Ipv4Address, PCE*>::iterator act =
+//            Gateways.find(target)->second.begin();
+//            act != Gateways.find(target)->second.end(); act++) {
+//        double deltaT = simTime().dbl() - act->second->lastSeen();
+//        if (deltaT  <= std::max(neighborReliabilityTimeout, mhChirpInterval)) {
+//            if (act == Gateways.find(target)->second.begin()) {
+//                // First possible action, make sure the result gets this value anyway
+//                res = qFunction_map(target, act->first);
+//            }
+//            res = std::max(res, qFunction_map(target, act->first));
 //
-//	return a;
-//
+//        }
+//    }
+//    }
+//    return res;
 //}
 
 
+
 Ipv4Address PARRoT::getNextHopFor(Ipv4Address target) {
-    Ipv4Address a = Ipv4Address("0.0.0.0");
-    double res = -1000;
-    std::vector<Ipv4Address> toDelete;
-    if(Gateways.find(target) != Gateways.end()){
-    for (std::map<Ipv4Address, PCE*>::iterator act =
-            Gateways.find(target)->second.begin();
-            act != Gateways.find(target)->second.end(); act++) {
-        double deltaT = simTime().dbl() - act->second->lastSeen();
-        if (deltaT  <= std::max(neighborReliabilityTimeout, mhChirpInterval)) {
-            if (act == Gateways.find(target)->second.begin()) {
-//               First possible action, make sure the result gets this value anyway
-                res = qFunction_c(target, act->first);
-                a = act->first;
-            }
-            else if (qFunction_c(target, act->first) > res) { //act->second->Q() > res) {
-                res = qFunction_c(target, act->first); //act->second->Q();
-                a = act->first;
-            }
-        }
-        else {
-            toDelete.push_back(act->first);
-//          delete act->second;
-//          Gateways.at(target).erase(act);
-        }
-    }
+	Ipv4Address a = Ipv4Address("0.0.0.0");
+	double res = -1000;
+	std::vector<Ipv4Address> toDelete;
+	if(Gateways.find(target) != Gateways.end()){
+	for (std::map<Ipv4Address, PCE*>::iterator act =
+	        Gateways.find(target)->second.begin();
+	        act != Gateways.find(target)->second.end(); act++) {
+		double deltaT = simTime().dbl() - act->second->lastSeen();
+		if (deltaT	<= std::min(std::max(neighborReliabilityTimeout, mhChirpInterval), Gamma_Pos(act->first))) {
+
+		    if (act == Gateways.find(target)->second.begin()) {
+//				 First possible action, make sure the result gets this value anyway
+				res = qFunction(target, act->first);
+				a = act->first;
+			}
+			else if (qFunction(target, act->first) > res) { //act->second->Q() > res) {
+				res = qFunction(target, act->first); //act->second->Q();
+				a = act->first;
+			}
+		}
+		else {
+		    toDelete.push_back(act->first);
+//			delete act->second;
+//			Gateways.at(target).erase(act);
+		}
+	}
 
     for (const auto& addr : toDelete) {
         std::map<Ipv4Address, PCE*> interNodes = Gateways.find(target)->second;
@@ -246,13 +202,57 @@ Ipv4Address PARRoT::getNextHopFor(Ipv4Address target) {
             interNodes.erase(it);  // 从 map 中删除元素
         }
     }
-    }
+	}
 
 
 
-    return a;
+	return a;
 
 }
+
+
+//Ipv4Address PARRoT::getNextHopFor(Ipv4Address target) {
+//    Ipv4Address a = Ipv4Address("0.0.0.0");
+//    double res = -1000;
+//    std::vector<Ipv4Address> toDelete;
+//    if(Gateways.find(target) != Gateways.end()){
+//    for (std::map<Ipv4Address, PCE*>::iterator act =
+//            Gateways.find(target)->second.begin();
+//            act != Gateways.find(target)->second.end(); act++) {
+//        double deltaT = simTime().dbl() - act->second->lastSeen();
+//        if (deltaT  <= std::max(neighborReliabilityTimeout, mhChirpInterval)) {
+//            if (act == Gateways.find(target)->second.begin()) {
+////               First possible action, make sure the result gets this value anyway
+//                res = qFunction_c(target, act->first);
+//                a = act->first;
+//            }
+//            else if (qFunction_c(target, act->first) > res) { //act->second->Q() > res) {
+//                res = qFunction_c(target, act->first); //act->second->Q();
+//                a = act->first;
+//            }
+//        }
+//        else {
+//            toDelete.push_back(act->first);
+////          delete act->second;
+////          Gateways.at(target).erase(act);
+//        }
+//    }
+//
+//    for (const auto& addr : toDelete) {
+//        std::map<Ipv4Address, PCE*> interNodes = Gateways.find(target)->second;
+//        auto it = interNodes.find(addr);
+//        if (it != interNodes.end()) {
+////                delete static_cast<PCE*>(it->second);  // 释放 PCE 对象的内存
+//            interNodes.erase(it);  // 从 map 中删除元素
+//        }
+//    }
+//    }
+//
+//
+//
+//    return a;
+//
+//}
 
 //	Rewards
 double PARRoT::R(Ipv4Address origin, Ipv4Address hop) {

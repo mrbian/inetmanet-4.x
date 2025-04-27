@@ -34,6 +34,7 @@ void PARRoT_map::initialize(int stage) {
 
     if (stage == INITSTAGE_LOCAL) {
 
+        disableRobust = par("disableRobust");
         areaMaxX = par("areaMaxX");
         areaMaxY = par("areaMaxY");
         nlosThres = par("nlosThres");

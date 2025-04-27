@@ -187,7 +187,8 @@ void Ieee8022Llc::addMapData(Packet *packet)
 
 void Ieee8022Llc::storeMapDataToCSV()
 {
-    std::string baseName = getEnvir()->getConfig()->substituteVariables("${resultdir}/../LOSMapDataFiles/${configname}-${iterationvarsf}");
+//    std::string baseName = getEnvir()->getConfig()->substituteVariables("${resultdir}/../LOSMapDataFiles/${configname}-${iterationvarsf}");
+    std::string baseName = getEnvir()->getConfig()->substituteVariables("${resultdir}/../LOSMapDataFiles_2/${configname}-${iterationvarsf}");
     if (!std::filesystem::exists(baseName)) {
         if (std::filesystem::create_directory(baseName)) {
             std::cout << "Folder " << baseName << " created successfully" << std::endl;

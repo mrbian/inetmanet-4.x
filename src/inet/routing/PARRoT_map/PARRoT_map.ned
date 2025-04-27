@@ -45,5 +45,7 @@ simple PARRoT_map extends NetworkProtocolBase like INetworkProtocol
 		double nlosThres = default(0.5);
 		int _seed = default(0);
 		int _block = default(0);
+		
+		bool disableRobust = default(false);
 }
 

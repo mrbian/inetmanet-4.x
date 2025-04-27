@@ -107,6 +107,7 @@ class PARRoT_map: public NetworkProtocolBase, public INetworkProtocol {
         double nlosThres;
         int _seed;
         int _block;
+        bool disableRobust;
 
     // Routing
     protected:

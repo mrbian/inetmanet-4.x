@@ -75,6 +75,10 @@ void PARRoT_map::forwardData(Packet* packet, Ipv4Address dest)
 {
     Ipv4Address bestGateway = findBestNextHop(dest);
     Ipv4Address robustGateway = findRobustNextHop(dest);
+    if(disableRobust)
+    {
+        robustGateway = bestGateway;
+    }
 
     if(bestGateway == Ipv4Address("0.0.0.0"))
     {

@@ -121,15 +121,15 @@ class PARRoT: public RoutingProtocolBase {
 
 	// Reinforcement Learning
 	protected:
-//		double qFunction(Ipv4Address target, Ipv4Address hop);
-		double qFunction_c(Ipv4Address target, Ipv4Address hop);
-		double qFunction_map(Ipv4Address target, Ipv4Address hop);
+		double qFunction(Ipv4Address target, Ipv4Address hop);
+//		double qFunction_c(Ipv4Address target, Ipv4Address hop);
+//		double qFunction_map(Ipv4Address target, Ipv4Address hop);
 		double R(Ipv4Address origin, Ipv4Address hop);
 		double Gamma_Pos(Ipv4Address a, Ipv4Address origin = Ipv4Address("0.0.0.0"));
 		double combineDiscounts(std::vector<double> gamma);
-//		double getMaxValueFor(Ipv4Address target);
-		double getMaxValueFor_c(Ipv4Address target);
-		double getMaxValueFor_map(Ipv4Address target);
+		double getMaxValueFor(Ipv4Address target);
+//		double getMaxValueFor_c(Ipv4Address target);
+//		double getMaxValueFor_map(Ipv4Address target);
 		Ipv4Address getNextHopFor(Ipv4Address target);
 		void updateGamma_Mob();
 
